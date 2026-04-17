@@ -7,3 +7,6 @@
 - [ ] Verify the recent Home.tsx visual edits against the user's requested branding and layout intent.
 - [ ] Correct any mismatched manual edits for the logo, heading treatment, and API button removal.
 - [ ] Validate the updated page and save a new checkpoint.
+- [ ] Review the latest missed Home.tsx edits for login/dashboard linking, centered presets, expanded categories, AI search toggle, recent design linking, and footer navigation.
+- [ ] Manually implement the requested homepage updates in Home.tsx.
+- [ ] Validate the homepage changes and save a new checkpoint.

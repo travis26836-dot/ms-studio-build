@@ -71,12 +71,19 @@ function Dashboard({ user, searchQuery, setSearchQuery, setLocation }: {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="h-14 border-b border-border bg-card flex items-center px-6 sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Palette className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <h1 className="text-base font-semibold text-foreground">Manus Design Studio</h1>
+      <header className="h-16 border-b border-border bg-card flex items-center px-6 sticky top-0 z-50">
+        <div className="flex items-center gap-4">
+          <img
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663493947527/i5xfsQArDhfZwLWSNRfh3R/dead-oak-decals-logo_1b233b2f.png"
+            alt="ManuScript Studio logo"
+            className="h-12 w-12 rounded-md object-cover ring-1 ring-white/10"
+          />
+          <h1
+            className="inline-flex text-foreground uppercase tracking-[0.12em]"
+            style={{ fontSize: "18px", fontWeight: 700, fontFamily: '"Cinzel Decorative", serif' }}
+          >
+            ManuScript Studio
+          </h1>
         </div>
         <div className="flex-1 max-w-md mx-auto">
           <div className="relative">
@@ -90,9 +97,6 @@ function Dashboard({ user, searchQuery, setSearchQuery, setLocation }: {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setLocation("/api-docs")}>
-            <Code2 className="w-4 h-4 mr-1.5" /> API
-          </Button>
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium text-primary">
             {user?.name?.[0] || "U"}
           </div>
@@ -267,7 +271,7 @@ function LandingPage() {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <Palette className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h1 className="text-lg font-bold text-foreground">Manus Design Studio</h1>
+          <h1 className="text-lg font-bold uppercase tracking-[0.08em] text-foreground" style={{ fontFamily: '"Cinzel Decorative", serif' }}>ManuScript Studio</h1>
         </div>
         <div className="flex-1" />
         <Button asChild>

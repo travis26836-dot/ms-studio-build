@@ -4,3 +4,6 @@
 - [ ] Validate the web build output and prepare Netlify deployment handoff details.
 - [ ] Package and validate the desktop application on the attached Windows computer.
 - [ ] Summarize build outputs, remaining manual steps, and validation results for the user.
+- [ ] Verify the recent Home.tsx visual edits against the user's requested branding and layout intent.
+- [ ] Correct any mismatched manual edits for the logo, heading treatment, and API button removal.
+- [ ] Validate the updated page and save a new checkpoint.

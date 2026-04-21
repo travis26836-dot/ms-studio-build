@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useCanvasEditor } from "@/hooks/useCanvasEditor";
+import type { ShapeType } from "@/hooks/useCanvasEditor";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
@@ -470,7 +471,7 @@ function TemplatesPanel({ editor, searchQuery }: { editor: ReturnType<typeof use
 
 // ─── Elements Panel ──────────────────────────────────────────
 function ElementsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
-  const shapes = [
+  const shapes: Array<{ type: ShapeType; label: string; icon: React.ComponentType<{ className?: string }> }> = [
     { type: "rect", label: "Rectangle", icon: Square },
     { type: "rounded-rect", label: "Rounded", icon: Square },
     { type: "circle", label: "Circle", icon: Circle },
@@ -501,7 +502,7 @@ function ElementsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> 
         {shapes.map((s) => (
           <button
             key={s.type}
-            onClick={() => editor.addShape(s.type as Parameters<typeof editor.addShape>[0])}
+            onClick={() => editor.addShape(s.type)}
             className="aspect-square rounded-lg bg-secondary hover:bg-accent border border-border flex flex-col items-center justify-center gap-1 transition-colors"
           >
             <s.icon className="w-5 h-5 text-card-foreground" />

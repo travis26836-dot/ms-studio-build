@@ -6,7 +6,7 @@ type EditorState = {
   zoom: number;
 };
 
-type ShapeType =
+export type ShapeType =
   | "rect"
   | "rounded-rect"
   | "circle"
@@ -271,7 +271,7 @@ export function useCanvasEditor(
         object = new fabric.Line([0, 0, 180, 0], {
           left: width / 2 - 90,
           top: height / 2,
-          stroke: (base.stroke as unknown as string | undefined) || (base.fill as unknown as string | undefined) || "#111827",
+          stroke: (base.fill as string | undefined) ?? "#111827",
           strokeWidth: Number(base.strokeWidth || 4),
         });
         break;

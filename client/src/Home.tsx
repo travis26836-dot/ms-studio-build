@@ -321,7 +321,7 @@ function Dashboard({
         <div className="mx-auto flex h-20 max-w-7xl items-center gap-4">
           <div className="flex items-center gap-4">
             <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663493947527/i5xfsQArDhfZwLWSNRfh3R/dead-oak-decals-logo_1b233b2f.png"
+              src="/dedoak-digital-holdings-LOGO-favicon.png"
               alt="ManuScript Studio logo"
               className="h-12 w-12 rounded-md object-cover ring-1 ring-white/10"
             />

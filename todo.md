@@ -1,7 +1,5 @@
 - [ ] Inspect the mounted desktop project structure and identify the actual source entrypoints.
 - [ ] Determine the correct desktop packaging stack based on the local environment and existing code.
-- [ ] Adapt the existing application into the web workspace for a Netlify-compatible build.
-- [ ] Validate the web build output and prepare Netlify deployment handoff details.
 - [ ] Package and validate the desktop application on the attached Windows computer.
 - [ ] Summarize build outputs, remaining manual steps, and validation results for the user.
 - [ ] Verify the recent Home.tsx visual edits against the user's requested branding and layout intent.

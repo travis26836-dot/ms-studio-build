@@ -137,7 +137,7 @@ export default function Editor({
       <div className="h-12 border-b border-border bg-toolbar flex items-center px-3 gap-1 shrink-0">
         <Button variant="ghost" size="sm" className="text-toolbar-foreground gap-1.5 mr-2" onClick={() => window.history.back()}>
           <ChevronLeft className="w-4 h-4" />
-          <span className="text-sm font-medium">Manus Design Studio</span>
+          <span className="text-sm font-medium">DedOak Digital Holdings</span>
         </Button>
 
         <Separator orientation="vertical" className="h-6 mx-1" />

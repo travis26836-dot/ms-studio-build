@@ -168,7 +168,7 @@ function SiteFooter() {
       <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground" style={{ fontFamily: '"Cinzel Decorative", serif' }}>
-            ManuScript Studio
+            DedOak Digital Holdings
           </p>
           <p className="mt-2 max-w-xl text-xs leading-6 text-muted-foreground">
             Custom image editing, templates, branding systems, listing mockups, and digital marketing assets in one studio workspace.
@@ -283,14 +283,14 @@ function Dashboard({
           <div className="flex items-center gap-4">
             <img
               src="/dedoak-digital-holdings-LOGO-favicon.png"
-              alt="ManuScript Studio logo"
+              alt="DedOak Digital Holdings logo"
               className="h-12 w-12 rounded-md object-cover ring-1 ring-white/10"
             />
             <h1
               className="hidden uppercase tracking-[0.12em] text-foreground sm:inline-flex"
               style={{ fontSize: "18px", fontWeight: 700, fontFamily: '"Cinzel Decorative", serif' }}
             >
-              ManuScript Studio
+              DedOak Digital Holdings
             </h1>
           </div>
 
@@ -594,11 +594,13 @@ function LandingPage() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 flex h-16 items-center border-b border-border bg-card/80 px-6 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Palette className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <img
+            src="/dedoak-digital-holdings-LOGO-favicon.png"
+            alt="DedOak Digital Holdings logo"
+            className="h-8 w-8 rounded-lg object-cover"
+          />
           <h1 className="text-lg font-bold uppercase tracking-[0.08em] text-foreground" style={{ fontFamily: '"Cinzel Decorative", serif' }}>
-            ManuScript Studio
+            DedOak Digital Holdings
           </h1>
         </div>
         <div className="flex-1" />
@@ -691,7 +693,7 @@ function LandingPage() {
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="mb-4 text-3xl font-bold text-foreground">Ready to create?</h2>
             <p className="mb-8 text-muted-foreground">
-              Join ManuScript Studio and start building polished digital assets with AI-assisted editing and flexible templates.
+              Join DedOak Digital Holdings and start building polished digital assets with AI-assisted editing and flexible templates.
             </p>
             <Button size="lg" asChild>
               <a href={getLoginUrl()} className="gap-2">

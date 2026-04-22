@@ -24,7 +24,7 @@ export default function ApiDocs() {
           <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
             <Code2 className="w-4 h-4 text-primary-foreground" />
           </div>
-          <h1 className="text-sm font-semibold text-foreground">Manus Design Studio API</h1>
+          <h1 className="text-sm font-semibold text-foreground">DedOak Digital Holdings API</h1>
         </div>
         <div className="flex-1" />
         <span className="text-xs text-muted-foreground px-2 py-0.5 rounded bg-secondary">v1.0</span>
@@ -34,7 +34,7 @@ export default function ApiDocs() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-3">Developer Documentation</h1>
           <p className="text-muted-foreground max-w-2xl">
-            Manus Design Studio exposes a tRPC-based API that enables programmatic control of all design operations.
+            DedOak Digital Holdings exposes a tRPC-based API that enables programmatic control of all design operations.
             Every action available in the visual editor can be performed via the API, making it suitable for
             automation, batch processing, and integration with external tools.
           </p>
@@ -57,9 +57,9 @@ export default function ApiDocs() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-xs text-muted-foreground">
-                    All API calls go through the tRPC endpoint. Authentication uses session cookies from Manus OAuth.
+                    All API calls go through the tRPC endpoint. Authentication uses session cookies from DedOak OAuth.
                   </p>
-                  <CodeBlock code={`// Base URL\nconst BASE = "https://your-app.manus.space/api/trpc";\n\n// tRPC client setup (recommended)\nimport { createTRPCClient, httpBatchLink } from '@trpc/client';\nimport type { AppRouter } from './server/routers';\n\nconst client = createTRPCClient<AppRouter>({\n  links: [\n    httpBatchLink({ url: BASE }),\n  ],\n});`} />
+                  <CodeBlock code={`// Base URL\nconst BASE = "https://your-app.dedoak.digital/api/trpc";\n\n// tRPC client setup (recommended)\nimport { createTRPCClient, httpBatchLink } from '@trpc/client';\nimport type { AppRouter } from './server/routers';\n\nconst client = createTRPCClient<AppRouter>({\n  links: [\n    httpBatchLink({ url: BASE }),\n  ],\n});`} />
                 </CardContent>
               </Card>
 
@@ -108,25 +108,25 @@ export default function ApiDocs() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    The Manus Design Studio VS Code extension enables a seamless workflow between design and development.
+                    The DedOak Digital Holdings VS Code extension enables a seamless workflow between design and development.
                     Export designs as optimized assets directly into your project workspace, generate responsive CSS/HTML
                     from your canvas layouts, and use the design system tokens in your code.
                   </p>
                   <div className="space-y-3">
                     <h4 className="text-xs font-semibold text-card-foreground">Installation</h4>
-                    <CodeBlock code={`# Install from VS Code Marketplace\ncode --install-extension manus.design-studio-bridge\n\n# Or search "Manus Design Studio" in VS Code Extensions`} />
+                    <CodeBlock code={`# Install from VS Code Marketplace\ncode --install-extension dedoak.design-studio-bridge\n\n# Or search "DedOak Digital Holdings" in VS Code Extensions`} />
                   </div>
                   <div className="space-y-3">
                     <h4 className="text-xs font-semibold text-card-foreground">Configuration</h4>
-                    <CodeBlock code={`// .vscode/settings.json\n{\n  "manus.designStudio.apiUrl": "https://your-app.manus.space",\n  "manus.designStudio.outputDir": "./src/assets/designs",\n  "manus.designStudio.format": "png",\n  "manus.designStudio.quality": 0.9,\n  "manus.designStudio.generateCSS": true\n}`} />
+                    <CodeBlock code={`// .vscode/settings.json\n{\n  "dedoak.designStudio.apiUrl": "https://your-app.dedoak.digital",\n  "dedoak.designStudio.outputDir": "./src/assets/designs",\n  "dedoak.designStudio.format": "png",\n  "dedoak.designStudio.quality": 0.9,\n  "dedoak.designStudio.generateCSS": true\n}`} />
                   </div>
                   <div className="space-y-3">
                     <h4 className="text-xs font-semibold text-card-foreground">Commands</h4>
-                    <CodeBlock code={`// Command Palette (Ctrl+Shift+P)\n> Manus: Pull Design Assets     // Download project assets\n> Manus: Export Current Design   // Export active design\n> Manus: Generate CSS Module     // Create CSS from design tokens\n> Manus: Sync Brand Kit          // Pull brand colors/fonts`} />
+                    <CodeBlock code={`// Command Palette (Ctrl+Shift+P)\n> DedOak: Pull Design Assets     // Download project assets\n> DedOak: Export Current Design   // Export active design\n> DedOak: Generate CSS Module     // Create CSS from design tokens\n> DedOak: Sync Brand Kit          // Pull brand colors/fonts`} />
                   </div>
                   <div className="space-y-3">
                     <h4 className="text-xs font-semibold text-card-foreground">CLI Tool</h4>
-                    <CodeBlock code={`# Install the CLI globally\nnpm install -g @manus/design-cli\n\n# Export a project\nmanus-cli export --project 42 --format png --output ./assets\n\n# Generate CSS variables from a brand kit\nmanus-cli brand-kit --id 1 --output ./src/styles/brand.css\n\n# Batch export all projects\nmanus-cli export-all --format png --output ./assets/designs`} />
+                    <CodeBlock code={`# Install the CLI globally\nnpm install -g @dedoak/design-cli\n\n# Export a project\ndedoak-cli export --project 42 --format png --output ./assets\n\n# Generate CSS variables from a brand kit\ndedoak-cli brand-kit --id 1 --output ./src/styles/brand.css\n\n# Batch export all projects\ndedoak-cli export-all --format png --output ./assets/designs`} />
                   </div>
                 </CardContent>
               </Card>
@@ -143,22 +143,22 @@ export default function ApiDocs() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    The Manus Design Studio API is designed for full automation. Combined with the Manus AI platform,
+                    The DedOak Digital Holdings API is designed for full automation. Combined with the DedOak AI platform,
                     every editor action can be performed programmatically, enabling batch processing, workflow
                     automation, and AI-driven design generation at scale.
                   </p>
                   <div className="space-y-3">
                     <h4 className="text-xs font-semibold text-card-foreground">Batch Design Generation</h4>
-                    <CodeBlock code={`import { createTRPCClient, httpBatchLink } from '@trpc/client';\n\nconst client = createTRPCClient({\n  links: [httpBatchLink({ url: 'https://your-app.manus.space/api/trpc' })],\n});\n\n// Generate social media variants from a single design\nasync function batchResize(projectId, presets) {\n  const project = await client.projects.get.query({ id: projectId });\n  const canvasData = project.canvasData;\n\n  for (const preset of presets) {\n    const newProject = await client.projects.create.mutate({\n      name: \`\${project.name} - \${preset.label}\`,\n      canvasWidth: preset.width,\n      canvasHeight: preset.height,\n      canvasData: scaleCanvasData(canvasData, preset.width, preset.height),\n    });\n    console.log(\`Created: \${newProject.id} (\${preset.label})\`);\n  }\n}\n\nbatchResize(42, [\n  { label: "Instagram Post", width: 1080, height: 1080 },\n  { label: "Facebook Cover", width: 1200, height: 630 },\n  { label: "Twitter Header", width: 1500, height: 500 },\n]);`} />
+                    <CodeBlock code={`import { createTRPCClient, httpBatchLink } from '@trpc/client';\n\nconst client = createTRPCClient({\n  links: [httpBatchLink({ url: 'https://your-app.dedoak.digital/api/trpc' })],\n});\n\n// Generate social media variants from a single design\nasync function batchResize(projectId, presets) {\n  const project = await client.projects.get.query({ id: projectId });\n  const canvasData = project.canvasData;\n\n  for (const preset of presets) {\n    const newProject = await client.projects.create.mutate({\n      name: \`\${project.name} - \${preset.label}\`,\n      canvasWidth: preset.width,\n      canvasHeight: preset.height,\n      canvasData: scaleCanvasData(canvasData, preset.width, preset.height),\n    });\n    console.log(\`Created: \${newProject.id} (\${preset.label})\`);\n  }\n}\n\nbatchResize(42, [\n  { label: "Instagram Post", width: 1080, height: 1080 },\n  { label: "Facebook Cover", width: 1200, height: 630 },\n  { label: "Twitter Header", width: 1500, height: 500 },\n]);`} />
                   </div>
                   <div className="space-y-3">
                     <h4 className="text-xs font-semibold text-card-foreground">AI-Driven Workflow</h4>
                     <CodeBlock code={`// Use AI to generate a complete design from a brief\nasync function generateDesignFromBrief(brief) {\n  // Step 1: Get AI layout suggestion\n  const layout = await client.ai.suggestLayout.mutate({\n    purpose: brief,\n    canvasWidth: 1080,\n    canvasHeight: 1080,\n  });\n\n  // Step 2: Create a project with the layout\n  const project = await client.projects.create.mutate({\n    name: brief.substring(0, 50),\n    canvasWidth: 1080,\n    canvasHeight: 1080,\n  });\n\n  // Step 3: Generate AI background\n  const bg = await client.ai.generateBackground.mutate({\n    prompt: \`Background for: \${brief}\`,\n  });\n\n  // Step 4: Generate AI elements\n  const element = await client.ai.generateImage.mutate({\n    prompt: \`Design element for: \${brief}\`,\n  });\n\n  console.log("Design created:", project.id);\n  return project;\n}\n\ngenerateDesignFromBrief("Modern tech startup launch announcement");`} />
                   </div>
                   <div className="space-y-3">
-                    <h4 className="text-xs font-semibold text-card-foreground">Manus AI Integration</h4>
+                    <h4 className="text-xs font-semibold text-card-foreground">DedOak AI Integration</h4>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      The Manus platform can control the entire design workflow. Every action available in the UI is also available via the API:
+                      The DedOak platform can control the entire design workflow. Every action available in the UI is also available via the API:
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {[

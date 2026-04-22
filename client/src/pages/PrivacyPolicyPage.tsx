@@ -23,7 +23,7 @@ export default function PrivacyPolicyPage() {
             className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
             style={{ fontFamily: '"Cinzel Decorative", serif' }}
           >
-            ManuScript Studio
+            DedOak Digital Holdings
           </p>
         </div>
       </header>
@@ -43,7 +43,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2>1. Introduction</h2>
             <p>
-              Welcome to ManuScript Studio ("Company", "we", "our", "us"). We are committed to
+              Welcome to DedOak Digital Holdings ("Company", "we", "our", "us"). We are committed to
               protecting your personal information and your right to privacy. This Privacy Policy
               explains how we collect, use, disclose, and safeguard your information when you
               access or use our platform and services (the "Service").
@@ -88,7 +88,7 @@ export default function PrivacyPolicyPage() {
             <p>We may share your information with:</p>
             <ul>
               <li><strong className="text-foreground">Service Providers:</strong> Trusted third parties who assist us in operating the Service (e.g., hosting, payment processing, authentication, analytics).</li>
-              <li><strong className="text-foreground">Legal Authorities:</strong> When required by law or to protect the rights, property, or safety of ManuScript Studio, our users, or others.</li>
+              <li><strong className="text-foreground">Legal Authorities:</strong> When required by law or to protect the rights, property, or safety of DedOak Digital Holdings, our users, or others.</li>
               <li><strong className="text-foreground">Business Transfers:</strong> In connection with a merger, acquisition, or sale of all or a portion of our assets.</li>
             </ul>
             <p>We do not sell your personal information to third parties.</p>

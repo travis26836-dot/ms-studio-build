@@ -1,3 +1,3 @@
 export function getLoginUrl() {
-  return "/";
+  return "/sign-in";
 }

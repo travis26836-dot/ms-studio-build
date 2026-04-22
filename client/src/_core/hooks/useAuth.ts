@@ -1,21 +1,19 @@
-export interface DemoUser {
-  id: number;
-  name: string;
-  email: string;
-  role: "admin" | "user";
-}
-
-const demoUser: DemoUser = {
-  id: 1,
-  name: "Demo Creator",
-  email: "demo@manus.studio",
-  role: "admin",
-};
+import { useUser, useAuth as useClerkAuth } from "@clerk/react";
 
 export function useAuth() {
+  const { user, isLoaded } = useUser();
+  const { isSignedIn } = useClerkAuth();
+
   return {
-    user: demoUser,
-    loading: false,
-    isAuthenticated: true,
+    user: user
+      ? {
+          id: user.id,
+          name: user.fullName ?? user.username ?? user.primaryEmailAddress?.emailAddress ?? "",
+          email: user.primaryEmailAddress?.emailAddress ?? "",
+          role: "user" as const,
+        }
+      : null,
+    loading: !isLoaded,
+    isAuthenticated: !!isSignedIn,
   };
 }

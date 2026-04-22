@@ -23,7 +23,9 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/sign-in">{() => <div className="flex min-h-screen items-center justify-center"><SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" /></div>}</Route>
+      <Route path="/sign-in/:rest*">{() => <div className="flex min-h-screen items-center justify-center"><SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" /></div>}</Route>
       <Route path="/sign-up">{() => <div className="flex min-h-screen items-center justify-center"><SignUp routing="path" path="/sign-up" signInUrl="/sign-in" /></div>}</Route>
+      <Route path="/sign-up/:rest*">{() => <div className="flex min-h-screen items-center justify-center"><SignUp routing="path" path="/sign-up" signInUrl="/sign-in" /></div>}</Route>
       <Route path="/editor">{() => <ProtectedRoute component={EditorPage} />}</Route>
       <Route path="/api-docs" component={ApiDocs} />
       <Route path="/404" component={NotFound} />

@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Plus,
   Search,
@@ -37,12 +36,6 @@ import { useLocation } from "wouter";
 import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-
-type FooterPage = {
-  key: string;
-  title: string;
-  body: string;
-};
 
 type CuratedTemplate = {
   id: string;
@@ -137,33 +130,12 @@ const CURATED_TEMPLATE_IDEAS: CuratedTemplate[] = [
   },
 ];
 
-const FOOTER_PAGES: FooterPage[] = [
-  {
-    key: "contact",
-    title: "Contact",
-    body: "For support, custom setup requests, or partnership inquiries, use the contact options connected to your workspace or your configured support channel. This footer section is ready to become a dedicated contact page when you want one added.",
-  },
-  {
-    key: "about",
-    title: "About",
-    body: "ManuScript Studio is positioned as an all-in-one editor for images, templates, product listing mockups, branding systems, and marketing assets. The current homepage highlights that studio-grade workflow while keeping expansion room for deeper product storytelling.",
-  },
-  {
-    key: "privacy-policy",
-    title: "Privacy Policy",
-    body: "This link is prepared as a policy destination for your production site. A dedicated policy page can be added next with your final legal copy, data handling rules, cookie language, and account privacy disclosures.",
-  },
-  {
-    key: "terms-of-service",
-    title: "Terms of Service",
-    body: "This menu item is prepared for your platform terms. The next implementation step would be a proper terms page covering account use, acceptable content, commercial rights, and platform limitations.",
-  },
-  {
-    key: "refund-return-policy",
-    title: "Refund / Return Policy",
-    body: "This footer item is ready for your billing and service policy. If you want, I can turn it into a dedicated page with language specific to digital templates, subscriptions, service windows, and exclusions.",
-  },
-];
+const FOOTER_LINKS = [
+  { key: "contact", title: "Contact", href: "/contact" },
+  { key: "privacy-policy", title: "Privacy Policy", href: "/privacy-policy" },
+  { key: "terms-of-service", title: "Terms of Service", href: "/terms-of-service" },
+  { key: "refund-return-policy", title: "Refund / Return Policy", href: "/refund-policy" },
+] as const;
 
 function matchesTemplateCategory(template: any, activeTab: string) {
   if (activeTab === "all") return true;
@@ -189,45 +161,34 @@ function matchesTemplateCategory(template: any, activeTab: string) {
 }
 
 function SiteFooter() {
-  const [activePage, setActivePage] = useState<FooterPage | null>(null);
+  const [, setLocation] = useLocation();
 
   return (
-    <>
-      <footer className="mt-16 border-t border-border bg-card/50 px-6 py-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground" style={{ fontFamily: '"Cinzel Decorative", serif' }}>
-              ManuScript Studio
-            </p>
-            <p className="mt-2 max-w-xl text-xs leading-6 text-muted-foreground">
-              Custom image editing, templates, branding systems, listing mockups, and digital marketing assets in one studio workspace.
-            </p>
-          </div>
-          <nav className="flex flex-wrap items-center gap-2 md:justify-end">
-            {FOOTER_PAGES.map((page) => (
-              <Button
-                key={page.key}
-                type="button"
-                variant="ghost"
-                className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => setActivePage(page)}
-              >
-                {page.title}
-              </Button>
-            ))}
-          </nav>
+    <footer className="mt-16 border-t border-border bg-card/50 px-6 py-8">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground" style={{ fontFamily: '"Cinzel Decorative", serif' }}>
+            ManuScript Studio
+          </p>
+          <p className="mt-2 max-w-xl text-xs leading-6 text-muted-foreground">
+            Custom image editing, templates, branding systems, listing mockups, and digital marketing assets in one studio workspace.
+          </p>
         </div>
-      </footer>
-
-      <Dialog open={!!activePage} onOpenChange={(open) => !open && setActivePage(null)}>
-        <DialogContent className="bg-card text-card-foreground">
-          <DialogHeader>
-            <DialogTitle>{activePage?.title}</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm leading-7 text-muted-foreground">{activePage?.body}</p>
-        </DialogContent>
-      </Dialog>
-    </>
+        <nav className="flex flex-wrap items-center gap-2 md:justify-end">
+          {FOOTER_LINKS.map((link) => (
+            <Button
+              key={link.key}
+              type="button"
+              variant="ghost"
+              className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => setLocation(link.href)}
+            >
+              {link.title}
+            </Button>
+          ))}
+        </nav>
+      </div>
+    </footer>
   );
 }
 

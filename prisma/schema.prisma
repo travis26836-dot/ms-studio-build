@@ -47,3 +47,11 @@ model Customer {
   email  String
   plan   String  @default("free") // "free" | "pro" | "team"
 }
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}

@@ -12,6 +12,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^5.1.6",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",

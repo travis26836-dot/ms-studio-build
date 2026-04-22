@@ -8,6 +8,10 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import EditorPage from "./pages/EditorPage";
 import ApiDocs from "./pages/ApiDocs";
+import ContactPage from "./pages/ContactPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsOfServicePage from "./pages/TermsOfServicePage";
+import RefundPolicyPage from "./pages/RefundPolicyPage";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
 
@@ -28,6 +32,10 @@ function Router() {
       <Route path="/sign-up/:rest*">{() => <div className="flex min-h-screen items-center justify-center"><SignUp routing="path" path="/sign-up" signInUrl="/sign-in" /></div>}</Route>
       <Route path="/editor">{() => <ProtectedRoute component={EditorPage} />}</Route>
       <Route path="/api-docs" component={ApiDocs} />
+      <Route path="/contact" component={ContactPage} />
+      <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+      <Route path="/terms-of-service" component={TermsOfServicePage} />
+      <Route path="/refund-policy" component={RefundPolicyPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

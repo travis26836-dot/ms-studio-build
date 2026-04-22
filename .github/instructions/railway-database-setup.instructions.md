@@ -53,7 +53,7 @@ Get the local connection string from Railway dashboard → PostgreSQL plugin →
 ### 2.1 Install Dependencies
 
 ```bash
-pnpm add prisma @prisma/client
+pnpm add prisma @prisma/client @prisma/adapter-pg dotenv
 npx prisma init
 ```
 
@@ -70,7 +70,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -118,28 +117,123 @@ model Customer {
 
 ### 2.3 Run Migration
 
+Prisma 7 no longer keeps the datasource URL inside `schema.prisma`.
+
+Put the database connection in `prisma.config.ts` instead:
+
+```typescript
+/// <reference types="node" />
+import "dotenv/config";
+import { defineConfig } from "prisma/config";
+
+export default defineConfig({
+  schema: "prisma/schema.prisma",
+  migrations: {
+    path: "prisma/migrations",
+  },
+  datasource: {
+    url: process.env["DATABASE_URL"],
+  },
+});
+```
+
+Then generate the Prisma client:
+
 ```bash
 npx prisma migrate dev --name init
 npx prisma generate
 ```
 
-### 2.4 Singleton Prisma Client
+### 2.4 Lazy Prisma Helper
 
-Create `server/db.ts`:
+Prisma needs one reusable database client on the server side.
+
+Without this file, you end up creating a new database connection every time the server reloads or a file imports Prisma. In development, that often causes too many open connections.
+
+For this repo, use a lazy helper instead of constructing Prisma at module load time. That keeps the app from failing early if Prisma has not been generated yet.
+
+Do this exactly:
+
+1. Inside the repo root, open the `server/` folder
+2. Create a new file named `db.ts`
+3. Paste the code below into that file
+4. Save the file
+
+Your new file should be `server/db.ts` and should contain:
 
 ```typescript
-import { PrismaClient } from "@prisma/client";
+type PrismaClientModule = typeof import("@prisma/client");
+type PrismaAdapterModule = typeof import("@prisma/adapter-pg");
+type PrismaClientInstance = InstanceType<PrismaClientModule["PrismaClient"]>;
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+const globalForPrisma = globalThis as unknown as {
+  prismaPromise: Promise<PrismaClientInstance> | undefined;
+};
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+async function createPrismaClient(): Promise<PrismaClientInstance> {
+  const connectionString = process.env.DATABASE_URL;
+
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is not set");
+  }
+
+  const [{ PrismaPg }, { PrismaClient }] = await Promise.all([
+    import("@prisma/adapter-pg") as Promise<PrismaAdapterModule>,
+    import("@prisma/client") as Promise<PrismaClientModule>,
+  ]);
+
+  const adapter = new PrismaPg({ connectionString });
+
+  return new PrismaClient({
+    adapter,
     log: process.env.NODE_ENV === "development" ? ["query", "error"] : ["error"],
   });
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+export function getPrisma(): Promise<PrismaClientInstance> {
+  if (!globalForPrisma.prismaPromise) {
+    globalForPrisma.prismaPromise = createPrismaClient();
+  }
+
+  return globalForPrisma.prismaPromise;
+}
 ```
+
+### What this file is doing
+
+- `type PrismaClientModule = typeof import("@prisma/client")`
+  Describes the Prisma module without forcing it to load immediately.
+- `globalForPrisma.prismaPromise`
+  Caches one shared async Prisma client setup for the whole server process.
+- `await Promise.all([import("@prisma/adapter-pg"), import("@prisma/client")])`
+  Loads Prisma only when first needed.
+- `new PrismaPg({ connectionString })`
+  Connects Prisma Client to PostgreSQL through the Prisma 7 adapter.
+- `export function getPrisma()`
+  Gives route handlers a single helper they can `await` before making queries.
+
+### Why you need this
+
+Later, when you add API routes in `server/index.ts`, you will call this shared helper instead of creating Prisma directly in every file.
+
+Example:
+
+```typescript
+import { getPrisma } from "./db.js";
+
+const prisma = await getPrisma();
+const customers = await prisma.customer.findMany();
+```
+
+### How to verify it
+
+After creating `server/db.ts`, run:
+
+```bash
+pnpm check
+```
+
+If that passes, the file is in the right place and TypeScript can see it.
 
 ---
 
@@ -163,7 +257,7 @@ Add clerk middleware **before** API routes. Edit `server/index.ts`:
 
 ```typescript
 import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
-import { prisma } from "./db.js";
+import { getPrisma } from "./db.js";
 
 // After: const app = express();
 // Add:
@@ -177,9 +271,10 @@ Add this helper to `server/index.ts` (or `server/auth.ts`):
 
 ```typescript
 import type { Request } from "express";
-import { prisma } from "./db.js";
+import { getPrisma } from "./db.js";
 
 export async function getOrCreateUser(req: Request) {
+  const prisma = await getPrisma();
   const clerkId = (req as any).auth?.userId;
   if (!clerkId) return null;
   return prisma.user.upsert({
@@ -204,6 +299,7 @@ All routes go in `server/index.ts` **before** the `app.get("*", ...)` SPA fallba
 // ── Customer Portal API ──────────────────────────────────────────────────────
 
 app.get("/api/customer/:id", async (req, res) => {
+  const prisma = await getPrisma();
   // Public endpoint used by customer-portal/src/app.jsx
   // :id is currently ignored — returns data for authenticated user
   // TODO: add auth check once customer portal has Clerk session
@@ -217,6 +313,7 @@ app.get("/api/customer/:id", async (req, res) => {
 // ── Subscription Status ───────────────────────────────────────────────────────
 
 app.get("/api/subscription/status", async (req, res) => {
+  const prisma = await getPrisma();
   const user = await getOrCreateUser(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
   const sub = await prisma.subscription.findUnique({ where: { userId: user.id } });
@@ -226,6 +323,7 @@ app.get("/api/subscription/status", async (req, res) => {
 // ── Projects API ──────────────────────────────────────────────────────────────
 
 app.get("/api/projects", async (req, res) => {
+  const prisma = await getPrisma();
   const user = await getOrCreateUser(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
   const projects = await prisma.project.findMany({
@@ -236,6 +334,7 @@ app.get("/api/projects", async (req, res) => {
 });
 
 app.post("/api/projects", async (req, res) => {
+  const prisma = await getPrisma();
   const user = await getOrCreateUser(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
   const { name, canvasState } = req.body;
@@ -297,6 +396,7 @@ app.post(
   "/api/stripe/webhook",
   express.raw({ type: "application/json" }),
   async (req, res) => {
+    const prisma = await getPrisma();
     const sig = req.headers["stripe-signature"] as string;
     let event: Stripe.Event;
     try {

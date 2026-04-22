@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String        @id @default(cuid())
+  clerkId      String        @unique
+  email        String        @unique
+  createdAt    DateTime      @default(now())
+  subscription Subscription?
+  projects     Project[]
+  customer     Customer?
+}
+
+model Subscription {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id])
+  stripeCustomerId   String   @unique
+  stripePriceId      String
+  // Tier: "free" | "pro" | "team" — derive from stripePriceId
+  // Add STRIPE_PRICE_PRO and STRIPE_PRICE_TEAM to Railway env vars
+  status             String   // "active" | "canceled" | "past_due"
+  currentPeriodEnd   DateTime
+  updatedAt          DateTime @updatedAt
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  canvasState Json     // matches CanvasState type in shared/designTypes.ts
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Customer {
+  id     String  @id @default(cuid())
+  userId String  @unique
+  user   User    @relation(fields: [userId], references: [id])
+  name   String
+  email  String
+  plan   String  @default("free") // "free" | "pro" | "team"
+}

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, Send, User, Sparkles, X } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { chatStream } from "@/lib/aiClient";
 import { Streamdown } from "streamdown";
 
 interface Message {
@@ -25,7 +25,6 @@ export default function AIChatPanel({ onClose }: AIChatPanelProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const chatMutation = trpc.ai.chat.useMutation();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -41,24 +40,38 @@ export default function AIChatPanel({ onClose }: AIChatPanelProps) {
     setInput("");
     setIsLoading(true);
 
-    try {
-      const result = await chatMutation.mutateAsync({
-        message: input,
-        history: messages.map((m) => ({ role: m.role, content: m.content })),
-      });
+    // Add empty assistant message that will be filled token-by-token
+    setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: result.response },
-      ]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "I'm having trouble connecting right now. Please try again in a moment.",
+    try {
+      await chatStream(
+        input,
+        messages.map((m) => ({ role: m.role, content: m.content })),
+        (token) => {
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            return [
+              ...prev.slice(0, -1),
+              { ...last, content: last.content + token },
+            ];
+          });
         },
-      ]);
+      );
+    } catch (err) {
+      console.error("AI chat error:", err);
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        // Replace empty placeholder with error message
+        const hasContent = last.content.length > 0;
+        if (hasContent) return prev;
+        return [
+          ...prev.slice(0, -1),
+          {
+            role: "assistant" as const,
+            content: "I'm having trouble connecting right now. Please try again in a moment.",
+          },
+        ];
+      });
     }
 
     setIsLoading(false);

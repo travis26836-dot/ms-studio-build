@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
 import { getPrisma } from "./db.js";
+import { createAiRouter } from "./ai.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -100,38 +101,8 @@ async function startServer() {
     return res.status(201).json(project);
   });
 
-  // Contact form submission (public — no auth required)
-  app.post("/api/contact", async (req, res) => {
-    const prisma = await getPrisma();
-    const { name, email, message } = req.body as {
-      name?: string;
-      email?: string;
-      message?: string;
-    };
-
-    if (!name?.trim() || !email?.trim() || !message?.trim()) {
-      return res.status(400).json({ error: "name, email, and message are required" });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      return res.status(400).json({ error: "Invalid email address" });
-    }
-
-    if (name.trim().length > 200) {
-      return res.status(400).json({ error: "Name must be 200 characters or fewer" });
-    }
-
-    if (message.trim().length > 5000) {
-      return res.status(400).json({ error: "Message must be 5000 characters or fewer" });
-    }
-
-    const submission = await prisma.contactSubmission.create({
-      data: { name: name.trim(), email: email.trim(), message: message.trim() },
-    });
-
-    return res.status(201).json({ id: submission.id });
-  });
+  // AI routes
+  app.use("/api/ai", createAiRouter(getOrCreateUser));
 
   // Serve static files from dist/public in production
   const staticPath =

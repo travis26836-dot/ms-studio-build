@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import * as aiClient from "./aiClient";
 
 type QueryOptions = {
   enabled?: boolean;
@@ -745,18 +746,24 @@ export const trpc = {
   ai: {
     chat: {
       useMutation: () =>
-        useLocalMutation((input: {
+        useLocalMutation(async (input: {
           message: string;
           history?: Array<{ role: "user" | "assistant"; content: string }>;
-        }) => ({
-          response: buildChatResponse(input.message),
-        })),
+        }) => {
+          let response = "";
+          await aiClient.chatStream(
+            input.message,
+            input.history ?? [],
+            (token) => { response += token; },
+          );
+          return { response };
+        }),
     },
     generateImage: {
       useMutation: () =>
-        useLocalMutation((input: { prompt: string }) => ({
-          url: createAiImage(input.prompt),
-        })),
+        useLocalMutation((input: { prompt: string }) =>
+          aiClient.generateImage(input.prompt),
+        ),
     },
     generateBackground: {
       useMutation: () =>
@@ -764,9 +771,7 @@ export const trpc = {
           prompt: string;
           width: number;
           height: number;
-        }) => ({
-          url: createAiBackground(input.prompt, input.width, input.height),
-        })),
+        }) => aiClient.generateBackground(input.prompt, input.width, input.height)),
     },
     suggestLayout: {
       useMutation: () =>
@@ -774,7 +779,7 @@ export const trpc = {
           purpose: string;
           canvasWidth: number;
           canvasHeight: number;
-        }) => createLayoutSuggestion(input)),
+        }) => aiClient.suggestLayout(input.purpose, input.canvasWidth, input.canvasHeight)),
     },
   },
 };

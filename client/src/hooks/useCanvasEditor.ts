@@ -94,6 +94,28 @@ export function useCanvasEditor(
       historyRef.current.shift();
     }
     historyIndexRef.current = historyRef.current.length - 1;
+    const saveHistory = useCallback(() => {
+      // Defer the expensive toJSON serialization to the next animation frame so
+      // it doesn't block pointer events (e.g. right after a drag mouseup).
+      requestAnimationFrame(() => {
+        const canvas = fabricRef.current;
+        if (!canvas || isHistoryActionRef.current) {
+          return;
+        }
+
+        const snapshot = JSON.stringify(canvas.toJSON());
+        if (historyRef.current[historyIndexRef.current] === snapshot) {
+          return;
+        }
+
+        historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
+        historyRef.current.push(snapshot);
+        if (historyRef.current.length > 50) {
+          historyRef.current.shift();
+        }
+        historyIndexRef.current = historyRef.current.length - 1;
+      });
+    }, []);
   }, []);
 
   const loadHistorySnapshot = useCallback(async (snapshot: string) => {

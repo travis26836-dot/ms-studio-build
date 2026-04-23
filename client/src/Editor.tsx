@@ -54,10 +54,16 @@ export default function Editor({
   const saveMutation = trpc.projects.save.useMutation();
   const createMutation = trpc.projects.create.useMutation();
 
-  // Initialize canvas
+  // Stable refs so keyboard / init effects don't re-run on every render
+  const editorRef = useRef(editor);
+  editorRef.current = editor;
+  const currentProjectIdRef = useRef(currentProjectId);
+  currentProjectIdRef.current = currentProjectId;
+
+  // Initialize canvas — run once on mount only
   useEffect(() => {
     if (canvasRef.current) {
-      const canvas = editor.initCanvas();
+      const canvas = editorRef.current.initCanvas();
       if (canvas) {
         const container = canvasContainerRef.current;
         if (container) {
@@ -65,40 +71,41 @@ export default function Editor({
           const scaleX = (container.clientWidth - padding) / canvasWidth;
           const scaleY = (container.clientHeight - padding) / canvasHeight;
           const zoom = Math.min(scaleX, scaleY, 1);
-          editor.setZoom(zoom);
+          editorRef.current.setZoom(zoom);
         }
         if (templateData) {
-          editor.loadFromJSON(templateData);
+          editorRef.current.loadFromJSON(templateData);
         }
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts — stable empty deps, reads editor/save via refs
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if ((e.ctrlKey || e.metaKey) && e.key === "z") {
         e.preventDefault();
-        if (e.shiftKey) editor.redo();
-        else editor.undo();
+        if (e.shiftKey) editorRef.current.redo();
+        else editorRef.current.undo();
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === "y") { e.preventDefault(); editor.redo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === "y") { e.preventDefault(); editorRef.current.redo(); }
       if (e.key === "Delete" || e.key === "Backspace") {
         if (!(e.target instanceof HTMLInputElement)) {
           e.preventDefault();
-          editor.deleteSelected();
+          editorRef.current.deleteSelected();
         }
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === "d") { e.preventDefault(); editor.duplicateSelected(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === "d") { e.preventDefault(); editorRef.current.duplicateSelected(); }
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
-        handleSave();
+        handleSaveRef.current();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editor, currentProjectId]);
+  }, []);
 
   const handleSave = useCallback(async () => {
     const json = editor.exportCanvas("json");
@@ -122,6 +129,10 @@ export default function Editor({
       toast.error("Failed to save. Please try again.");
     }
   }, [editor, currentProjectId, canvasWidth, canvasHeight]);
+
+  // Stable ref so the keyboard shortcut effect can call the latest handleSave
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
 
   const togglePanel = (panel: SidebarPanel) => {
     setActivePanel(activePanel === panel ? null : panel);
@@ -242,18 +253,28 @@ export default function Editor({
         {/* Canvas Area */}
         <div
           ref={canvasContainerRef}
-          className="flex-1 bg-canvas overflow-auto flex items-center justify-center relative"
+          className="flex-1 overflow-auto relative"
           style={{ background: "oklch(0.18 0.005 260)" }}
         >
-          <div className="relative" style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.4)" }}>
-            <canvas ref={canvasRef} />
+          <div className="min-h-full min-w-full flex items-center justify-center p-10">
+            <div className="relative" style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.4)" }}>
+              <canvas ref={canvasRef} />
+            </div>
           </div>
         </div>
 
         {/* Right Properties Panel */}
-        {hasSelection && !showChat && (
+        {/* Always render at fixed width to prevent canvas layout shift on selection */}
+        {!showChat && (
           <div className="w-64 border-l border-border bg-card shrink-0">
-            <PropertiesPanel editor={editor} canvasWidth={canvasWidth} canvasHeight={canvasHeight} />
+            {hasSelection ? (
+              <PropertiesPanel editor={editor} canvasWidth={canvasWidth} canvasHeight={canvasHeight} />
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center p-4 text-center gap-2">
+                <Shapes className="w-8 h-8 opacity-20 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">Select an element to edit properties</p>
+              </div>
+            )}
           </div>
         )}
 

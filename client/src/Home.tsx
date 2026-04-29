@@ -282,7 +282,7 @@ function Dashboard({
         <div className="mx-auto flex h-20 max-w-7xl items-center gap-4">
           <div className="flex items-center gap-4">
             <img
-              src="/manuscript-studio-logo-favicon.png"
+              src="/MANUSCRIPT-STUDIO-NEWLOGO.png"
               alt="ManuScript Studio logo"
               className="h-14 w-14 rounded-md object-cover ring-1 ring-white/10"
             />
@@ -595,7 +595,7 @@ function LandingPage() {
       <header className="sticky top-0 z-50 flex h-16 items-center border-b border-border bg-card/80 px-6 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <img
-            src="/manuscript-studio-logo-favicon.png"
+            src="/MANUSCRIPT-STUDIO-NEWLOGO.png"
             alt="ManuScript Studio logo"
             className="h-9 w-9 rounded-lg object-cover"
           />

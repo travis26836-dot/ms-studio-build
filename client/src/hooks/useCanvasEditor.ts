@@ -64,6 +64,7 @@ export function useCanvasEditor(
   const historyRef = useRef<string[]>([]);
   const historyIndexRef = useRef(-1);
   const isHistoryActionRef = useRef(false);
+  const pendingHistoryFrameRef = useRef<number | null>(null);
 
   const updateSelectionState = useCallback(() => {
     const canvas = fabricRef.current;
@@ -78,44 +79,31 @@ export function useCanvasEditor(
   }, []);
 
   const saveHistory = useCallback(() => {
-    const canvas = fabricRef.current;
-    if (!canvas || isHistoryActionRef.current) {
-      return;
+    // Defer expensive serialization so mouseup/object:modified doesn't feel sticky.
+    if (pendingHistoryFrameRef.current !== null) {
+      cancelAnimationFrame(pendingHistoryFrameRef.current);
     }
 
-    const snapshot = JSON.stringify(canvas.toJSON());
-    if (historyRef.current[historyIndexRef.current] === snapshot) {
-      return;
-    }
+    pendingHistoryFrameRef.current = requestAnimationFrame(() => {
+      pendingHistoryFrameRef.current = null;
 
-    historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
-    historyRef.current.push(snapshot);
-    if (historyRef.current.length > 50) {
-      historyRef.current.shift();
-    }
-    historyIndexRef.current = historyRef.current.length - 1;
-    const saveHistory = useCallback(() => {
-      // Defer the expensive toJSON serialization to the next animation frame so
-      // it doesn't block pointer events (e.g. right after a drag mouseup).
-      requestAnimationFrame(() => {
-        const canvas = fabricRef.current;
-        if (!canvas || isHistoryActionRef.current) {
-          return;
-        }
+      const canvas = fabricRef.current;
+      if (!canvas || isHistoryActionRef.current) {
+        return;
+      }
 
-        const snapshot = JSON.stringify(canvas.toJSON());
-        if (historyRef.current[historyIndexRef.current] === snapshot) {
-          return;
-        }
+      const snapshot = JSON.stringify(canvas.toJSON());
+      if (historyRef.current[historyIndexRef.current] === snapshot) {
+        return;
+      }
 
-        historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
-        historyRef.current.push(snapshot);
-        if (historyRef.current.length > 50) {
-          historyRef.current.shift();
-        }
-        historyIndexRef.current = historyRef.current.length - 1;
-      });
-    }, []);
+      historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
+      historyRef.current.push(snapshot);
+      if (historyRef.current.length > 50) {
+        historyRef.current.shift();
+      }
+      historyIndexRef.current = historyRef.current.length - 1;
+    });
   }, []);
 
   const loadHistorySnapshot = useCallback(async (snapshot: string) => {
@@ -646,6 +634,10 @@ export function useCanvasEditor(
 
   useEffect(() => {
     return () => {
+      if (pendingHistoryFrameRef.current !== null) {
+        cancelAnimationFrame(pendingHistoryFrameRef.current);
+        pendingHistoryFrameRef.current = null;
+      }
       if (fabricRef.current) {
         fabricRef.current.dispose();
         fabricRef.current = null;

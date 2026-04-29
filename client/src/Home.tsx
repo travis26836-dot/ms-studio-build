@@ -282,9 +282,9 @@ function Dashboard({
         <div className="mx-auto flex h-20 max-w-7xl items-center gap-4">
           <div className="flex items-center gap-4">
             <img
-              src="/manuscript-digital-holdings-LOGO-favicon.png"
+              src="/manuscript-studio-logo-favicon.png"
               alt="ManuScript Studio logo"
-              className="h-12 w-12 rounded-md object-cover ring-1 ring-white/10"
+              className="h-14 w-14 rounded-md object-cover ring-1 ring-white/10"
             />
             <h1
               className="hidden uppercase tracking-[0.12em] text-foreground sm:inline-flex"
@@ -595,9 +595,9 @@ function LandingPage() {
       <header className="sticky top-0 z-50 flex h-16 items-center border-b border-border bg-card/80 px-6 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <img
-            src="/manuscript-digital-holdings-LOGO-favicon.png"
+            src="/manuscript-studio-logo-favicon.png"
             alt="ManuScript Studio logo"
-            className="h-8 w-8 rounded-lg object-cover"
+            className="h-9 w-9 rounded-lg object-cover"
           />
           <h1 className="text-lg font-bold uppercase tracking-[0.08em] text-foreground" style={{ fontFamily: '"Cinzel Decorative", serif' }}>
             ManuScript Studio

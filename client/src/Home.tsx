@@ -285,7 +285,7 @@ function Dashboard({
   <img
     src="/MANUSCRIPT-STUDIO-NEWLOGO-BB.png"
     alt="ManuScript Studio logo"
-    className="h-full w-full object-cover"
+    className="h-full w-full object-contain"
   />
 </div>
             <h1
@@ -600,7 +600,7 @@ function LandingPage() {
   <img
     src="/MANUSCRIPT-STUDIO-NEWLOGO-BB.png"
     alt="ManuScript Studio logo"
-    className="h-full w-full object-cover"
+    className="h-full w-full object-contain"
   />
 </div>
           <h1 className="text-lg font-bold uppercase tracking-[0.08em] text-foreground" style={{ fontFamily: '"Cinzel Decorative", serif' }}>

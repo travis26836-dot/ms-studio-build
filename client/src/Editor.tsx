@@ -250,15 +250,36 @@ export default function Editor({
           </div>
         )}
 
-        {/* Canvas Area */}
+        {/* Canvas Area — zoom via CSS transform keeps Fabric canvas at native pixel dimensions,
+             preserving retina (devicePixelRatio) context scaling and correct pointer coordinates */}
         <div
           ref={canvasContainerRef}
           className="flex-1 overflow-auto relative"
           style={{ background: "oklch(0.18 0.005 260)" }}
         >
           <div className="min-h-full min-w-full flex items-center justify-center p-10">
-            <div className="relative" style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.4)" }}>
-              <canvas ref={canvasRef} />
+            {/* Outer div sizes to visual (zoomed) dimensions for layout and shadow */}
+            <div
+              style={{
+                position: "relative",
+                width: canvasWidth * editor.editorState.zoom,
+                height: canvasHeight * editor.editorState.zoom,
+                flexShrink: 0,
+                boxShadow: "0 4px 40px rgba(0,0,0,0.4)",
+              }}
+            >
+              {/* Inner div: CSS scale the native canvas without resizing the element */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  transform: `scale(${editor.editorState.zoom})`,
+                  transformOrigin: "top left",
+                }}
+              >
+                <canvas ref={canvasRef} />
+              </div>
             </div>
           </div>
         </div>

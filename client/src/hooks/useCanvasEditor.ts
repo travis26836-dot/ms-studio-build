@@ -397,22 +397,16 @@ export function useCanvasEditor(
     void loadHistorySnapshot(historyRef.current[historyIndexRef.current]);
   }, [loadHistorySnapshot]);
 
+
+  // setZoom only updates React state. Visual scaling is applied via CSS transform in Editor.tsx.
+  // We must NOT call canvas.setZoom() or canvas.setDimensions() — resetting the canvas element's
+  // .width attribute destroys the retina (devicePixelRatio) context scaling Fabric applies at init.
+  // On HiDPI screens this creates a 2x coordinate mismatch, making every pointer event land in the
+  // wrong position and completely breaking object selection and drag-and-drop.
   const setZoom = useCallback((zoom: number) => {
-    const canvas = fabricRef.current;
-    if (!canvas) {
-      return;
-    }
-
     const clamped = clamp(zoom, 0.2, 3);
-    canvas.setZoom(clamped);
-    canvas.setDimensions({
-      width: width * clamped,
-      height: height * clamped,
-    });
-    canvas.renderAll();
     setEditorState((prev) => ({ ...prev, zoom: clamped }));
-  }, [height, width]);
-
+  }, []);
   const bringForward = useCallback(() => {
     const canvas = fabricRef.current;
     if (!canvas) return;

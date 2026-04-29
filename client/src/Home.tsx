@@ -284,7 +284,7 @@ function Dashboard({
             <img
               src="/MANUSCRIPT-STUDIO-NEWLOGO.png"
               alt="ManuScript Studio logo"
-              className="h-14 w-14 rounded-md object-cover ring-1 ring-white/10"
+              className="h-14 w-14 rounded-md object-cover ring-2 ring-red-700/60 bg-black"
             />
             <h1
               className="hidden uppercase tracking-[0.12em] text-foreground sm:inline-flex"
@@ -597,7 +597,7 @@ function LandingPage() {
           <img
             src="/MANUSCRIPT-STUDIO-NEWLOGO.png"
             alt="ManuScript Studio logo"
-            className="h-9 w-9 rounded-lg object-cover"
+            className="h-9 w-9 rounded-lg object-cover ring-2 ring-red-700/60 bg-black"
           />
           <h1 className="text-lg font-bold uppercase tracking-[0.08em] text-foreground" style={{ fontFamily: '"Cinzel Decorative", serif' }}>
             ManuScript Studio

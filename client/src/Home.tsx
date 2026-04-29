@@ -10,6 +10,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Plus,
   Search,
   LayoutTemplate,
@@ -230,6 +237,8 @@ function Dashboard({
   const [aiSearchEnabled, setAiSearchEnabled] = useState(false);
   const [showAllPresets, setShowAllPresets] = useState(false);
   const [showAllTemplates, setShowAllTemplates] = useState(false);
+  const [pendingPreset, setPendingPreset] = useState<{ width: number; height: number; label: string } | null>(null);
+  const [newProjectName, setNewProjectName] = useState("");
 
   const filteredTemplates = useMemo(() => {
     const templates = dbTemplates || [];
@@ -261,6 +270,19 @@ function Dashboard({
     } catch {
       toast.error("Failed to delete project");
     }
+  };
+
+  const openCreateDialog = (preset: { width: number; height: number; label: string }) => {
+    setNewProjectName(preset.label);
+    setPendingPreset(preset);
+  };
+
+  const handleCreateProject = () => {
+    if (!pendingPreset) return;
+    const name = newProjectName.trim() || pendingPreset.label;
+    setLocation(`/editor?w=${pendingPreset.width}&h=${pendingPreset.height}&name=${encodeURIComponent(name)}`);
+    setPendingPreset(null);
+    setNewProjectName("");
   };
 
   const templateColors = [
@@ -342,7 +364,7 @@ function Dashboard({
             {visiblePresets.map((preset) => (
               <button
                 key={preset.key}
-                onClick={() => setLocation(`/editor?w=${preset.width}&h=${preset.height}&preset=custom`)}
+                onClick={() => openCreateDialog({ width: preset.width, height: preset.height, label: preset.label })}
                 className="group flex flex-col items-center gap-3 rounded-2xl border border-border bg-card/60 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
               >
                 <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-border bg-secondary transition-all group-hover:border-primary/50">
@@ -358,7 +380,7 @@ function Dashboard({
             ))}
 
             <button
-              onClick={() => setLocation("/editor?w=1080&h=1080&preset=custom")}
+              onClick={() => openCreateDialog({ width: 1080, height: 1080, label: "Custom Design" })}
               className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card/40 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
             >
               <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-dashed border-border transition-all group-hover:border-primary/50">
@@ -587,6 +609,31 @@ function Dashboard({
       </main>
 
       <SiteFooter />
+
+      <Dialog open={!!pendingPreset} onOpenChange={(open) => { if (!open) setPendingPreset(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Name your project</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <label className="text-sm text-muted-foreground mb-1.5 block">Project name</label>
+            <Input
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              placeholder="e.g. Summer Campaign"
+              className="h-10"
+              autoFocus
+              onKeyDown={(e) => { if (e.key === "Enter") handleCreateProject(); }}
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPendingPreset(null)}>Cancel</Button>
+            <Button onClick={handleCreateProject}>
+              <Plus className="h-4 w-4 mr-1.5" /> Create Design
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

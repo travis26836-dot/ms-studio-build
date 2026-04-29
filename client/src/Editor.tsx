@@ -57,6 +57,7 @@ interface EditorProps {
   templateData?: string;
   canvasWidth?: number;
   canvasHeight?: number;
+  initialProjectName?: string;
 }
 
 export default function Editor({
@@ -64,6 +65,7 @@ export default function Editor({
   templateData,
   canvasWidth = 1080,
   canvasHeight = 1080,
+  initialProjectName,
 }: EditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -72,6 +74,9 @@ export default function Editor({
   const [searchQuery, setSearchQuery] = useState("");
   const [showChat, setShowChat] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<string | undefined>(projectId);
+  const [projectName, setProjectName] = useState(initialProjectName || "Untitled Design");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
 
   const saveMutation = trpc.projects.save.useMutation();
@@ -138,12 +143,14 @@ export default function Editor({
         return;
       }
 
+      const name = projectName.trim() || "Untitled Design";
+
       if (currentProjectId) {
-        await saveMutation.mutateAsync({ id: currentProjectId, canvasData: json });
+        await saveMutation.mutateAsync({ id: currentProjectId, canvasData: json, name });
         toast.success("Project saved!");
       } else {
         const result = await createMutation.mutateAsync({
-          name: "Untitled Design",
+          name,
           canvasWidth,
           canvasHeight,
           canvasData: json,
@@ -166,6 +173,13 @@ export default function Editor({
   // Stable ref so the keyboard shortcut effect can call the latest handleSave
   const handleSaveRef = useRef(handleSave);
   handleSaveRef.current = handleSave;
+
+  useEffect(() => {
+    if (isEditingName) {
+      nameInputRef.current?.focus();
+      nameInputRef.current?.select();
+    }
+  }, [isEditingName]);
 
   const togglePanel = (panel: SidebarPanel) => {
     setActivePanel(activePanel === panel ? null : panel);
@@ -227,7 +241,32 @@ export default function Editor({
           </>
         )}
 
-        <div className="flex-1" />
+        <div className="flex-1 flex justify-center items-center px-2">
+          {isEditingName ? (
+            <input
+              ref={nameInputRef}
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              onBlur={() => setIsEditingName(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === "Escape") {
+                  setIsEditingName(false);
+                }
+              }}
+              className="bg-transparent border border-primary rounded px-2 py-0.5 text-sm text-foreground text-center outline-none"
+              style={{ minWidth: 120, maxWidth: 280, width: `${Math.max(120, projectName.length * 8 + 24)}px` }}
+              maxLength={80}
+            />
+          ) : (
+            <button
+              onClick={() => setIsEditingName(true)}
+              className="text-sm text-toolbar-foreground hover:bg-accent rounded px-2 py-1 truncate max-w-xs transition-colors"
+              title="Click to rename"
+            >
+              {projectName}
+            </button>
+          )}
+        </div>
 
         <Button
           variant="ghost"

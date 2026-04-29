@@ -726,6 +726,7 @@ export const trpc = {
           id: string;
           canvasData: string;
           thumbnailUrl?: string;
+          name?: string;
         }) => {
           if (!isSignedIn) {
             throw new Error("Please sign in to save projects.");
@@ -736,7 +737,7 @@ export const trpc = {
             `/api/projects/${input.id}`,
             {
               method: "PUT",
-              body: JSON.stringify({ canvasData: input.canvasData, thumbnailUrl: input.thumbnailUrl }),
+              body: JSON.stringify({ canvasData: input.canvasData, thumbnailUrl: input.thumbnailUrl, name: input.name }),
             },
             token,
           );

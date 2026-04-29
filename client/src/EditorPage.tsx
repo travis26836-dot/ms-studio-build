@@ -10,6 +10,7 @@ export default function EditorPage() {
   const h = parseInt(params.get("h") || "1080", 10);
   const projectId = params.get("project") || undefined;
   const templateId = params.get("template") ? parseInt(params.get("template")!, 10) : undefined;
+  const urlName = params.get("name") || undefined;
 
   // If template ID is provided, fetch the template data
   const { data: template, isLoading: templateLoading } = trpc.templates.get.useQuery(
@@ -52,6 +53,7 @@ export default function EditorPage() {
       canvasHeight={h}
       projectId={projectId}
       templateData={templateData}
+      initialProjectName={project?.name || urlName}
     />
   );
 }

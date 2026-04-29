@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import * as aiClient from "./aiClient";
 
 type QueryOptions = {
@@ -6,7 +7,7 @@ type QueryOptions = {
 };
 
 type ProjectRecord = {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   category?: string;
@@ -52,7 +53,6 @@ type LayoutSuggestion = {
   description: string;
 };
 
-const PROJECTS_KEY = "manuscript.projects.v1";
 const TEMPLATES_KEY = "manuscript.templates.v1";
 
 function useLocalQuery<T>(
@@ -388,74 +388,41 @@ function getTemplatesStore() {
   return writeStore(TEMPLATES_KEY, seedTemplates());
 }
 
-function getProjectsStore() {
-  return readStore<ProjectRecord[]>(PROJECTS_KEY, []);
-}
+async function apiRequest<T>(path: string, init: RequestInit = {}, token?: string | null): Promise<T> {
+  const headers = new Headers(init.headers ?? {});
 
-function writeProjectsStore(projects: ProjectRecord[]) {
-  return writeStore(PROJECTS_KEY, projects);
-}
+  if (!headers.has("Content-Type") && init.body) {
+    headers.set("Content-Type", "application/json");
+  }
 
-function listProjects() {
-  return [...getProjectsStore()].sort((a, b) =>
-    b.updatedAt.localeCompare(a.updatedAt),
-  );
-}
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
 
-function getProject(id: number) {
-  return getProjectsStore().find((project) => project.id === id);
-}
+  const response = await fetch(path, {
+    ...init,
+    headers,
+    credentials: "include",
+  });
 
-function createProject(input: {
-  name: string;
-  canvasWidth: number;
-  canvasHeight: number;
-  canvasData: string;
-  category?: string;
-  thumbnailUrl?: string;
-}) {
-  const projects = getProjectsStore();
-  const now = new Date().toISOString();
-  const project: ProjectRecord = {
-    id: nextId(projects),
-    name: input.name,
-    canvasWidth: input.canvasWidth,
-    canvasHeight: input.canvasHeight,
-    canvasData: input.canvasData,
-    category: input.category ?? "custom",
-    thumbnailUrl: input.thumbnailUrl,
-    createdAt: now,
-    updatedAt: now,
-  };
+  if (!response.ok) {
+    let message = `Request failed (${response.status})`;
+    try {
+      const err = await response.json();
+      if (err?.error && typeof err.error === "string") {
+        message = err.error;
+      }
+    } catch {
+      // Ignore JSON parse failures for non-JSON error responses.
+    }
+    throw new Error(message);
+  }
 
-  writeProjectsStore([project, ...projects]);
-  return { id: project.id };
-}
+  if (response.status === 204) {
+    return undefined as T;
+  }
 
-function saveProject(input: {
-  id: number;
-  canvasData: string;
-  thumbnailUrl?: string;
-}) {
-  const projects = getProjectsStore().map((project) =>
-    project.id === input.id
-      ? {
-          ...project,
-          canvasData: input.canvasData,
-          thumbnailUrl: input.thumbnailUrl ?? project.thumbnailUrl,
-          updatedAt: new Date().toISOString(),
-        }
-      : project,
-  );
-
-  writeProjectsStore(projects);
-  return { success: true };
-}
-
-function deleteProject(input: { id: number }) {
-  const remaining = getProjectsStore().filter((project) => project.id !== input.id);
-  writeProjectsStore(remaining);
-  return { success: true };
+  return response.json() as Promise<T>;
 }
 
 function listTemplates(input?: { category?: string }) {
@@ -681,40 +648,102 @@ function buildChatResponse(message: string) {
 export const trpc = {
   projects: {
     list: {
-      useQuery: () => useLocalQuery(() => listProjects(), []),
+      useQuery: () => {
+        const { getToken, isSignedIn } = useClerkAuth();
+        return useLocalQuery(async () => {
+          if (!isSignedIn) {
+            return [] as ProjectRecord[];
+          }
+          const token = await getToken();
+          return apiRequest<ProjectRecord[]>("/api/projects", { method: "GET" }, token);
+        }, [isSignedIn, getToken]);
+      },
     },
     get: {
-      useQuery: (input?: { id: number }, options?: QueryOptions) => {
+      useQuery: (input?: { id: string }, options?: QueryOptions) => {
+        const { getToken, isSignedIn } = useClerkAuth();
         const key = useMemo(() => JSON.stringify(input ?? null), [input]);
         return useLocalQuery(
-          () => (input ? getProject(input.id) : undefined),
-          [key],
+          async () => {
+            if (!input || !isSignedIn) {
+              return undefined;
+            }
+            const token = await getToken();
+            return apiRequest<ProjectRecord>(`/api/projects/${input.id}`, { method: "GET" }, token);
+          },
+          [key, isSignedIn, getToken],
           options,
         );
       },
     },
     create: {
-      useMutation: () =>
-        useLocalMutation((input: {
+      useMutation: () => {
+        const { getToken, isSignedIn } = useClerkAuth();
+        return useLocalMutation(async (input: {
           name: string;
           canvasWidth: number;
           canvasHeight: number;
           canvasData: string;
           category?: string;
           thumbnailUrl?: string;
-        }) => createProject(input)),
+        }) => {
+          if (!isSignedIn) {
+            throw new Error("Please sign in to save projects.");
+          }
+
+          const token = await getToken();
+          const created = await apiRequest<ProjectRecord>(
+            "/api/projects",
+            {
+              method: "POST",
+              body: JSON.stringify(input),
+            },
+            token,
+          );
+
+          return { id: created.id };
+        });
+      },
     },
     save: {
-      useMutation: () =>
-        useLocalMutation((input: {
-          id: number;
+      useMutation: () => {
+        const { getToken, isSignedIn } = useClerkAuth();
+        return useLocalMutation(async (input: {
+          id: string;
           canvasData: string;
           thumbnailUrl?: string;
-        }) => saveProject(input)),
+        }) => {
+          if (!isSignedIn) {
+            throw new Error("Please sign in to save projects.");
+          }
+
+          const token = await getToken();
+          await apiRequest<ProjectRecord>(
+            `/api/projects/${input.id}`,
+            {
+              method: "PUT",
+              body: JSON.stringify({ canvasData: input.canvasData, thumbnailUrl: input.thumbnailUrl }),
+            },
+            token,
+          );
+
+          return { success: true };
+        });
+      },
     },
     delete: {
-      useMutation: () =>
-        useLocalMutation((input: { id: number }) => deleteProject(input)),
+      useMutation: () => {
+        const { getToken, isSignedIn } = useClerkAuth();
+        return useLocalMutation(async (input: { id: string }) => {
+          if (!isSignedIn) {
+            throw new Error("Please sign in to delete projects.");
+          }
+
+          const token = await getToken();
+          await apiRequest<void>(`/api/projects/${input.id}`, { method: "DELETE" }, token);
+          return { success: true };
+        });
+      },
     },
   },
   templates: {

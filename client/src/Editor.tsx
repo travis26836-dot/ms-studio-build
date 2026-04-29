@@ -53,7 +53,7 @@ const FONT_OPTIONS = [
 ];
 
 interface EditorProps {
-  projectId?: number;
+  projectId?: string;
   templateData?: string;
   canvasWidth?: number;
   canvasHeight?: number;
@@ -71,7 +71,7 @@ export default function Editor({
   const [activePanel, setActivePanel] = useState<SidebarPanel>("templates");
   const [searchQuery, setSearchQuery] = useState("");
   const [showChat, setShowChat] = useState(false);
-  const [currentProjectId, setCurrentProjectId] = useState<number | undefined>(projectId);
+  const [currentProjectId, setCurrentProjectId] = useState<string | undefined>(projectId);
   const { user } = useAuth();
 
   const saveMutation = trpc.projects.save.useMutation();

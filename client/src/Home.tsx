@@ -253,7 +253,7 @@ function Dashboard({
     [filteredTemplates, showAllTemplates],
   );
 
-  const handleDeleteProject = async (id: number) => {
+  const handleDeleteProject = async (id: string) => {
     try {
       await deleteMutation.mutateAsync({ id });
       refetchProjects();

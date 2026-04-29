@@ -8,7 +8,7 @@ export default function EditorPage() {
   const params = new URLSearchParams(searchStr);
   const w = parseInt(params.get("w") || "1080", 10);
   const h = parseInt(params.get("h") || "1080", 10);
-  const projectId = params.get("project") ? parseInt(params.get("project")!, 10) : undefined;
+  const projectId = params.get("project") || undefined;
   const templateId = params.get("template") ? parseInt(params.get("template")!, 10) : undefined;
 
   // If template ID is provided, fetch the template data

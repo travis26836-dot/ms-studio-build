@@ -281,11 +281,13 @@ function Dashboard({
       <header className="sticky top-0 z-50 border-b border-border bg-card/95 px-6 backdrop-blur">
         <div className="mx-auto flex h-20 max-w-7xl items-center gap-4">
           <div className="flex items-center gap-4">
-            <img
-              src="/MANUSCRIPT-STUDIO-NEWLOGO.png"
-              alt="ManuScript Studio logo"
-              className="h-14 w-14 rounded-md object-cover ring-2 ring-red-700/60 bg-black"
-            />
+            <div className="h-14 w-14 rounded-md ring-2 ring-red-700/60 bg-black overflow-hidden">
+  <img
+    src="/MANUSCRIPT-STUDIO-NEWLOGO.png"
+    alt="ManuScript Studio logo"
+    className="h-full w-full object-cover"
+  />
+</div>
             <h1
               className="hidden uppercase tracking-[0.12em] text-foreground sm:inline-flex"
               style={{ fontSize: "18px", fontWeight: 700, fontFamily: '"Cinzel Decorative", serif' }}
@@ -594,11 +596,13 @@ function LandingPage() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 flex h-16 items-center border-b border-border bg-card/80 px-6 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <img
-            src="/MANUSCRIPT-STUDIO-NEWLOGO.png"
-            alt="ManuScript Studio logo"
-            className="h-9 w-9 rounded-lg object-cover ring-2 ring-red-700/60 bg-black"
-          />
+          <div className="h-9 w-9 rounded-lg ring-2 ring-red-700/60 bg-black overflow-hidden">
+  <img
+    src="/MANUSCRIPT-STUDIO-NEWLOGO.png"
+    alt="ManuScript Studio logo"
+    className="h-full w-full object-cover"
+  />
+</div>
           <h1 className="text-lg font-bold uppercase tracking-[0.08em] text-foreground" style={{ fontFamily: '"Cinzel Decorative", serif' }}>
             ManuScript Studio
           </h1>

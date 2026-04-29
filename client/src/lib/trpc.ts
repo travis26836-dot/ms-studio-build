@@ -52,8 +52,8 @@ type LayoutSuggestion = {
   description: string;
 };
 
-const PROJECTS_KEY = "dedoak.projects.v1";
-const TEMPLATES_KEY = "dedoak.templates.v1";
+const PROJECTS_KEY = "manuscript.projects.v1";
+const TEMPLATES_KEY = "manuscript.templates.v1";
 
 function useLocalQuery<T>(
   fetcher: () => Promise<T> | T,

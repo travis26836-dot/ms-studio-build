@@ -336,6 +336,43 @@ export function useCanvasEditor(
     addObject(object);
   }, [addObject, height, width]);
 
+  const addPath = useCallback((pathData: string, scale = 1.0, opts: Record<string, unknown> = {}) => {
+    addObject(
+      new fabric.Path(pathData, {
+        left: width / 2 - 75,
+        top: height / 2 - 75,
+        fill: "#6366f1",
+        scaleX: scale,
+        scaleY: scale,
+        ...opts,
+      }),
+    );
+  }, [addObject, width, height]);
+
+  const addPolygonByCount = useCallback((sides: number, opts: Record<string, unknown> = {}) => {
+    addObject(
+      new fabric.Polygon(createRegularPolygonPoints(sides, 70), {
+        left: width / 2 - 70,
+        top: height / 2 - 70,
+        fill: "#6366f1",
+        ...opts,
+      }),
+    );
+  }, [addObject, width, height]);
+
+  const addStarByCount = useCallback((points: number, innerRatio = 0.45, opts: Record<string, unknown> = {}) => {
+    const outer = 70;
+    const inner = Math.round(outer * innerRatio);
+    addObject(
+      new fabric.Polygon(createStarPoints(points, outer, inner), {
+        left: width / 2 - outer,
+        top: height / 2 - outer,
+        fill: "#6366f1",
+        ...opts,
+      }),
+    );
+  }, [addObject, width, height]);
+
   const deleteSelected = useCallback(() => {
     const canvas = fabricRef.current;
     if (!canvas) {
@@ -648,6 +685,9 @@ export function useCanvasEditor(
     addSubheading,
     addImage,
     addShape,
+    addPath,
+    addPolygonByCount,
+    addStarByCount,
     deleteSelected,
     duplicateSelected,
     undo,

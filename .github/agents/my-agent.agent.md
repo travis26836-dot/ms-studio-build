@@ -64,7 +64,7 @@ Stability indicators
 D. Cultural & Workflow Fit (10%)
 Adaptability
 Collaboration potential
-Alignment with DedOAK’s digital‑first environment
+Alignment with ManuScript’s digital‑first environment
 
 Input Types the Agent Accepts
 Job descriptions

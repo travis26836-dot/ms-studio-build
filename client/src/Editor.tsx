@@ -29,6 +29,29 @@ import AIChatPanel from "@/components/AIChatPanel";
 
 type SidebarPanel = "templates" | "elements" | "text" | "uploads" | "photos" | "ai" | "brand" | "layers" | null;
 
+const FONT_OPTIONS = [
+  "Inter",
+  "Montserrat",
+  "Poppins",
+  "Playfair Display",
+  "Roboto",
+  "Lato",
+  "Open Sans",
+  "Raleway",
+  "Oswald",
+  "Merriweather",
+  "Nunito",
+  "Work Sans",
+  "DM Sans",
+  "Source Sans 3",
+  "Bebas Neue",
+  "Lora",
+  "Rubik",
+  "PT Sans",
+  "Quicksand",
+  "Anton",
+];
+
 interface EditorProps {
   projectId?: number;
   templateData?: string;
@@ -148,7 +171,7 @@ export default function Editor({
       <div className="h-12 border-b border-border bg-toolbar flex items-center px-3 gap-1 shrink-0">
         <Button variant="ghost" size="sm" className="text-toolbar-foreground gap-1.5 mr-2" onClick={() => window.history.back()}>
           <ChevronLeft className="w-4 h-4" />
-          <span className="text-sm font-medium">DedOak Digital Holdings</span>
+          <span className="text-sm font-medium">ManuScript Studio</span>
         </Button>
 
         <Separator orientation="vertical" className="h-6 mx-1" />
@@ -511,97 +534,306 @@ function TemplatesPanel({ editor, searchQuery }: { editor: ReturnType<typeof use
   );
 }
 
+// ─── Shape preview helpers ───────────────────────────────────
+function makePolygonPath(sides: number, r = 85, cx = 100, cy = 100): string {
+  const pts = Array.from({ length: sides }, (_, i) => {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / sides;
+    return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
+  });
+  return `M${pts.join("L")}Z`;
+}
+
+function makeStarPath(pts: number, outerR = 85, innerR = 40, cx = 100, cy = 100): string {
+  const points: string[] = [];
+  const step = Math.PI / pts;
+  let angle = -Math.PI / 2;
+  for (let i = 0; i < pts * 2; i++) {
+    const r = i % 2 === 0 ? outerR : innerR;
+    points.push(`${(cx + r * Math.cos(angle)).toFixed(1)},${(cy + r * Math.sin(angle)).toFixed(1)}`);
+    angle += step;
+  }
+  return `M${points.join("L")}Z`;
+}
+
+// ─── Shape library data ──────────────────────────────────────
+const ARROW_SHAPES = [
+  { label: "Right",      path: "M10,65 L140,65 L140,20 L195,100 L140,180 L140,135 L10,135 Z",                  vb: "0 0 205 200" },
+  { label: "Left",       path: "M190,65 L60,65 L60,20 L5,100 L60,180 L60,135 L190,135 Z",                     vb: "0 0 200 200" },
+  { label: "Up",         path: "M65,190 L65,60 L20,60 L100,5 L180,60 L135,60 L135,190 Z",                     vb: "0 0 200 200" },
+  { label: "Down",       path: "M65,10 L65,140 L20,140 L100,195 L180,140 L135,140 L135,10 Z",                 vb: "0 0 200 205" },
+  { label: "↔ Double",   path: "M5,100 L45,42 L45,78 L155,78 L155,42 L195,100 L155,158 L155,122 L45,122 L45,158 Z",  vb: "0 0 200 200" },
+  { label: "↕ Double",   path: "M100,5 L158,45 L122,45 L122,155 L158,155 L100,195 L42,155 L78,155 L78,45 L42,45 Z",  vb: "0 0 200 200" },
+  { label: "Chevron →",  path: "M0,0 L130,100 L0,200 L55,200 L190,100 L55,0 Z",                              vb: "0 0 195 200" },
+  { label: "Chevron ←",  path: "M200,0 L70,100 L200,200 L145,200 L10,100 L145,0 Z",                          vb: "0 0 205 200" },
+  { label: "Notch →",    path: "M0,72 L155,72 L200,100 L155,128 L0,128 L38,100 Z",                           vb: "0 0 205 200" },
+  { label: "Notch ←",    path: "M200,72 L45,72 L0,100 L45,128 L200,128 L162,100 Z",                          vb: "0 0 205 200" },
+] as const;
+
+const BUBBLE_SHAPES = [
+  { label: "Round",   path: "M20,0 Q0,0 0,20 L0,110 Q0,130 20,130 L55,130 L35,162 L85,130 L180,130 Q200,130 200,110 L200,20 Q200,0 180,0 Z",          vb: "0 0 205 170" },
+  { label: "Square",  path: "M0,0 L200,0 L200,120 L120,120 L100,158 L80,120 L0,120 Z",                                                                  vb: "0 0 205 165" },
+  { label: "Oval",    path: "M95,5 C42,5 0,38 0,80 C0,122 42,155 95,155 C115,155 133,149 148,138 L176,166 L163,132 C184,118 200,101 200,80 C200,38 148,5 95,5 Z", vb: "0 0 205 172" },
+  { label: "Thought", path: "M10,78 C10,36 50,5 100,5 C150,5 190,36 190,78 C190,120 150,151 100,151 C88,151 77,149 67,145 L52,168 L65,144 C34,133 10,108 10,78 Z M73,165 C73,158 78,152 85,152 C92,152 97,158 97,165 C97,172 92,178 85,178 C78,178 73,172 73,165 Z M60,180 C60,174 65,169 71,169 C77,169 82,174 82,180 C82,186 77,191 71,191 C65,191 60,186 60,180 Z", vb: "0 0 200 195" },
+  { label: "Spiky",   path: "M100,5 L115,32 L148,17 L136,47 L170,40 L153,66 L188,68 L163,87 L194,96 L164,103 L188,121 L156,118 L174,146 L141,133 L144,164 L114,149 L107,180 L93,151 L79,180 L72,149 L42,164 L45,133 L12,146 L30,118 L-2,121 L22,103 L-7,96 L24,87 L-1,68 L34,66 L17,40 L51,47 L39,17 L72,32 Z", vb: "5 5 190 180" },
+] as const;
+
+const CLOUD_SHAPES = [
+  { label: "Simple", path: "M50,90 C30,90 15,75 15,57 C15,41 28,28 46,27 C48,13 62,5 80,7 C90,1 104,5 110,15 C120,9 134,10 140,19 C155,15 168,27 166,43 C180,45 190,59 186,73 C182,83 172,91 160,89 L50,89 Z", vb: "10 0 185 95" },
+  { label: "Fluffy",  path: "M27,100 C13,100 3,88 7,73 C7,55 21,43 39,43 C39,25 55,13 73,15 C81,3 97,0 112,7 C125,0 142,7 147,21 C163,16 181,30 178,49 C193,51 203,67 199,82 C197,95 185,105 170,101 L43,101 Z", vb: "3 0 205 110" },
+  { label: "Wispy",  path: "M17,77 C7,77 1,66 6,55 C6,43 18,33 33,33 C35,21 47,13 61,15 C69,7 82,5 92,10 C102,4 117,9 121,20 C135,17 148,28 146,41 C159,44 166,57 162,68 C160,77 151,83 141,79 L23,79 Z", vb: "0 3 170 82" },
+  { label: "Puffy",  path: "M35,115 C15,115 2,100 6,82 C5,62 20,48 40,48 C40,28 56,14 76,16 C84,4 100,0 115,7 C130,0 148,12 151,28 C168,22 186,38 183,58 C198,62 206,78 200,94 C196,106 183,117 169,113 L52,113 Z", vb: "2 0 210 120" },
+] as const;
+
+const HEART_SHAPES: Array<{ label: string; path: string; vb: string; opts?: Record<string, unknown> }> = [
+  { label: "Classic", path: "M100,170 C100,170 5,115 5,65 C5,30 28,10 58,10 C74,10 88,18 100,30 C112,18 126,10 142,10 C172,10 195,30 195,65 C195,115 100,170 100,170 Z", vb: "0 5 200 170" },
+  { label: "Chubby",  path: "M100,175 C100,175 0,120 0,68 C0,30 25,5 58,5 C76,5 92,16 100,30 C108,16 124,5 142,5 C175,5 200,30 200,68 C200,120 100,175 100,175 Z", vb: "0 5 200 175" },
+  { label: "Outline", path: "M100,170 C100,170 5,115 5,65 C5,30 28,10 58,10 C74,10 88,18 100,30 C112,18 126,10 142,10 C172,10 195,30 195,65 C195,115 100,170 100,170 Z", vb: "0 5 200 170", opts: { fill: "transparent", stroke: "#6366f1", strokeWidth: 8 } },
+  { label: "Pointy",  path: "M100,192 C80,162 5,112 5,65 C5,30 28,10 58,10 C74,10 88,20 100,35 C112,20 126,10 142,10 C172,10 195,30 195,65 C195,112 120,162 100,192 Z", vb: "0 5 200 195" },
+];
+
+const BANNER_SHAPES: Array<{ label: string; path?: string; vb?: string; scale?: number; star?: { pts: number; ratio: number } }> = [
+  { label: "Ribbon",  path: "M0,0 L18,38 L0,76 L220,76 L202,38 L220,0 Z",                                              vb: "0 0 225 80",  scale: 0.85 },
+  { label: "Wavy",    path: "M0,40 Q50,5 100,40 Q150,75 200,40 L200,95 Q150,130 100,95 Q50,60 0,95 Z",                 vb: "0 0 205 135", scale: 0.95 },
+  { label: "Tag",     path: "M0,0 L175,0 L205,60 L175,120 L0,120 Z",                                                   vb: "0 0 210 125", scale: 0.90 },
+  { label: "Pennant", path: "M0,0 L200,70 L0,140 Z",                                                                   vb: "0 0 205 145", scale: 0.90 },
+  { label: "Scroll",  path: "M30,10 C15,10 5,20 5,35 L5,115 C5,130 15,140 30,140 L170,140 C185,140 195,130 195,115 L195,35 C195,20 185,10 170,10 Z", vb: "0 0 205 155", scale: 0.90 },
+  { label: "Badge",   star: { pts: 16, ratio: 0.82 } },
+];
+
+// ─── Reusable shape button ────────────────────────────────────
+function ShapeBtn({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className="aspect-square rounded-lg bg-secondary hover:bg-accent border border-border flex flex-col items-center justify-center gap-1 transition-colors p-1"
+    >
+      {children}
+      <span className="text-[9px] text-muted-foreground leading-tight text-center">{label}</span>
+    </button>
+  );
+}
+
 // ─── Elements Panel ──────────────────────────────────────────
 function ElementsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
-  const shapes: Array<{ type: ShapeType; label: string; icon: React.ComponentType<{ className?: string }> }> = [
-    { type: "rect", label: "Rectangle", icon: Square },
-    { type: "rounded-rect", label: "Rounded", icon: Square },
-    { type: "circle", label: "Circle", icon: Circle },
-    { type: "triangle", label: "Triangle", icon: Triangle },
-    { type: "star", label: "Star", icon: Star },
-    { type: "line", label: "Line", icon: Minus },
-    { type: "ellipse", label: "Ellipse", icon: Circle },
-    { type: "polygon", label: "Pentagon", icon: Hexagon },
+  const [activeCategory, setActiveCategory] = useState("basic");
+
+  const categories = [
+    { id: "basic",    label: "Basic" },
+    { id: "polygons", label: "Polygons" },
+    { id: "stars",    label: "Stars" },
+    { id: "arrows",   label: "Arrows" },
+    { id: "bubbles",  label: "Bubbles" },
+    { id: "clouds",   label: "Clouds" },
+    { id: "hearts",   label: "Hearts" },
+    { id: "banners",  label: "Banners" },
   ];
 
-  const decorativeShapes = [
-    { type: "heart", label: "Heart", svgPath: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" },
-    { type: "diamond", label: "Diamond", svgPath: "M12 2L2 12l10 10 10-10L12 2z" },
-    { type: "hexagon", label: "Hexagon", svgPath: "M12 2l9.5 5.5v11L12 24l-9.5-5.5v-11L12 2z" },
-    { type: "arrow", label: "Arrow", svgPath: "M5 12h14m-7-7l7 7-7 7" },
-  ];
-
-  const colors = [
+  const quickColors = [
     "#6366f1", "#ec4899", "#14b8a6", "#f59e0b", "#ef4444",
     "#8b5cf6", "#06b6d4", "#22c55e", "#f97316", "#64748b",
     "#000000", "#ffffff",
   ];
 
   return (
-    <div className="space-y-4">
-      <p className="text-xs text-muted-foreground font-medium">Basic Shapes</p>
-      <div className="grid grid-cols-4 gap-2">
-        {shapes.map((s) => (
+    <div className="space-y-3">
+      {/* Category tabs */}
+      <div className="flex gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+        {categories.map((cat) => (
           <button
-            key={s.type}
-            onClick={() => editor.addShape(s.type)}
-            className="aspect-square rounded-lg bg-secondary hover:bg-accent border border-border flex flex-col items-center justify-center gap-1 transition-colors"
+            key={cat.id}
+            onClick={() => setActiveCategory(cat.id)}
+            className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
+              activeCategory === cat.id
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-muted-foreground hover:bg-accent hover:text-foreground"
+            }`}
           >
-            <s.icon className="w-5 h-5 text-card-foreground" />
-            <span className="text-[9px] text-muted-foreground">{s.label}</span>
+            {cat.label}
           </button>
         ))}
       </div>
 
-      <Separator />
-      <p className="text-xs text-muted-foreground font-medium">Quick Colors</p>
-      <div className="flex flex-wrap gap-1.5">
-        {colors.map((c) => (
-          <button
-            key={c}
-            onClick={() => editor.addShape("rect", { fill: c, width: 100, height: 100 })}
-            className="w-7 h-7 rounded-md border border-border hover:scale-110 transition-transform"
-            style={{ background: c }}
-          />
-        ))}
-      </div>
+      {/* ── Basic ── */}
+      {activeCategory === "basic" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-4 gap-2">
+            {([
+              { type: "rect" as ShapeType,         label: "Rect",     icon: Square },
+              { type: "rounded-rect" as ShapeType, label: "Rounded",  icon: Square },
+              { type: "circle" as ShapeType,       label: "Circle",   icon: Circle },
+              { type: "triangle" as ShapeType,     label: "Triangle", icon: Triangle },
+              { type: "star" as ShapeType,         label: "Star",     icon: Star },
+              { type: "ellipse" as ShapeType,      label: "Ellipse",  icon: Circle },
+              { type: "diamond" as ShapeType,      label: "Diamond",  icon: Diamond },
+              { type: "heart" as ShapeType,        label: "Heart",    icon: Heart },
+            ] as Array<{ type: ShapeType; label: string; icon: React.ComponentType<{ className?: string }> }>).map((s) => (
+              <button
+                key={s.type}
+                onClick={() => editor.addShape(s.type)}
+                className="aspect-square rounded-lg bg-secondary hover:bg-accent border border-border flex flex-col items-center justify-center gap-1 transition-colors"
+              >
+                <s.icon className="w-5 h-5 text-card-foreground" />
+                <span className="text-[9px] text-muted-foreground">{s.label}</span>
+              </button>
+            ))}
+          </div>
+          <Separator />
+          <p className="text-xs text-muted-foreground font-medium">Quick Colors</p>
+          <div className="flex flex-wrap gap-1.5">
+            {quickColors.map((c) => (
+              <button
+                key={c}
+                onClick={() => editor.addShape("rect", { fill: c, width: 100, height: 100 })}
+                className="w-7 h-7 rounded-md border border-border hover:scale-110 transition-transform"
+                style={{ background: c }}
+              />
+            ))}
+          </div>
+          <Separator />
+          <p className="text-xs text-muted-foreground font-medium">Lines</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => editor.addShape("line")} className="h-10 rounded-lg bg-secondary hover:bg-accent border border-border flex items-center justify-center text-xs text-card-foreground">
+              <Minus className="w-5 h-5 mr-1" /> Thin
+            </button>
+            <button onClick={() => editor.addShape("line", { stroke: "#6366f1", strokeWidth: 4 })} className="h-10 rounded-lg bg-secondary hover:bg-accent border border-border flex items-center justify-center text-xs text-card-foreground">
+              <Minus className="w-5 h-5 mr-1" /> Thick
+            </button>
+          </div>
+          <Separator />
+          <p className="text-xs text-muted-foreground font-medium">Gradient Blocks</p>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              ["#6366f1","#a855f7"],["#ec4899","#f43f5e"],["#14b8a6","#06b6d4"],
+              ["#f59e0b","#ef4444"],["#22c55e","#3b82f6"],["#8b5cf6","#ec4899"],
+            ].map(([c1, c2], i) => (
+              <button
+                key={i}
+                onClick={() => editor.addShape("rounded-rect", { fill: c1, width: 200, height: 200 })}
+                className="aspect-square rounded-lg border border-border hover:scale-105 transition-transform"
+                style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
-      <Separator />
-      <p className="text-xs text-muted-foreground font-medium">Lines & Connectors</p>
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={() => editor.addShape("line")}
-          className="h-10 rounded-lg bg-secondary hover:bg-accent border border-border flex items-center justify-center text-xs text-card-foreground"
-        >
-          <Minus className="w-5 h-5 mr-1" /> Line
-        </button>
-        <button
-          onClick={() => editor.addShape("line", { stroke: "#6366f1", strokeWidth: 4 })}
-          className="h-10 rounded-lg bg-secondary hover:bg-accent border border-border flex items-center justify-center text-xs text-card-foreground"
-        >
-          <Minus className="w-5 h-5 mr-1" /> Thick
-        </button>
-      </div>
+      {/* ── Polygons ── */}
+      {activeCategory === "polygons" && (
+        <div className="grid grid-cols-3 gap-2">
+          {([
+            { sides: 3, label: "Triangle" },
+            { sides: 4, label: "Square" },
+            { sides: 5, label: "Pentagon" },
+            { sides: 6, label: "Hexagon" },
+            { sides: 7, label: "Heptagon" },
+            { sides: 8, label: "Octagon" },
+          ]).map(({ sides, label }) => (
+            <ShapeBtn key={sides} label={label} onClick={() => editor.addPolygonByCount(sides)}>
+              <svg viewBox="0 0 200 200" className="w-9 h-9 fill-current text-card-foreground">
+                <path d={makePolygonPath(sides)} />
+              </svg>
+            </ShapeBtn>
+          ))}
+        </div>
+      )}
 
-      <Separator />
-      <p className="text-xs text-muted-foreground font-medium">Gradient Blocks</p>
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          ["#6366f1", "#a855f7"],
-          ["#ec4899", "#f43f5e"],
-          ["#14b8a6", "#06b6d4"],
-          ["#f59e0b", "#ef4444"],
-          ["#22c55e", "#3b82f6"],
-          ["#8b5cf6", "#ec4899"],
-        ].map(([c1, c2], i) => (
-          <button
-            key={i}
-            onClick={() => editor.addShape("rounded-rect", { fill: c1, width: 200, height: 200 })}
-            className="aspect-square rounded-lg border border-border hover:scale-105 transition-transform"
-            style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
-          />
-        ))}
-      </div>
+      {/* ── Stars ── */}
+      {activeCategory === "stars" && (
+        <div className="grid grid-cols-3 gap-2">
+          {([
+            { pts: 4,  ratio: 0.38, label: "4-Point" },
+            { pts: 5,  ratio: 0.45, label: "5-Point" },
+            { pts: 6,  ratio: 0.45, label: "6-Point" },
+            { pts: 8,  ratio: 0.50, label: "8-Point" },
+            { pts: 12, ratio: 0.82, label: "Burst" },
+            { pts: 16, ratio: 0.60, label: "Spiky" },
+          ]).map(({ pts, ratio, label }) => (
+            <ShapeBtn key={pts} label={label} onClick={() => editor.addStarByCount(pts, ratio)}>
+              <svg viewBox="0 0 200 200" className="w-9 h-9 fill-current text-card-foreground">
+                <path d={makeStarPath(pts, 85, Math.round(85 * ratio))} />
+              </svg>
+            </ShapeBtn>
+          ))}
+        </div>
+      )}
+
+      {/* ── Arrows ── */}
+      {activeCategory === "arrows" && (
+        <div className="grid grid-cols-3 gap-2">
+          {ARROW_SHAPES.map((s) => (
+            <ShapeBtn key={s.label} label={s.label} onClick={() => editor.addPath(s.path, 0.9)}>
+              <svg viewBox={s.vb} className="w-9 h-9 fill-current text-card-foreground" preserveAspectRatio="xMidYMid meet">
+                <path d={s.path} />
+              </svg>
+            </ShapeBtn>
+          ))}
+        </div>
+      )}
+
+      {/* ── Speech Bubbles ── */}
+      {activeCategory === "bubbles" && (
+        <div className="grid grid-cols-2 gap-2">
+          {BUBBLE_SHAPES.map((s) => (
+            <ShapeBtn key={s.label} label={s.label} onClick={() => editor.addPath(s.path, 0.85)}>
+              <svg viewBox={s.vb} className="w-12 h-10 fill-current text-card-foreground" preserveAspectRatio="xMidYMid meet">
+                <path d={s.path} />
+              </svg>
+            </ShapeBtn>
+          ))}
+        </div>
+      )}
+
+      {/* ── Clouds ── */}
+      {activeCategory === "clouds" && (
+        <div className="grid grid-cols-2 gap-2">
+          {CLOUD_SHAPES.map((s) => (
+            <ShapeBtn key={s.label} label={s.label} onClick={() => editor.addPath(s.path, 1.0)}>
+              <svg viewBox={s.vb} className="w-14 h-7 fill-current text-card-foreground" preserveAspectRatio="xMidYMid meet">
+                <path d={s.path} />
+              </svg>
+            </ShapeBtn>
+          ))}
+        </div>
+      )}
+
+      {/* ── Hearts ── */}
+      {activeCategory === "hearts" && (
+        <div className="grid grid-cols-2 gap-2">
+          {HEART_SHAPES.map((s) => (
+            <ShapeBtn key={s.label} label={s.label} onClick={() => editor.addPath(s.path, 1.0, s.opts ?? {})}>
+              <svg
+                viewBox={s.vb}
+                className="w-9 h-9 text-card-foreground"
+                preserveAspectRatio="xMidYMid meet"
+                style={s.opts ? { fill: "none", stroke: "currentColor", strokeWidth: 10 } : { fill: "currentColor" }}
+              >
+                <path d={s.path} />
+              </svg>
+            </ShapeBtn>
+          ))}
+        </div>
+      )}
+
+      {/* ── Banners ── */}
+      {activeCategory === "banners" && (
+        <div className="grid grid-cols-2 gap-2">
+          {BANNER_SHAPES.map((s) =>
+            s.star ? (
+              <ShapeBtn key={s.label} label={s.label} onClick={() => editor.addStarByCount(s.star!.pts, s.star!.ratio)}>
+                <svg viewBox="0 0 200 200" className="w-9 h-9 fill-current text-card-foreground">
+                  <path d={makeStarPath(s.star.pts, 85, Math.round(85 * s.star.ratio))} />
+                </svg>
+              </ShapeBtn>
+            ) : (
+              <ShapeBtn key={s.label} label={s.label} onClick={() => editor.addPath(s.path!, s.scale ?? 1.0)}>
+                <svg viewBox={s.vb} className="w-14 h-8 fill-current text-card-foreground" preserveAspectRatio="xMidYMid meet">
+                  <path d={s.path} />
+                </svg>
+              </ShapeBtn>
+            )
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -830,6 +1062,16 @@ function BrandPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) 
     { name: "Lato", style: "Humanist Sans" },
     { name: "Oswald", style: "Condensed" },
     { name: "Raleway", style: "Thin Sans" },
+    { name: "Nunito", style: "Friendly Sans" },
+    { name: "Work Sans", style: "Modern Sans" },
+    { name: "DM Sans", style: "Contemporary Sans" },
+    { name: "Source Sans 3", style: "Readable Sans" },
+    { name: "Bebas Neue", style: "Display Sans" },
+    { name: "Lora", style: "Editorial Serif" },
+    { name: "Rubik", style: "Rounded Sans" },
+    { name: "PT Sans", style: "Classic Sans" },
+    { name: "Quicksand", style: "Soft Sans" },
+    { name: "Anton", style: "Bold Display" },
   ];
 
   return (
@@ -1371,7 +1613,7 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
                 onChange={(e) => editor.updateActiveObject({ fontFamily: e.target.value })}
                 className="w-full h-7 text-xs bg-secondary border border-border rounded-md px-2 text-card-foreground"
               >
-                {["Inter", "Montserrat", "Poppins", "Playfair Display", "Roboto", "Lato", "Open Sans", "Raleway", "Oswald", "Merriweather"].map((f) => (
+                {FONT_OPTIONS.map((f) => (
                   <option key={f} value={f}>{f}</option>
                 ))}
               </select>

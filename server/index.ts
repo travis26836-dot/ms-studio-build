@@ -16,6 +16,20 @@ type CanvasStateRecord = {
   thumbnailUrl?: string;
 };
 
+function buildCanvasState(input: {
+  canvasData: string;
+  canvasWidth: number;
+  canvasHeight: number;
+  thumbnailUrl?: string;
+}) {
+  return {
+    canvasData: input.canvasData,
+    canvasWidth: input.canvasWidth,
+    canvasHeight: input.canvasHeight,
+    ...(typeof input.thumbnailUrl === "string" ? { thumbnailUrl: input.thumbnailUrl } : {}),
+  };
+}
+
 function safeParseJson(raw: string): unknown {
   try {
     return JSON.parse(raw);
@@ -185,12 +199,12 @@ async function startServer() {
       data: {
         userId: user.id,
         name,
-        canvasState: {
+        canvasState: buildCanvasState({
           canvasData,
           canvasWidth: typeof canvasWidth === "number" ? canvasWidth : 1080,
           canvasHeight: typeof canvasHeight === "number" ? canvasHeight : 1080,
-          thumbnailUrl: typeof thumbnailUrl === "string" ? thumbnailUrl : undefined,
-        },
+          thumbnailUrl,
+        }),
       },
     });
 
@@ -228,12 +242,12 @@ async function startServer() {
       where: { id: existing.id },
       data: {
         name: typeof name === "string" && name.trim() ? name : existing.name,
-        canvasState: {
+        canvasState: buildCanvasState({
           canvasData: nextCanvasData,
           canvasWidth: prev.canvasWidth ?? 1080,
           canvasHeight: prev.canvasHeight ?? 1080,
           thumbnailUrl: typeof thumbnailUrl === "string" ? thumbnailUrl : prev.thumbnailUrl,
-        },
+        }),
       },
     });
 

@@ -148,8 +148,12 @@ export default function Editor({
         setCurrentProjectId(result.id);
         toast.success("Project created and saved!");
       }
-    } catch {
-      toast.error("Failed to save. Please try again.");
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to save. Please try again.";
+      toast.error(message);
     }
   }, [editor, currentProjectId, canvasWidth, canvasHeight]);
 

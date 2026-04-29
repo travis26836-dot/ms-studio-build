@@ -399,11 +399,17 @@ async function apiRequest<T>(path: string, init: RequestInit = {}, token?: strin
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(path, {
-    ...init,
-    headers,
-    credentials: "include",
-  });
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      ...init,
+      headers,
+      credentials: "include",
+    });
+  } catch (error) {
+    const message = error instanceof Error && error.message ? error.message : "Network request failed";
+    throw new Error(`Network error: ${message}`);
+  }
 
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
@@ -413,7 +419,15 @@ async function apiRequest<T>(path: string, init: RequestInit = {}, token?: strin
         message = err.error;
       }
     } catch {
-      // Ignore JSON parse failures for non-JSON error responses.
+      try {
+        const raw = await response.text();
+        const snippet = raw.replace(/\s+/g, " ").trim().slice(0, 160);
+        if (snippet) {
+          message = `${message}: ${snippet}`;
+        }
+      } catch {
+        // Ignore text parse failures.
+      }
     }
     throw new Error(message);
   }

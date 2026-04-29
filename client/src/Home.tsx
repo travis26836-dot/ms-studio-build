@@ -283,7 +283,7 @@ function Dashboard({
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 rounded-md ring-2 ring-red-700/60 bg-black overflow-hidden">
   <img
-    src="/MANUSCRIPT-STUDIO-NEWLOGO-BB.png"
+    src="/icon-192.png"
     alt="ManuScript Studio logo"
     className="h-full w-full object-contain"
   />
@@ -598,7 +598,7 @@ function LandingPage() {
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg ring-2 ring-red-700/60 bg-black overflow-hidden">
   <img
-    src="/MANUSCRIPT-STUDIO-NEWLOGO-BB.png"
+    src="/icon-192.png"
     alt="ManuScript Studio logo"
     className="h-full w-full object-contain"
   />

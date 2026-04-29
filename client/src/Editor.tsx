@@ -131,10 +131,13 @@ export default function Editor({
   }, []);
 
   const handleSave = useCallback(async () => {
-    const json = editor.exportCanvas("json");
-    if (!json) return;
-
     try {
+      const json = editor.exportCanvas("json");
+      if (!json) {
+        toast.error("Canvas is not ready. Please try again.");
+        return;
+      }
+
       if (currentProjectId) {
         await saveMutation.mutateAsync({ id: currentProjectId, canvasData: json });
         toast.success("Project saved!");
@@ -149,13 +152,16 @@ export default function Editor({
         toast.success("Project created and saved!");
       }
     } catch (error) {
+      console.error("Save failed:", error);
       const message =
         error instanceof Error && error.message
           ? error.message
-          : "Failed to save. Please try again.";
+          : typeof error === "string" && error
+            ? error
+            : "Failed to save. Please try again.";
       toast.error(message);
     }
-  }, [editor, currentProjectId, canvasWidth, canvasHeight]);
+  }, [editor, currentProjectId, canvasWidth, canvasHeight, saveMutation, createMutation]);
 
   // Stable ref so the keyboard shortcut effect can call the latest handleSave
   const handleSaveRef = useRef(handleSave);

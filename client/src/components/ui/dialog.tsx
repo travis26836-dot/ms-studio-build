@@ -111,3 +111,10 @@ export function DialogTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return <h2 className={cn("text-lg font-semibold", className)} {...props} />;
 }
+
+export function DialogFooter({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("mt-4 flex justify-end gap-2", className)} {...props} />;
+}

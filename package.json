@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.35",
-    "@clerk/clerk-sdk-node": "^5.1.6",
+    "@clerk/express": "^2.1.10",
     "@clerk/react": "^6.4.2",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.7.0",

@@ -2,7 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
-import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
+import { clerkMiddleware } from "@clerk/express";
 import { getPrisma } from "./db.js";
 import { createAiRouter } from "./ai.js";
 
@@ -321,7 +321,7 @@ async function startServer() {
   const server = createServer(app);
 
   app.use(express.json());
-  app.use(ClerkExpressWithAuth());
+  app.use(clerkMiddleware());
 
   // Customer portal API
   app.post("/api/customer/resolve", async (req, res) => {

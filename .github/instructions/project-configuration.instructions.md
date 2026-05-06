@@ -32,7 +32,7 @@ Defined in both `vite.config.ts` (build) and `tsconfig.json` (type checking).
 // pnpm update esbuild vite
   // pnpm update -D esbuild vite
   
-  ((## update Vite or esbuild when needed, then run the approve-builds command to allowlist the new versions. This prevents unexpected build tool updates from breaking the build without notice.))
+  ((## update Vite or esbuild when a new version is released or a bug fix is required, then run the approve-builds command to allowlist the new versions. This prevents unexpected build tool updates from breaking the build without notice.))
 
 ## Build Pipeline
 
@@ -45,13 +45,17 @@ pnpm start → runs dist/index.js (Express serves dist/public as SPA)
 node dist/index.js → direct equivalent of pnpm start
 ```
 
-- `pnpm dev` runs only the Vite dev server (port 3000); the Express server is for production. During development, you can run `pnpm build` in watch mode (`-w`) to rebuild the server on changes.
+- In the main app (repo root), `pnpm dev` runs only the Vite dev server (port 3000); the Express server is for production. In `customer-portal/`, use that app's own `pnpm dev` command separately. During development, you can run `pnpm build` in watch mode (`-w`) to rebuild the server on changes.
 - `dist/index.js` still needs `dist/public/` present, because Express serves SPA assets from that folder.
 - `pnpm check` runs `tsc --noEmit` — use this to validate TypeScript before committing.
 
 ## Required Environment Variables
 
 Create a `.env` file in the **repo root** (not inside `client/`). Vite reads from root via `envDir`.
+
+Use this section as a quick checklist:
+- First, set all variables in **Always Required**.
+- Then, add variables in **Feature-Gated** only for features you enable.
 
 ### Always Required
 

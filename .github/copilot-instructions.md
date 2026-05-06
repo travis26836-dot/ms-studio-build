@@ -3,7 +3,7 @@
 ## Code Style
 - Use TypeScript and React function components in the main app under `client/`.
 - Follow existing import aliases from `tsconfig.json`: `@/*` for `client/src/*` and `@shared/*` for `shared/*`.
-- Reuse existing UI and utility patterns before introducing new abstractions:
+- Reuse existing UI and utility patterns unless the required functionality cannot be achieved cleanly without a new abstraction:
   - UI primitives in `client/src/components/ui/`
   - Shared utility helpers in `client/src/lib/utils.ts`
   - Canvas/editor logic in `client/src/hooks/useCanvasEditor.ts`
@@ -30,6 +30,7 @@
 - Secondary app commands (`customer-portal/`): `pnpm dev`, `pnpm build`, `pnpm start`.
 
 ## Conventions
+- When these guidelines compete, apply them in this order: 1. keep changes scoped to the requested task, 2. prefer existing patterns in `client/`, `server/`, and `shared/`, 3. align design work with `ideas.md` and `todo.md`, 4. avoid changes in `imported-source/` unless the task explicitly targets it.
 - Prefer editing code in `client/`, `server/`, and `shared/`; treat `imported-source/` as historical/reference unless a task explicitly targets it.
 - Preserve existing router and canvas patterns:
   - Wouter routing in `client/src/App.tsx`

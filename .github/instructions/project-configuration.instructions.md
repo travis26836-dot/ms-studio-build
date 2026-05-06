@@ -66,6 +66,7 @@ Create a `.env` file in the **repo root** (not inside `client/`). Vite reads fro
 | Variable | Feature |
 |----------|---------|
 | `GROQ_API_KEY` | AI chat + layout suggestions (`server/ai.ts`) — returns 503 if missing |
+| `TOGETHER_AI_API_KEY` | AI image & background generation (`server/ai.ts`) — returns 503 if missing; get a free key at api.together.ai |
 | `STRIPE_SECRET_KEY` | Subscription billing |
 | `STRIPE_PRICE_PRO` | Pro tier price ID |
 | `STRIPE_PRICE_TEAM` | Team tier price ID |
@@ -90,8 +91,11 @@ The Prisma client is a singleton in `server/db.ts` — import `prisma` from ther
 ## AI Routes (server/ai.ts)
 
 - `POST /api/ai/chat` — streaming chat, model: `llama-3.3-70b-versatile` (Groq)
-- `POST /api/ai/suggest-layout` — returns JSON layout suggestions
-- Requires `GROQ_API_KEY`; returns `503` with a clear message if the key is absent
+- `POST /api/ai/suggest-layout` — returns JSON layout suggestions (Groq)
+- `POST /api/ai/generate-image` — generates an image via Together AI (FLUX.1-schnell-Free); returns `{ url: string }` as a base64 data URL
+- `POST /api/ai/generate-background` — generates a canvas background via Together AI (FLUX.1-schnell-Free); returns `{ url: string }` as a base64 data URL
+- `GROQ_API_KEY` required for chat/layout; returns `503` with a clear message if absent
+- `TOGETHER_AI_API_KEY` required for image/background generation; returns `503` with a clear message if absent
 - Client calls these via relative URLs in `client/src/lib/aiClient.ts` — no hardcoded hosts
 
 ## Auth (Clerk)

@@ -11,6 +11,76 @@ const groqClient = process.env.GROQ_API_KEY
 
 const CHAT_MODEL = "llama-3.3-70b-versatile";
 
+// Together AI image generation constants
+const TOGETHER_API_URL = "https://api.together.xyz/v1/images/generations";
+const IMAGE_MODEL = "black-forest-labs/FLUX.1-schnell-Free";
+
+/**
+ * Clamp and round a pixel dimension to a value accepted by FLUX.1:
+ * must be a multiple of 64, between 64 and 1440.
+ */
+function normalizeImageDimension(size: number): number {
+  const clamped = Math.min(Math.max(Math.round(size), 64), 1440);
+  return Math.round(clamped / 64) * 64;
+}
+
+/**
+ * Call Together AI's REST API to generate an image and return a base64 data URL.
+ */
+async function generateImageViaTogetherAI(
+  prompt: string,
+  width: number,
+  height: number,
+): Promise<{ url: string }> {
+  const apiKey = process.env.TOGETHER_AI_API_KEY;
+  if (!apiKey) {
+    throw new Error("TOGETHER_AI_API_KEY is not configured");
+  }
+
+  const w = normalizeImageDimension(width);
+  const h = normalizeImageDimension(height);
+
+  const response = await fetch(TOGETHER_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: IMAGE_MODEL,
+      prompt,
+      n: 1,
+      width: w,
+      height: h,
+      response_format: "b64_json",
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => response.statusText);
+    throw new Error(`Together AI error (${response.status}): ${errorText}`);
+  }
+
+  const data = (await response.json()) as {
+    data?: Array<{ b64_json?: string; url?: string }>;
+  };
+
+  const item = data.data?.[0];
+  if (!item) {
+    throw new Error("No image data returned by Together AI");
+  }
+
+  if (item.b64_json) {
+    return { url: `data:image/jpeg;base64,${item.b64_json}` };
+  }
+
+  if (item.url) {
+    return { url: item.url };
+  }
+
+  throw new Error("Unexpected response format from Together AI");
+}
+
 export function createAiRouter(getOrCreateUser: GetOrCreateUser): Router {
   const router = Router();
 
@@ -145,21 +215,51 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
     }
   });
 
-  // POST /api/ai/generate-image – placeholder (image generation deferred)
-  router.post("/generate-image", (_req: Request, res: Response) => {
-    return res.status(501).json({
-      error:
-        "Image generation is not yet implemented. It requires Together AI or a self-hosted image generation service.",
-    });
-  });
+  /**
+   * Shared handler for both generate-image and generate-background routes.
+   * Validates the request, calls Together AI, and sends the result.
+   */
+  function handleImageGeneration(label: "image" | "background") {
+    return async (req: Request, res: Response) => {
+      const user = await getOrCreateUser(req);
+      if (!user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
 
-  // POST /api/ai/generate-background – placeholder (image generation deferred)
-  router.post("/generate-background", (_req: Request, res: Response) => {
-    return res.status(501).json({
-      error:
-        "Background generation is not yet implemented. It requires Together AI or a self-hosted image generation service.",
-    });
-  });
+      if (!process.env.TOGETHER_AI_API_KEY) {
+        return res.status(503).json({
+          error:
+            `${label === "image" ? "Image" : "Background"} generation requires a TOGETHER_AI_API_KEY environment variable. ` +
+            "Sign up at api.together.ai and add TOGETHER_AI_API_KEY to your environment.",
+        });
+      }
+
+      const { prompt, width = 1024, height = 1024 } = req.body as {
+        prompt?: string;
+        width?: number;
+        height?: number;
+      };
+
+      if (!prompt?.trim()) {
+        return res.status(400).json({ error: "prompt is required" });
+      }
+
+      try {
+        const result = await generateImageViaTogetherAI(prompt.trim(), width, height);
+        return res.json(result);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : `Failed to generate ${label}`;
+        console.error(`${label} generation error:`, err);
+        return res.status(500).json({ error: message });
+      }
+    };
+  }
+
+  // POST /api/ai/generate-image – generate a design element image via Together AI (FLUX.1)
+  router.post("/generate-image", handleImageGeneration("image"));
+
+  // POST /api/ai/generate-background – generate a full-canvas background via Together AI (FLUX.1)
+  router.post("/generate-background", handleImageGeneration("background"));
 
   return router;
 }

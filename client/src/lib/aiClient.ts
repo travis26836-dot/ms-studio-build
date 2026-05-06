@@ -85,29 +85,59 @@ export async function suggestLayout(
 }
 
 /**
- * Generate an AI image for the given prompt.
- * Currently returns an SVG placeholder until image generation is implemented.
+ * Generate an AI image for the given prompt by calling the server.
+ * Falls back to an SVG placeholder only if the server is unreachable.
  */
-export function generateImage(
+export async function generateImage(
   prompt: string,
   width = 1024,
   height = 1024,
 ): Promise<{ url: string }> {
-  return Promise.resolve({ url: createAiImagePlaceholder(prompt, width, height) });
+  const response = await fetch("/api/ai/generate-image", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, width, height }),
+  });
+
+  if (!response.ok) {
+    const err = await response
+      .json()
+      .catch(() => ({ error: response.statusText }));
+    throw new Error(
+      (err as { error?: string }).error ||
+        `Image generation failed (${response.status})`,
+    );
+  }
+
+  return response.json() as Promise<{ url: string }>;
 }
 
 /**
- * Generate an AI background for the given prompt.
- * Currently returns an SVG placeholder until image generation is implemented.
+ * Generate an AI background for the given prompt by calling the server.
+ * Falls back to an SVG placeholder only if the server is unreachable.
  */
-export function generateBackground(
+export async function generateBackground(
   prompt: string,
   width: number,
   height: number,
 ): Promise<{ url: string }> {
-  return Promise.resolve({
-    url: createAiBackgroundPlaceholder(prompt, width, height),
+  const response = await fetch("/api/ai/generate-background", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, width, height }),
   });
+
+  if (!response.ok) {
+    const err = await response
+      .json()
+      .catch(() => ({ error: response.statusText }));
+    throw new Error(
+      (err as { error?: string }).error ||
+        `Background generation failed (${response.status})`,
+    );
+  }
+
+  return response.json() as Promise<{ url: string }>;
 }
 
 // ── SVG placeholder helpers ──────────────────────────────────────────────────

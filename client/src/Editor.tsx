@@ -1233,8 +1233,9 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
         toast.success("AI element added to canvas!");
         setAiPrompt("");
       }
-    } catch {
-      toast.error("Generation failed. Please try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Generation failed. Please try again.";
+      toast.error(msg);
     }
   };
 
@@ -1252,8 +1253,9 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
         toast.success("AI background added!");
         setBgPrompt("");
       }
-    } catch {
-      toast.error("Background generation failed.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Background generation failed.";
+      toast.error(msg);
     }
   };
 
@@ -1288,8 +1290,9 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
         }
         toast.success(`Layout applied: ${result.description}`);
       }
-    } catch {
-      toast.error("Layout suggestion failed.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Layout suggestion failed.";
+      toast.error(msg);
     }
   };
 

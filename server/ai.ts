@@ -13,7 +13,12 @@ const CHAT_MODEL = "llama-3.3-70b-versatile";
 
 // Together AI image generation constants
 const TOGETHER_API_URL = "https://api.together.xyz/v1/images/generations";
-const IMAGE_MODEL = "black-forest-labs/FLUX.1-schnell-Free";
+const IMAGE_MODEL =
+  process.env.TOGETHER_IMAGE_MODEL ?? "black-forest-labs/FLUX.1-schnell-Free";
+
+function getTogetherImageApiKey(): string | undefined {
+  return process.env.TOGETHER_IMAGE_API_KEY ?? process.env.TOGETHER_AI_API_KEY;
+}
 
 /**
  * Clamp and round a pixel dimension to a value accepted by FLUX.1:
@@ -32,9 +37,11 @@ async function generateImageViaTogetherAI(
   width: number,
   height: number,
 ): Promise<{ url: string }> {
-  const apiKey = process.env.TOGETHER_AI_API_KEY;
+  const apiKey = getTogetherImageApiKey();
   if (!apiKey) {
-    throw new Error("TOGETHER_AI_API_KEY is not configured");
+    throw new Error(
+      "TOGETHER_IMAGE_API_KEY or TOGETHER_AI_API_KEY is not configured",
+    );
   }
 
   const w = normalizeImageDimension(width);
@@ -226,11 +233,11 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      if (!process.env.TOGETHER_AI_API_KEY) {
+      if (!getTogetherImageApiKey()) {
         return res.status(503).json({
           error:
-            `${label === "image" ? "Image" : "Background"} generation requires a TOGETHER_AI_API_KEY environment variable. ` +
-            "Sign up at api.together.ai and add TOGETHER_AI_API_KEY to your environment.",
+            `${label === "image" ? "Image" : "Background"} generation requires TOGETHER_IMAGE_API_KEY or TOGETHER_AI_API_KEY. ` +
+            "Sign up at api.together.ai and add one of these environment variables.",
         });
       }
 

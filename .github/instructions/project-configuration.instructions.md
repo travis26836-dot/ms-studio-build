@@ -1,22 +1,36 @@
 ---
-description: "Use when configuring the app, setting up environment variables, running dev or build commands, wiring Clerk auth, connecting the database, or working on server/AI routes. Covers app structure, required env vars, build pipeline, and Prisma setup."
-applyTo: "server/**,prisma/**,vite.config.ts,tsconfig.json,package.json"
+description: "Start here for app configuration. Covers required environment variables, build pipeline, database connection, and local development setup. Use when setting up .env, running dev/build commands, configuring Vite/Express, or troubleshooting builds."
+applyTo: "server/**,prisma/**,vite.config.ts,tsconfig.json,package.json,.env*"
 ---
 
 # Project Configuration Reference
 
-## App Structure
+> **Start here** for setup and configuration. See [copilot-instructions.md](../copilot-instructions.md) for code style and architecture guidelines.
 
-This is a monorepo-style workspace with **two separate apps**:
+## Quick Start
 
-| App | Root | Dev Command | Build Output |
-|-----|------|-------------|--------------|
-| Main product (React + Vite + Express) | `client/` (Vite root), `server/` | `pnpm dev` (repo root) | `dist/public/` (client), `dist/index.js` (server) |
-| Customer portal (standalone) | `customer-portal/` | `pnpm dev` inside `customer-portal/` | separate |
+```bash
+pnpm install              # install dependencies
+cp .env.example .env      # create local .env from template
+pnpm dev                  # run Vite dev server (port 3000)
+pnpm build                # build for production
+pnpm start                # run production server (dist/index.js)
+```
 
-- **Do not mix up the two apps.** Main app commands run from repo root; customer portal has its own `package.json`.
-- Both default to port 3000 — run them separately to avoid conflicts.
-- `imported-source/` is legacy/reference only; do not edit it unless explicitly asked.
+## Build Pipeline
+
+```
+pnpm dev                    → Vite dev server only (client-side, port 3000)
+pnpm build                  → Vite builds client/ → dist/public/
+                            → esbuild bundles server/index.ts → dist/index.js
+pnpm start (or node dist/)  → Express server (port 3000, production mode)
+```
+
+**Key points:**
+- `pnpm dev` runs only Vite; Express is for production only
+- Both `pnpm dev` and `pnpm start` use port 3000 — run them separately
+- In `customer-portal/`, use its own `pnpm dev` command (separate from main app)
+- `dist/index.js` requires `dist/public/` present (SPA assets)
 
 ## Path Aliases
 
@@ -25,92 +39,78 @@ This is a monorepo-style workspace with **two separate apps**:
 | `@/*` | `client/src/*` | All main app imports |
 | `@shared/*` | `shared/*` | Shared types and constants |
 
-Defined in both `vite.config.ts` (build) and `tsconfig.json` (type checking).
-
-**pnpm install
-**pnpm approve-builds # approve esbuild and Vite updates after running pnpm update.
-// pnpm update esbuild vite
-  // pnpm update -D esbuild vite
-  
-  ((## update Vite or esbuild when a new version is released or a bug fix is required, then run the approve-builds command to allowlist the new versions. This prevents unexpected build tool updates from breaking the build without notice.))
-
-## Build Pipeline
-
-pnpm rebuild;
-```
-pnpm build
-  └─ Vite builds client/ → dist/public/
-  └─ esbuild bundles server/index.ts → dist/index.js
-pnpm start → runs dist/index.js (Express serves dist/public as SPA)
-node dist/index.js → direct equivalent of pnpm start
-```
-
-- In the main app (repo root), `pnpm dev` runs only the Vite dev server (port 3000); the Express server is for production. In `customer-portal/`, use that app's own `pnpm dev` command separately. During development, you can run `pnpm build` in watch mode (`-w`) to rebuild the server on changes.
-- `dist/index.js` still needs `dist/public/` present, because Express serves SPA assets from that folder.
-- `pnpm check` runs `tsc --noEmit` — use this to validate TypeScript before committing.
+Defined in both `vite.config.ts` (Vite build) and `tsconfig.json` (type checking).
 
 ## Required Environment Variables
 
-Create a `.env` file in the **repo root** (not inside `client/`). Vite reads from root via `envDir`.
-
-Use this section as a quick checklist:
-- First, set all variables in **Always Required**.
-- Then, add variables in **Feature-Gated** only for features you enable.
+Create `.env` at **repo root** (not inside `client/`). Vite reads from the root via `envDir`.
 
 ### Always Required
 
-| Variable | Used By | Notes |
-|----------|---------|-------|
-| `DATABASE_URL` | Prisma (`server/db.ts`) | PostgreSQL connection string |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Client auth (`client/src/App.tsx`) | Starts with `pk_` |
-| `CLERK_SECRET_KEY` | Server auth (`server/auth.ts`) | Starts with `sk_` |
+| Variable | Used By | Value | Example |
+|----------|---------|-------|---------|
+| `DATABASE_URL` | Prisma / `server/db.ts` | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/studio` |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Client auth / `client/src/App.tsx` | Clerk public key | `pk_test_...` |
+| `CLERK_SECRET_KEY` | Server auth / `server/auth.ts` | Clerk secret key | `sk_test_...` |
 
-### Feature-Gated (app degrades gracefully without these)
+### Feature-Gated (app degrades without these)
 
-| Variable | Feature |
-|----------|---------|
-| `GROQ_API_KEY` | AI chat + layout suggestions (`server/ai.ts`) — returns 503 if missing |
-| `TOGETHER_AI_API_KEY` | AI image & background generation (`server/ai.ts`) — returns 503 if missing; get a free key at api.together.ai |
-| `STRIPE_SECRET_KEY` | Subscription billing |
-| `STRIPE_PRICE_PRO` | Pro tier price ID |
-| `STRIPE_PRICE_TEAM` | Team tier price ID |
+| Variable | Feature | Value | Notes |
+|----------|---------|-------|-------|
+| `GROQ_API_KEY` | AI chat + layout suggestions | API key from groq.com | Returns 503 if missing |
+| `TOGETHER_AI_API_KEY` | AI image & background generation | API key from together.ai | Returns 503 if missing; free tier available |
+| `STRIPE_SECRET_KEY` | Subscription billing | `sk_test_...` (dev) or `sk_live_...` (prod) | See [stripe-setup.instructions.md](./stripe-setup.instructions.md) |
+| `STRIPE_PRICE_PRO` | Pro tier subscription | Price ID from Stripe Dashboard | Example: `price_...` |
+| `STRIPE_PRICE_TEAM` | Team tier subscription | Price ID from Stripe Dashboard | Example: `price_...` |
 
-`VITE_` prefix is required for any variable accessed in client-side code.
+**Important:** `VITE_` prefix is required for any variable accessed in **client-side code** only.
 
-## Database (Prisma)
+## Checking Your Setup
 
-- Schema: `prisma/schema.prisma`
-- Provider: PostgreSQL via `@prisma/adapter-pg`
-- Config: `prisma.config.ts` (loads `DATABASE_URL` from `.env`)
+```bash
+pnpm check                # validate TypeScript (tsc --noEmit)
+pnpm format               # format code with Prettier
+pnpm dev                  # start dev server and verify .env loads
+```
+
+If dev server fails, check: `.env` file exists, `DATABASE_URL` is valid (if using database features), and all required keys are present.
+
+## Database Setup (Prisma)
+
+**Schema location:** `prisma/schema.prisma`  
+**Provider:** PostgreSQL via `@prisma/adapter-pg`  
+**Config file:** `prisma.config.ts` (loads `DATABASE_URL` from `.env`)
 
 Common commands:
 ```bash
-pnpm prisma migrate dev    # apply migrations in development
+pnpm prisma migrate dev    # create and apply migrations locally
 pnpm prisma generate       # regenerate Prisma Client after schema changes
-pnpm prisma studio         # visual DB browser
+pnpm prisma studio        # open visual database browser
 ```
 
-The Prisma client is a singleton in `server/db.ts` — import `prisma` from there, never create a new instance.
+**Important:** The Prisma client is a singleton in `server/db.ts`. Always import `prisma` from there; never create a new instance.
 
-## AI Routes (server/ai.ts)
+For full Prisma setup walkthrough, see [railway-database-setup.instructions.md](./railway-database-setup.instructions.md).
 
-- `POST /api/ai/chat` — streaming chat, model: `llama-3.3-70b-versatile` (Groq)
-- `POST /api/ai/suggest-layout` — returns JSON layout suggestions (Groq)
-- `POST /api/ai/generate-image` — generates an image via Together AI (FLUX.1-schnell-Free); returns `{ url: string }` as a base64 data URL
-- `POST /api/ai/generate-background` — generates a canvas background via Together AI (FLUX.1-schnell-Free); returns `{ url: string }` as a base64 data URL
-- `GROQ_API_KEY` required for chat/layout; returns `503` with a clear message if absent
-- `TOGETHER_AI_API_KEY` required for image/background generation; returns `503` with a clear message if absent
-- Client calls these via relative URLs in `client/src/lib/aiClient.ts` — no hardcoded hosts
+## Server Routes
 
-## Auth (Clerk)
+**Express server location:** `server/index.ts`
 
-- **Client-side**: `ClerkProvider` wraps the app in `client/src/App.tsx`, uses `VITE_CLERK_PUBLISHABLE_KEY`
-- **Server-side**: `ClerkExpressWithAuth()` middleware in `server/index.ts`, uses `CLERK_SECRET_KEY`
-- Users are upserted to the Prisma `User` table on first authenticated request via `getOrCreateUser()`
-- Email is a placeholder (`${clerkId}@placeholder.local`) until Clerk webhooks are configured
+### Built-in Routes
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/` | GET | Serves SPA (client build from `dist/public/`) |
+| `/api/*` | - | All API routes defined in `server/index.ts` |
 
-## Tailwind CSS
+### Feature Routes (see specific guides)
+- **AI endpoints** (chat, layout, image generation): See [server/ai.ts](../../server/ai.ts) + `GROQ_API_KEY` and `TOGETHER_AI_API_KEY` env vars
+- **Stripe webhook**: See [stripe-setup.instructions.md](./stripe-setup.instructions.md)
+- **Customer portal API**: See [railway-database-setup.instructions.md](./railway-database-setup.instructions.md)
 
-- Version 4 via `@tailwindcss/vite` plugin — **no `tailwind.config.ts` file**
-- CSS entry point: `client/src/index.css`
-- Customize theme in `index.css` using CSS variables, not a separate config file
+## Next Steps
+
+Once your `.env` is configured and you can run `pnpm dev` successfully:
+
+1. **To add database features:** Follow [railway-database-setup.instructions.md](./railway-database-setup.instructions.md)
+2. **To add subscriptions:** Follow [stripe-setup.instructions.md](./stripe-setup.instructions.md)
+3. **For code style & architecture:** See [copilot-instructions.md](../copilot-instructions.md)

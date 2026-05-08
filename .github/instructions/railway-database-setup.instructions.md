@@ -1,8 +1,13 @@
 ---
-description: "Use when setting up Railway PostgreSQL, Prisma ORM, Clerk auth, or Stripe subscriptions. Covers connecting a database to the Express server, adding API routes, wiring the customer portal, and deploying to Railway. Trigger phrases: Railway database, Prisma setup, Clerk middleware, Stripe integration, subscription tiers, DATABASE_URL, customer portal API."
+description: "Feature-specific guide for Railway PostgreSQL and Prisma ORM setup. Use after completing [project-configuration.instructions.md](project-configuration.instructions.md). Covers database schema, Prisma migrations, Clerk auth middleware, and customer portal API wiring."
+applyTo: "server/db.ts,server/auth.ts,prisma/**,customer-portal/**"
 ---
 
 # Railway + Database Setup Guide
+
+> **Prerequisites:** Follow [project-configuration.instructions.md](./project-configuration.instructions.md) first to set up .env and understand the app structure.
+
+> **Use this guide when:** Setting up a PostgreSQL database on Railway, connecting Prisma ORM, adding Clerk authentication middleware, or wiring the customer portal API.
 
 ## Stack
 

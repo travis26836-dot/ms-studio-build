@@ -1,8 +1,13 @@
 ---
-description: "Use when setting up Stripe subscriptions, wiring the webhook route, implementing checkout, managing subscription tiers, or working with Stripe env vars. Covers required env vars, the Subscription/Customer Prisma models, webhook handler, and plan-gating pattern."
+description: "Feature-specific guide for Stripe subscription integration. Use after completing [railway-database-setup.instructions.md](railway-database-setup.instructions.md). Covers webhook setup, checkout flow, plan-gating, and Stripe environment variables."
+applyTo: "server/index.ts,server/**"
 ---
 
 # Stripe Integration Guide
+
+> **Prerequisites:** Follow [project-configuration.instructions.md](./project-configuration.instructions.md) and [railway-database-setup.instructions.md](./railway-database-setup.instructions.md) first to set up database and Prisma schema.
+
+> **Use this guide when:** Setting up Stripe subscriptions, configuring webhook handlers, implementing checkout, managing subscription tiers, or troubleshooting billing issues.
 
 ## Required Environment Variables
 

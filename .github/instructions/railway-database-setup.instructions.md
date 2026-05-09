@@ -11,14 +11,14 @@ applyTo: "server/db.ts,server/auth.ts,prisma/**,customer-portal/**"
 
 ## Stack
 
-| Layer | Choice |
-|-------|--------|
-| Hosting | Railway (existing service: `ms-studio-build-production`) |
-| Database | Railway PostgreSQL plugin |
-| ORM | Prisma |
-| Auth | Clerk (`@clerk/clerk-sdk-node`) |
-| Payments | Stripe |
-| Server | `server/index.ts` (Express) |
+| Layer    | Choice                                                   |
+| -------- | -------------------------------------------------------- |
+| Hosting  | Railway (existing service: `ms-studio-build-production`) |
+| Database | Railway PostgreSQL plugin                                |
+| ORM      | Prisma                                                   |
+| Auth     | Clerk (`@clerk/clerk-sdk-node`)                          |
+| Payments | Stripe                                                   |
+| Server   | `server/index.ts` (Express)                              |
 
 ## Current State (know before starting)
 
@@ -191,7 +191,8 @@ async function createPrismaClient(): Promise<PrismaClientInstance> {
 
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["query", "error"] : ["error"],
+    log:
+      process.env.NODE_ENV === "development" ? ["query", "error"] : ["error"],
   });
 }
 
@@ -321,7 +322,9 @@ app.get("/api/subscription/status", async (req, res) => {
   const prisma = await getPrisma();
   const user = await getOrCreateUser(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
-  const sub = await prisma.subscription.findUnique({ where: { userId: user.id } });
+  const sub = await prisma.subscription.findUnique({
+    where: { userId: user.id },
+  });
   res.json({ plan: user.customer?.plan ?? "free", subscription: sub });
 });
 
@@ -373,7 +376,9 @@ STRIPE_PRICE_TEAM=price_...
 
 ```typescript
 import Stripe from "stripe";
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-04-10" });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-04-10",
+});
 
 app.post("/api/stripe/create-checkout", async (req, res) => {
   const user = await getOrCreateUser(req);
@@ -405,20 +410,30 @@ app.post(
     const sig = req.headers["stripe-signature"] as string;
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET!
+      );
     } catch {
       return res.status(400).send("Webhook signature verification failed");
     }
 
-    if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+    if (
+      event.type === "customer.subscription.updated" ||
+      event.type === "customer.subscription.deleted"
+    ) {
       const sub = event.data.object as Stripe.Subscription;
       const userId = sub.metadata?.userId;
       if (userId) {
         const status = sub.status; // "active" | "canceled" | "past_due"
         const priceId = sub.items.data[0]?.price.id;
         const plan =
-          priceId === process.env.STRIPE_PRICE_PRO ? "pro" :
-          priceId === process.env.STRIPE_PRICE_TEAM ? "team" : "free";
+          priceId === process.env.STRIPE_PRICE_PRO
+            ? "pro"
+            : priceId === process.env.STRIPE_PRICE_TEAM
+              ? "team"
+              : "free";
 
         await prisma.subscription.upsert({
           where: { userId },
@@ -474,16 +489,16 @@ The `customer-portal/src/app.jsx` already reads `import.meta.env.VITE_API_URL` �
 
 ### Required Railway Environment Variables (main service)
 
-| Variable | Source |
-|----------|--------|
-| `DATABASE_URL` | Auto-injected by Railway Postgres plugin |
-| `CLERK_SECRET_KEY` | Clerk dashboard → API Keys |
-| `STRIPE_SECRET_KEY` | Stripe dashboard → Developers → API keys |
-| `STRIPE_WEBHOOK_SECRET` | Stripe dashboard → Webhooks → signing secret |
-| `STRIPE_PRICE_PRO` | Stripe dashboard → Products → Pro plan price ID |
-| `STRIPE_PRICE_TEAM` | Stripe dashboard → Products → Team plan price ID |
-| `APP_URL` | `https://ms-studio-build-production.up.railway.app` |
-| `NODE_ENV` | `production` |
+| Variable                | Source                                              |
+| ----------------------- | --------------------------------------------------- |
+| `DATABASE_URL`          | Auto-injected by Railway Postgres plugin            |
+| `CLERK_SECRET_KEY`      | Clerk dashboard → API Keys                          |
+| `STRIPE_SECRET_KEY`     | Stripe dashboard → Developers → API keys            |
+| `STRIPE_WEBHOOK_SECRET` | Stripe dashboard → Webhooks → signing secret        |
+| `STRIPE_PRICE_PRO`      | Stripe dashboard → Products → Pro plan price ID     |
+| `STRIPE_PRICE_TEAM`     | Stripe dashboard → Products → Team plan price ID    |
+| `APP_URL`               | `https://ms-studio-build-production.up.railway.app` |
+| `NODE_ENV`              | `production`                                        |
 
 ### Railway Release Command
 

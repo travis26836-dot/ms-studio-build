@@ -35,7 +35,7 @@ export function Select({
       setOpen,
       onValueChange,
     }),
-    [onValueChange, open, value],
+    [onValueChange, open, value]
   );
 
   return (
@@ -56,7 +56,7 @@ export function SelectTrigger({
       type="button"
       className={cn(
         "flex h-10 w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground",
-        className,
+        className
       )}
       onClick={() => setOpen(!open)}
     >
@@ -86,7 +86,7 @@ export function SelectContent({
     <div
       className={cn(
         "absolute z-20 mt-1 w-full rounded-lg border border-border bg-popover p-1 shadow-lg",
-        className,
+        className
       )}
     >
       {children}

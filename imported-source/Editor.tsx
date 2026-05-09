@@ -1,23 +1,87 @@
-import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+} from "react";
 import { useCanvasEditor } from "@/hooks/useCanvasEditor";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Type, Image, Square, Circle, Triangle, Star, Minus, Hexagon,
-  Undo2, Redo2, ZoomIn, ZoomOut, Trash2, Copy, Lock, Unlock,
-  ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, Group, Ungroup,
-  AlignLeft, AlignCenter, AlignRight, AlignStartVertical, AlignCenterVertical, AlignEndVertical,
-  Download, Save, Palette, Layers, Sparkles, MessageSquare,
-  FileText, LayoutTemplate, ImageIcon, Shapes, Upload, Search,
-  ChevronLeft, Bold, Italic, Underline,
-  Wand2, Eraser, Crop, SlidersHorizontal, Bot, Code2, Maximize2,
-  Heart, Pentagon, Diamond, Loader2, Check, X, Sun, Contrast,
-  Droplets, Focus, Paintbrush, RotateCcw, Eye
+  Type,
+  Image,
+  Square,
+  Circle,
+  Triangle,
+  Star,
+  Minus,
+  Hexagon,
+  Undo2,
+  Redo2,
+  ZoomIn,
+  ZoomOut,
+  Trash2,
+  Copy,
+  Lock,
+  Unlock,
+  ArrowUp,
+  ArrowDown,
+  ChevronsUp,
+  ChevronsDown,
+  Group,
+  Ungroup,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignStartVertical,
+  AlignCenterVertical,
+  AlignEndVertical,
+  Download,
+  Save,
+  Palette,
+  Layers,
+  Sparkles,
+  MessageSquare,
+  FileText,
+  LayoutTemplate,
+  ImageIcon,
+  Shapes,
+  Upload,
+  Search,
+  ChevronLeft,
+  Bold,
+  Italic,
+  Underline,
+  Wand2,
+  Eraser,
+  Crop,
+  SlidersHorizontal,
+  Bot,
+  Code2,
+  Maximize2,
+  Heart,
+  Pentagon,
+  Diamond,
+  Loader2,
+  Check,
+  X,
+  Sun,
+  Contrast,
+  Droplets,
+  Focus,
+  Paintbrush,
+  RotateCcw,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -26,7 +90,16 @@ import { CANVAS_PRESETS } from "@shared/designTypes";
 import ExportDialog from "@/components/ExportDialog";
 import AIChatPanel from "@/components/AIChatPanel";
 
-type SidebarPanel = "templates" | "elements" | "text" | "uploads" | "photos" | "ai" | "brand" | "layers" | null;
+type SidebarPanel =
+  | "templates"
+  | "elements"
+  | "text"
+  | "uploads"
+  | "photos"
+  | "ai"
+  | "brand"
+  | "layers"
+  | null;
 
 interface EditorProps {
   projectId?: number;
@@ -47,7 +120,9 @@ export default function Editor({
   const [activePanel, setActivePanel] = useState<SidebarPanel>("templates");
   const [searchQuery, setSearchQuery] = useState("");
   const [showChat, setShowChat] = useState(false);
-  const [currentProjectId, setCurrentProjectId] = useState<number | undefined>(projectId);
+  const [currentProjectId, setCurrentProjectId] = useState<number | undefined>(
+    projectId
+  );
   const { user } = useAuth();
 
   const saveMutation = trpc.projects.save.useMutation();
@@ -76,20 +151,30 @@ export default function Editor({
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
       if ((e.ctrlKey || e.metaKey) && e.key === "z") {
         e.preventDefault();
         if (e.shiftKey) editor.redo();
         else editor.undo();
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === "y") { e.preventDefault(); editor.redo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === "y") {
+        e.preventDefault();
+        editor.redo();
+      }
       if (e.key === "Delete" || e.key === "Backspace") {
         if (!(e.target instanceof HTMLInputElement)) {
           e.preventDefault();
           editor.deleteSelected();
         }
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === "d") { e.preventDefault(); editor.duplicateSelected(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === "d") {
+        e.preventDefault();
+        editor.duplicateSelected();
+      }
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
         handleSave();
@@ -105,7 +190,10 @@ export default function Editor({
 
     try {
       if (currentProjectId) {
-        await saveMutation.mutateAsync({ id: currentProjectId, canvasData: json });
+        await saveMutation.mutateAsync({
+          id: currentProjectId,
+          canvasData: json,
+        });
         toast.success("Project saved!");
       } else {
         const result = await createMutation.mutateAsync({
@@ -134,51 +222,112 @@ export default function Editor({
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       {/* Top Toolbar */}
       <div className="h-12 border-b border-border bg-toolbar flex items-center px-3 gap-1 shrink-0">
-        <Button variant="ghost" size="sm" className="text-toolbar-foreground gap-1.5 mr-2" onClick={() => window.history.back()}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-toolbar-foreground gap-1.5 mr-2"
+          onClick={() => window.history.back()}
+        >
           <ChevronLeft className="w-4 h-4" />
           <span className="text-sm font-medium">Manus Design Studio</span>
         </Button>
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
-        <ToolbarButton icon={Undo2} tooltip="Undo (Ctrl+Z)" onClick={editor.undo} />
-        <ToolbarButton icon={Redo2} tooltip="Redo (Ctrl+Shift+Z)" onClick={editor.redo} />
+        <ToolbarButton
+          icon={Undo2}
+          tooltip="Undo (Ctrl+Z)"
+          onClick={editor.undo}
+        />
+        <ToolbarButton
+          icon={Redo2}
+          tooltip="Redo (Ctrl+Shift+Z)"
+          onClick={editor.redo}
+        />
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
-        <ToolbarButton icon={ZoomOut} tooltip="Zoom Out" onClick={() => editor.setZoom(editor.editorState.zoom - 0.1)} />
+        <ToolbarButton
+          icon={ZoomOut}
+          tooltip="Zoom Out"
+          onClick={() => editor.setZoom(editor.editorState.zoom - 0.1)}
+        />
         <span className="text-xs text-muted-foreground w-12 text-center">
           {Math.round(editor.editorState.zoom * 100)}%
         </span>
-        <ToolbarButton icon={ZoomIn} tooltip="Zoom In" onClick={() => editor.setZoom(editor.editorState.zoom + 0.1)} />
-        <ToolbarButton icon={Maximize2} tooltip="Fit to Screen" onClick={() => {
-          const container = canvasContainerRef.current;
-          if (container) {
-            const scaleX = (container.clientWidth - 80) / canvasWidth;
-            const scaleY = (container.clientHeight - 80) / canvasHeight;
-            editor.setZoom(Math.min(scaleX, scaleY, 1));
-          }
-        }} />
+        <ToolbarButton
+          icon={ZoomIn}
+          tooltip="Zoom In"
+          onClick={() => editor.setZoom(editor.editorState.zoom + 0.1)}
+        />
+        <ToolbarButton
+          icon={Maximize2}
+          tooltip="Fit to Screen"
+          onClick={() => {
+            const container = canvasContainerRef.current;
+            if (container) {
+              const scaleX = (container.clientWidth - 80) / canvasWidth;
+              const scaleY = (container.clientHeight - 80) / canvasHeight;
+              editor.setZoom(Math.min(scaleX, scaleY, 1));
+            }
+          }}
+        />
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
         {hasSelection && (
           <>
-            <ToolbarButton icon={Copy} tooltip="Duplicate (Ctrl+D)" onClick={editor.duplicateSelected} />
-            <ToolbarButton icon={Trash2} tooltip="Delete" onClick={editor.deleteSelected} />
+            <ToolbarButton
+              icon={Copy}
+              tooltip="Duplicate (Ctrl+D)"
+              onClick={editor.duplicateSelected}
+            />
+            <ToolbarButton
+              icon={Trash2}
+              tooltip="Delete"
+              onClick={editor.deleteSelected}
+            />
             <Separator orientation="vertical" className="h-6 mx-1" />
-            <ToolbarButton icon={ChevronsUp} tooltip="Bring to Front" onClick={editor.bringToFront} />
-            <ToolbarButton icon={ArrowUp} tooltip="Bring Forward" onClick={editor.bringForward} />
-            <ToolbarButton icon={ArrowDown} tooltip="Send Backward" onClick={editor.sendBackward} />
-            <ToolbarButton icon={ChevronsDown} tooltip="Send to Back" onClick={editor.sendToBack} />
+            <ToolbarButton
+              icon={ChevronsUp}
+              tooltip="Bring to Front"
+              onClick={editor.bringToFront}
+            />
+            <ToolbarButton
+              icon={ArrowUp}
+              tooltip="Bring Forward"
+              onClick={editor.bringForward}
+            />
+            <ToolbarButton
+              icon={ArrowDown}
+              tooltip="Send Backward"
+              onClick={editor.sendBackward}
+            />
+            <ToolbarButton
+              icon={ChevronsDown}
+              tooltip="Send to Back"
+              onClick={editor.sendToBack}
+            />
             <Separator orientation="vertical" className="h-6 mx-1" />
             {multiSelect && (
-              <ToolbarButton icon={Group} tooltip="Group" onClick={editor.groupSelected} />
+              <ToolbarButton
+                icon={Group}
+                tooltip="Group"
+                onClick={editor.groupSelected}
+              />
             )}
             {selectedObj?.type === "group" && (
-              <ToolbarButton icon={Ungroup} tooltip="Ungroup" onClick={editor.ungroupSelected} />
+              <ToolbarButton
+                icon={Ungroup}
+                tooltip="Ungroup"
+                onClick={editor.ungroupSelected}
+              />
             )}
-            <ToolbarButton icon={Lock} tooltip="Toggle Lock" onClick={editor.toggleLock} />
+            <ToolbarButton
+              icon={Lock}
+              tooltip="Toggle Lock"
+              onClick={editor.toggleLock}
+            />
           </>
         )}
 
@@ -194,7 +343,12 @@ export default function Editor({
           <span className="text-xs">AI Chat</span>
         </Button>
 
-        <Button variant="ghost" size="sm" className="text-toolbar-foreground gap-1.5" onClick={handleSave}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-toolbar-foreground gap-1.5"
+          onClick={handleSave}
+        >
           <Save className="w-4 h-4" />
           <span className="text-xs">Save</span>
         </Button>
@@ -214,14 +368,54 @@ export default function Editor({
       <div className="flex flex-1 overflow-hidden">
         {/* Left Icon Sidebar */}
         <div className="w-16 border-r border-border bg-toolbar flex flex-col items-center py-2 gap-1 shrink-0">
-          <SidebarIcon icon={LayoutTemplate} label="Templates" active={activePanel === "templates"} onClick={() => togglePanel("templates")} />
-          <SidebarIcon icon={Shapes} label="Elements" active={activePanel === "elements"} onClick={() => togglePanel("elements")} />
-          <SidebarIcon icon={Type} label="Text" active={activePanel === "text"} onClick={() => togglePanel("text")} />
-          <SidebarIcon icon={ImageIcon} label="Photos" active={activePanel === "photos"} onClick={() => togglePanel("photos")} />
-          <SidebarIcon icon={Upload} label="Uploads" active={activePanel === "uploads"} onClick={() => togglePanel("uploads")} />
-          <SidebarIcon icon={Palette} label="Brand" active={activePanel === "brand"} onClick={() => togglePanel("brand")} />
-          <SidebarIcon icon={Sparkles} label="AI Tools" active={activePanel === "ai"} onClick={() => togglePanel("ai")} />
-          <SidebarIcon icon={Layers} label="Layers" active={activePanel === "layers"} onClick={() => togglePanel("layers")} />
+          <SidebarIcon
+            icon={LayoutTemplate}
+            label="Templates"
+            active={activePanel === "templates"}
+            onClick={() => togglePanel("templates")}
+          />
+          <SidebarIcon
+            icon={Shapes}
+            label="Elements"
+            active={activePanel === "elements"}
+            onClick={() => togglePanel("elements")}
+          />
+          <SidebarIcon
+            icon={Type}
+            label="Text"
+            active={activePanel === "text"}
+            onClick={() => togglePanel("text")}
+          />
+          <SidebarIcon
+            icon={ImageIcon}
+            label="Photos"
+            active={activePanel === "photos"}
+            onClick={() => togglePanel("photos")}
+          />
+          <SidebarIcon
+            icon={Upload}
+            label="Uploads"
+            active={activePanel === "uploads"}
+            onClick={() => togglePanel("uploads")}
+          />
+          <SidebarIcon
+            icon={Palette}
+            label="Brand"
+            active={activePanel === "brand"}
+            onClick={() => togglePanel("brand")}
+          />
+          <SidebarIcon
+            icon={Sparkles}
+            label="AI Tools"
+            active={activePanel === "ai"}
+            onClick={() => togglePanel("ai")}
+          />
+          <SidebarIcon
+            icon={Layers}
+            label="Layers"
+            active={activePanel === "layers"}
+            onClick={() => togglePanel("layers")}
+          />
         </div>
 
         {/* Expandable Side Panel */}
@@ -244,7 +438,10 @@ export default function Editor({
           className="flex-1 bg-canvas overflow-auto flex items-center justify-center relative"
           style={{ background: "oklch(0.18 0.005 260)" }}
         >
-          <div className="relative" style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.4)" }}>
+          <div
+            className="relative"
+            style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.4)" }}
+          >
             <canvas ref={canvasRef} />
           </div>
         </div>
@@ -252,7 +449,11 @@ export default function Editor({
         {/* Right Properties Panel */}
         {hasSelection && !showChat && (
           <div className="w-64 border-l border-border bg-card shrink-0">
-            <PropertiesPanel editor={editor} canvasWidth={canvasWidth} canvasHeight={canvasHeight} />
+            <PropertiesPanel
+              editor={editor}
+              canvasWidth={canvasWidth}
+              canvasHeight={canvasHeight}
+            />
           </div>
         )}
 
@@ -268,7 +469,12 @@ export default function Editor({
 }
 
 // ─── Toolbar Button ──────────────────────────────────────────
-function ToolbarButton({ icon: Icon, tooltip, onClick, active }: {
+function ToolbarButton({
+  icon: Icon,
+  tooltip,
+  onClick,
+  active,
+}: {
   icon: React.ElementType;
   tooltip: string;
   onClick: () => void;
@@ -286,13 +492,20 @@ function ToolbarButton({ icon: Icon, tooltip, onClick, active }: {
           <Icon className="w-4 h-4" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-xs">{tooltip}</TooltipContent>
+      <TooltipContent side="bottom" className="text-xs">
+        {tooltip}
+      </TooltipContent>
     </Tooltip>
   );
 }
 
 // ─── Sidebar Icon ────────────────────────────────────────────
-function SidebarIcon({ icon: Icon, label, active, onClick }: {
+function SidebarIcon({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+}: {
   icon: React.ElementType;
   label: string;
   active: boolean;
@@ -311,7 +524,14 @@ function SidebarIcon({ icon: Icon, label, active, onClick }: {
 }
 
 // ─── Side Panel Content ──────────────────────────────────────
-function SidePanel({ panel, editor, searchQuery, setSearchQuery, canvasWidth, canvasHeight }: {
+function SidePanel({
+  panel,
+  editor,
+  searchQuery,
+  setSearchQuery,
+  canvasWidth,
+  canvasHeight,
+}: {
   panel: SidebarPanel;
   editor: ReturnType<typeof useCanvasEditor>;
   searchQuery: string;
@@ -333,14 +553,16 @@ function SidePanel({ panel, editor, searchQuery, setSearchQuery, canvasWidth, ca
   return (
     <>
       <div className="p-3 border-b border-border">
-        <h3 className="text-sm font-semibold text-card-foreground mb-2">{panelTitles[panel || ""]}</h3>
+        <h3 className="text-sm font-semibold text-card-foreground mb-2">
+          {panelTitles[panel || ""]}
+        </h3>
         {panel !== "layers" && panel !== "brand" && (
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
             <Input
               placeholder="Search..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className="pl-8 h-8 text-xs bg-secondary border-border"
             />
           </div>
@@ -348,13 +570,23 @@ function SidePanel({ panel, editor, searchQuery, setSearchQuery, canvasWidth, ca
       </div>
       <ScrollArea className="flex-1">
         <div className="p-3">
-          {panel === "templates" && <TemplatesPanel editor={editor} searchQuery={searchQuery} />}
+          {panel === "templates" && (
+            <TemplatesPanel editor={editor} searchQuery={searchQuery} />
+          )}
           {panel === "elements" && <ElementsPanel editor={editor} />}
           {panel === "text" && <TextPanel editor={editor} />}
-          {panel === "photos" && <PhotosPanel editor={editor} searchQuery={searchQuery} />}
+          {panel === "photos" && (
+            <PhotosPanel editor={editor} searchQuery={searchQuery} />
+          )}
           {panel === "uploads" && <UploadsPanel editor={editor} />}
           {panel === "brand" && <BrandPanel editor={editor} />}
-          {panel === "ai" && <AIPanel editor={editor} canvasWidth={canvasWidth} canvasHeight={canvasHeight} />}
+          {panel === "ai" && (
+            <AIPanel
+              editor={editor}
+              canvasWidth={canvasWidth}
+              canvasHeight={canvasHeight}
+            />
+          )}
           {panel === "layers" && <LayersPanel editor={editor} />}
         </div>
       </ScrollArea>
@@ -363,8 +595,16 @@ function SidePanel({ panel, editor, searchQuery, setSearchQuery, canvasWidth, ca
 }
 
 // ─── Templates Panel (DB-connected) ─────────────────────────
-function TemplatesPanel({ editor, searchQuery }: { editor: ReturnType<typeof useCanvasEditor>; searchQuery: string }) {
-  const [activeCategory, setActiveCategory] = useState<string | undefined>(undefined);
+function TemplatesPanel({
+  editor,
+  searchQuery,
+}: {
+  editor: ReturnType<typeof useCanvasEditor>;
+  searchQuery: string;
+}) {
+  const [activeCategory, setActiveCategory] = useState<string | undefined>(
+    undefined
+  );
   const { data: dbTemplates, isLoading } = trpc.templates.list.useQuery(
     activeCategory ? { category: activeCategory } : undefined
   );
@@ -385,14 +625,19 @@ function TemplatesPanel({ editor, searchQuery }: { editor: ReturnType<typeof use
     if (!searchQuery) return dbTemplates;
     const q = searchQuery.toLowerCase();
     return dbTemplates.filter(
-      (t: any) => t.name.toLowerCase().includes(q) || (t.tags && JSON.stringify(t.tags).toLowerCase().includes(q))
+      (t: any) =>
+        t.name.toLowerCase().includes(q) ||
+        (t.tags && JSON.stringify(t.tags).toLowerCase().includes(q))
     );
   }, [dbTemplates, searchQuery]);
 
   const handleApplyTemplate = (template: any) => {
     if (template.canvasData) {
       try {
-        const data = typeof template.canvasData === "string" ? template.canvasData : JSON.stringify(template.canvasData);
+        const data =
+          typeof template.canvasData === "string"
+            ? template.canvasData
+            : JSON.stringify(template.canvasData);
         editor.loadFromJSON(data);
         toast.success(`Applied template: ${template.name}`);
       } catch {
@@ -401,25 +646,40 @@ function TemplatesPanel({ editor, searchQuery }: { editor: ReturnType<typeof use
     }
   };
 
-  const templateColors = ["#6366f1", "#ec4899", "#14b8a6", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#22c55e", "#f97316", "#64748b"];
+  const templateColors = [
+    "#6366f1",
+    "#ec4899",
+    "#14b8a6",
+    "#f59e0b",
+    "#ef4444",
+    "#8b5cf6",
+    "#06b6d4",
+    "#22c55e",
+    "#f97316",
+    "#64748b",
+  ];
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-1.5">
         <button
           className={`flex flex-col items-center p-2 rounded-lg transition-colors text-xs ${
-            !activeCategory ? "bg-primary/20 text-primary" : "bg-secondary hover:bg-accent text-muted-foreground"
+            !activeCategory
+              ? "bg-primary/20 text-primary"
+              : "bg-secondary hover:bg-accent text-muted-foreground"
           }`}
           onClick={() => setActiveCategory(undefined)}
         >
           <span className="text-lg mb-0.5">✨</span>
           <span className="text-[10px]">All</span>
         </button>
-        {categories.map((cat) => (
+        {categories.map(cat => (
           <button
             key={cat.id}
             className={`flex flex-col items-center p-2 rounded-lg transition-colors text-xs ${
-              activeCategory === cat.id ? "bg-primary/20 text-primary" : "bg-secondary hover:bg-accent text-muted-foreground"
+              activeCategory === cat.id
+                ? "bg-primary/20 text-primary"
+                : "bg-secondary hover:bg-accent text-muted-foreground"
             }`}
             onClick={() => setActiveCategory(cat.id)}
           >
@@ -435,24 +695,39 @@ function TemplatesPanel({ editor, searchQuery }: { editor: ReturnType<typeof use
         </div>
       ) : filteredTemplates.length > 0 ? (
         <>
-          <p className="text-xs text-muted-foreground">{filteredTemplates.length} templates</p>
+          <p className="text-xs text-muted-foreground">
+            {filteredTemplates.length} templates
+          </p>
           <div className="grid grid-cols-2 gap-2">
             {filteredTemplates.map((t: any, i: number) => (
               <button
                 key={t.id}
                 className="aspect-[3/4] rounded-lg border border-border overflow-hidden hover:ring-2 hover:ring-primary transition-all group relative"
-                style={{ background: `linear-gradient(135deg, ${templateColors[i % templateColors.length]}22, ${templateColors[i % templateColors.length]}44)` }}
+                style={{
+                  background: `linear-gradient(135deg, ${templateColors[i % templateColors.length]}22, ${templateColors[i % templateColors.length]}44)`,
+                }}
                 onClick={() => handleApplyTemplate(t)}
               >
                 <div className="absolute inset-0 flex items-center justify-center p-2">
                   <div className="text-center">
-                    <div className="w-8 h-8 rounded-lg mx-auto mb-1.5" style={{ background: templateColors[i % templateColors.length] }} />
-                    <p className="text-[10px] text-card-foreground font-medium leading-tight">{t.name}</p>
-                    <p className="text-[9px] text-muted-foreground mt-0.5">{t.canvasWidth}x{t.canvasHeight}</p>
+                    <div
+                      className="w-8 h-8 rounded-lg mx-auto mb-1.5"
+                      style={{
+                        background: templateColors[i % templateColors.length],
+                      }}
+                    />
+                    <p className="text-[10px] text-card-foreground font-medium leading-tight">
+                      {t.name}
+                    </p>
+                    <p className="text-[9px] text-muted-foreground mt-0.5">
+                      {t.canvasWidth}x{t.canvasHeight}
+                    </p>
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <span className="text-xs font-medium text-primary bg-background/80 px-2 py-1 rounded">Apply</span>
+                  <span className="text-xs font-medium text-primary bg-background/80 px-2 py-1 rounded">
+                    Apply
+                  </span>
                 </div>
               </button>
             ))}
@@ -469,7 +744,11 @@ function TemplatesPanel({ editor, searchQuery }: { editor: ReturnType<typeof use
 }
 
 // ─── Elements Panel ──────────────────────────────────────────
-function ElementsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
+function ElementsPanel({
+  editor,
+}: {
+  editor: ReturnType<typeof useCanvasEditor>;
+}) {
   const shapes = [
     { type: "rect", label: "Rectangle", icon: Square },
     { type: "rounded-rect", label: "Rounded", icon: Square },
@@ -482,23 +761,45 @@ function ElementsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> 
   ];
 
   const decorativeShapes = [
-    { type: "heart", label: "Heart", svgPath: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" },
-    { type: "diamond", label: "Diamond", svgPath: "M12 2L2 12l10 10 10-10L12 2z" },
-    { type: "hexagon", label: "Hexagon", svgPath: "M12 2l9.5 5.5v11L12 24l-9.5-5.5v-11L12 2z" },
+    {
+      type: "heart",
+      label: "Heart",
+      svgPath:
+        "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",
+    },
+    {
+      type: "diamond",
+      label: "Diamond",
+      svgPath: "M12 2L2 12l10 10 10-10L12 2z",
+    },
+    {
+      type: "hexagon",
+      label: "Hexagon",
+      svgPath: "M12 2l9.5 5.5v11L12 24l-9.5-5.5v-11L12 2z",
+    },
     { type: "arrow", label: "Arrow", svgPath: "M5 12h14m-7-7l7 7-7 7" },
   ];
 
   const colors = [
-    "#6366f1", "#ec4899", "#14b8a6", "#f59e0b", "#ef4444",
-    "#8b5cf6", "#06b6d4", "#22c55e", "#f97316", "#64748b",
-    "#000000", "#ffffff",
+    "#6366f1",
+    "#ec4899",
+    "#14b8a6",
+    "#f59e0b",
+    "#ef4444",
+    "#8b5cf6",
+    "#06b6d4",
+    "#22c55e",
+    "#f97316",
+    "#64748b",
+    "#000000",
+    "#ffffff",
   ];
 
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground font-medium">Basic Shapes</p>
       <div className="grid grid-cols-4 gap-2">
-        {shapes.map((s) => (
+        {shapes.map(s => (
           <button
             key={s.type}
             onClick={() => editor.addShape(s.type)}
@@ -513,10 +814,12 @@ function ElementsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> 
       <Separator />
       <p className="text-xs text-muted-foreground font-medium">Quick Colors</p>
       <div className="flex flex-wrap gap-1.5">
-        {colors.map((c) => (
+        {colors.map(c => (
           <button
             key={c}
-            onClick={() => editor.addShape("rect", { fill: c, width: 100, height: 100 })}
+            onClick={() =>
+              editor.addShape("rect", { fill: c, width: 100, height: 100 })
+            }
             className="w-7 h-7 rounded-md border border-border hover:scale-110 transition-transform"
             style={{ background: c }}
           />
@@ -524,7 +827,9 @@ function ElementsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> 
       </div>
 
       <Separator />
-      <p className="text-xs text-muted-foreground font-medium">Lines & Connectors</p>
+      <p className="text-xs text-muted-foreground font-medium">
+        Lines & Connectors
+      </p>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => editor.addShape("line")}
@@ -533,7 +838,9 @@ function ElementsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> 
           <Minus className="w-5 h-5 mr-1" /> Line
         </button>
         <button
-          onClick={() => editor.addShape("line", { stroke: "#6366f1", strokeWidth: 4 })}
+          onClick={() =>
+            editor.addShape("line", { stroke: "#6366f1", strokeWidth: 4 })
+          }
           className="h-10 rounded-lg bg-secondary hover:bg-accent border border-border flex items-center justify-center text-xs text-card-foreground"
         >
           <Minus className="w-5 h-5 mr-1" /> Thick
@@ -541,7 +848,9 @@ function ElementsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> 
       </div>
 
       <Separator />
-      <p className="text-xs text-muted-foreground font-medium">Gradient Blocks</p>
+      <p className="text-xs text-muted-foreground font-medium">
+        Gradient Blocks
+      </p>
       <div className="grid grid-cols-3 gap-2">
         {[
           ["#6366f1", "#a855f7"],
@@ -553,7 +862,13 @@ function ElementsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> 
         ].map(([c1, c2], i) => (
           <button
             key={i}
-            onClick={() => editor.addShape("rounded-rect", { fill: c1, width: 200, height: 200 })}
+            onClick={() =>
+              editor.addShape("rounded-rect", {
+                fill: c1,
+                width: 200,
+                height: 200,
+              })
+            }
             className="aspect-square rounded-lg border border-border hover:scale-105 transition-transform"
             style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
           />
@@ -571,43 +886,100 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
         onClick={() => editor.addHeading()}
         className="w-full p-3 rounded-lg bg-secondary hover:bg-accent border border-border text-left transition-colors"
       >
-        <p className="text-lg font-bold text-card-foreground" style={{ fontFamily: "Montserrat" }}>Add a heading</p>
-        <p className="text-[10px] text-muted-foreground mt-0.5">Montserrat Bold, 48px</p>
+        <p
+          className="text-lg font-bold text-card-foreground"
+          style={{ fontFamily: "Montserrat" }}
+        >
+          Add a heading
+        </p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">
+          Montserrat Bold, 48px
+        </p>
       </button>
       <button
         onClick={() => editor.addSubheading()}
         className="w-full p-3 rounded-lg bg-secondary hover:bg-accent border border-border text-left transition-colors"
       >
-        <p className="text-base font-semibold text-card-foreground" style={{ fontFamily: "Poppins" }}>Add a subheading</p>
-        <p className="text-[10px] text-muted-foreground mt-0.5">Poppins Semibold, 28px</p>
+        <p
+          className="text-base font-semibold text-card-foreground"
+          style={{ fontFamily: "Poppins" }}
+        >
+          Add a subheading
+        </p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">
+          Poppins Semibold, 28px
+        </p>
       </button>
       <button
         onClick={() => editor.addText()}
         className="w-full p-3 rounded-lg bg-secondary hover:bg-accent border border-border text-left transition-colors"
       >
-        <p className="text-sm text-card-foreground" style={{ fontFamily: "Inter" }}>Add body text</p>
-        <p className="text-[10px] text-muted-foreground mt-0.5">Inter Regular, 16px</p>
+        <p
+          className="text-sm text-card-foreground"
+          style={{ fontFamily: "Inter" }}
+        >
+          Add body text
+        </p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">
+          Inter Regular, 16px
+        </p>
       </button>
 
       <Separator />
-      <p className="text-xs text-muted-foreground font-medium">Font Combinations</p>
+      <p className="text-xs text-muted-foreground font-medium">
+        Font Combinations
+      </p>
       <div className="space-y-2">
         {[
-          { heading: "Playfair Display", body: "Lato", label: "Elegant", desc: "Classic serif + clean sans" },
-          { heading: "Montserrat", body: "Open Sans", label: "Modern", desc: "Geometric + humanist" },
-          { heading: "Poppins", body: "Roboto", label: "Clean", desc: "Round + neutral" },
-          { heading: "Raleway", body: "Source Sans Pro", label: "Professional", desc: "Thin + readable" },
-          { heading: "Oswald", body: "Merriweather", label: "Bold", desc: "Condensed + traditional" },
-        ].map((combo) => (
+          {
+            heading: "Playfair Display",
+            body: "Lato",
+            label: "Elegant",
+            desc: "Classic serif + clean sans",
+          },
+          {
+            heading: "Montserrat",
+            body: "Open Sans",
+            label: "Modern",
+            desc: "Geometric + humanist",
+          },
+          {
+            heading: "Poppins",
+            body: "Roboto",
+            label: "Clean",
+            desc: "Round + neutral",
+          },
+          {
+            heading: "Raleway",
+            body: "Source Sans Pro",
+            label: "Professional",
+            desc: "Thin + readable",
+          },
+          {
+            heading: "Oswald",
+            body: "Merriweather",
+            label: "Bold",
+            desc: "Condensed + traditional",
+          },
+        ].map(combo => (
           <button
             key={combo.label}
             className="w-full p-3 rounded-lg bg-secondary hover:bg-accent border border-border text-left transition-colors"
             onClick={() => {
-              editor.addText({ fontFamily: combo.heading, fontSize: 36, fontWeight: "bold" });
+              editor.addText({
+                fontFamily: combo.heading,
+                fontSize: 36,
+                fontWeight: "bold",
+              });
               toast.success(`Applied ${combo.label} font combination`);
             }}
           >
-            <p className="text-sm font-bold text-card-foreground" style={{ fontFamily: combo.heading }}>{combo.label}</p>
+            <p
+              className="text-sm font-bold text-card-foreground"
+              style={{ fontFamily: combo.heading }}
+            >
+              {combo.label}
+            </p>
             <p className="text-[10px] text-muted-foreground">{combo.desc}</p>
           </button>
         ))}
@@ -617,22 +989,53 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
       <p className="text-xs text-muted-foreground font-medium">Text Presets</p>
       <div className="space-y-1.5">
         {[
-          { text: "SALE", size: 72, weight: "900", color: "#ef4444", label: "Sale Banner" },
-          { text: "Coming Soon", size: 42, weight: "300", color: "#6366f1", label: "Announcement" },
-          { text: "THANK YOU", size: 48, weight: "bold", color: "#22c55e", label: "Thank You" },
-          { text: "NEW", size: 64, weight: "900", color: "#f59e0b", label: "New Badge" },
-        ].map((preset) => (
+          {
+            text: "SALE",
+            size: 72,
+            weight: "900",
+            color: "#ef4444",
+            label: "Sale Banner",
+          },
+          {
+            text: "Coming Soon",
+            size: 42,
+            weight: "300",
+            color: "#6366f1",
+            label: "Announcement",
+          },
+          {
+            text: "THANK YOU",
+            size: 48,
+            weight: "bold",
+            color: "#22c55e",
+            label: "Thank You",
+          },
+          {
+            text: "NEW",
+            size: 64,
+            weight: "900",
+            color: "#f59e0b",
+            label: "New Badge",
+          },
+        ].map(preset => (
           <button
             key={preset.label}
             className="w-full p-2 rounded-lg bg-secondary hover:bg-accent border border-border text-left transition-colors"
-            onClick={() => editor.addText({
-              fontSize: preset.size,
-              fontWeight: preset.weight as any,
-              fill: preset.color,
-              fontFamily: "Montserrat",
-            } as any)}
+            onClick={() =>
+              editor.addText({
+                fontSize: preset.size,
+                fontWeight: preset.weight as any,
+                fill: preset.color,
+                fontFamily: "Montserrat",
+              } as any)
+            }
           >
-            <span className="text-xs" style={{ color: preset.color, fontWeight: preset.weight }}>{preset.label}</span>
+            <span
+              className="text-xs"
+              style={{ color: preset.color, fontWeight: preset.weight }}
+            >
+              {preset.label}
+            </span>
           </button>
         ))}
       </div>
@@ -641,10 +1044,20 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
 }
 
 // ─── Photos Panel ────────────────────────────────────────────
-function PhotosPanel({ editor, searchQuery }: { editor: ReturnType<typeof useCanvasEditor>; searchQuery: string }) {
+function PhotosPanel({
+  editor,
+  searchQuery,
+}: {
+  editor: ReturnType<typeof useCanvasEditor>;
+  searchQuery: string;
+}) {
   const [query, setQuery] = useState("");
   const effectiveQuery = searchQuery || query;
-  const { data: photos, isLoading, refetch } = trpc.assets.searchPhotos.useQuery(
+  const {
+    data: photos,
+    isLoading,
+    refetch,
+  } = trpc.assets.searchPhotos.useQuery(
     { query: effectiveQuery || "nature" },
     { enabled: true }
   );
@@ -659,8 +1072,8 @@ function PhotosPanel({ editor, searchQuery }: { editor: ReturnType<typeof useCan
         <Input
           placeholder="Search free photos..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSearch()}
           className="h-8 text-xs bg-secondary"
         />
         <Button size="sm" className="h-8 px-2" onClick={handleSearch}>
@@ -669,18 +1082,24 @@ function PhotosPanel({ editor, searchQuery }: { editor: ReturnType<typeof useCan
       </div>
 
       <div className="flex flex-wrap gap-1">
-        {["Nature", "Business", "Technology", "People", "Food", "Abstract"].map((tag) => (
-          <button
-            key={tag}
-            onClick={() => { setQuery(tag.toLowerCase()); }}
-            className="px-2 py-0.5 rounded-full bg-secondary text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          >
-            {tag}
-          </button>
-        ))}
+        {["Nature", "Business", "Technology", "People", "Food", "Abstract"].map(
+          tag => (
+            <button
+              key={tag}
+              onClick={() => {
+                setQuery(tag.toLowerCase());
+              }}
+              className="px-2 py-0.5 rounded-full bg-secondary text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              {tag}
+            </button>
+          )
+        )}
       </div>
 
-      <p className="text-xs text-muted-foreground">Click a photo to add it to your design</p>
+      <p className="text-xs text-muted-foreground">
+        Click a photo to add it to your design
+      </p>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
@@ -697,7 +1116,12 @@ function PhotosPanel({ editor, searchQuery }: { editor: ReturnType<typeof useCan
               }}
               className="aspect-square rounded-lg overflow-hidden border border-border hover:ring-2 hover:ring-primary transition-all group relative"
             >
-              <img src={photo.thumb} alt={photo.alt} className="w-full h-full object-cover" loading="lazy" />
+              <img
+                src={photo.thumb}
+                alt={photo.alt}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
             </button>
           ))}
@@ -708,27 +1132,36 @@ function PhotosPanel({ editor, searchQuery }: { editor: ReturnType<typeof useCan
 }
 
 // ─── Uploads Panel ───────────────────────────────────────────
-function UploadsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
-  const [uploads, setUploads] = useState<Array<{ url: string; name: string }>>([]);
+function UploadsPanel({
+  editor,
+}: {
+  editor: ReturnType<typeof useCanvasEditor>;
+}) {
+  const [uploads, setUploads] = useState<Array<{ url: string; name: string }>>(
+    []
+  );
   const [uploading, setUploading] = useState(false);
 
-  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    setUploading(true);
+  const handleFileUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files) return;
+      setUploading(true);
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const url = ev.target?.result as string;
-        setUploads((prev) => [...prev, { url, name: file.name }]);
-        editor.addImage(url);
-        toast.success(`Added ${file.name}`);
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
-    });
-  }, [editor]);
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const url = ev.target?.result as string;
+          setUploads(prev => [...prev, { url, name: file.name }]);
+          editor.addImage(url);
+          toast.success(`Added ${file.name}`);
+          setUploading(false);
+        };
+        reader.readAsDataURL(file);
+      });
+    },
+    [editor]
+  );
 
   return (
     <div className="space-y-3">
@@ -738,9 +1171,19 @@ function UploadsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }
         ) : (
           <Upload className="w-6 h-6 text-muted-foreground mb-1" />
         )}
-        <span className="text-xs text-muted-foreground">{uploading ? "Uploading..." : "Upload images"}</span>
-        <span className="text-[10px] text-muted-foreground/60">PNG, JPG, SVG up to 10MB</span>
-        <input type="file" accept="image/*" multiple className="hidden" onChange={handleFileUpload} />
+        <span className="text-xs text-muted-foreground">
+          {uploading ? "Uploading..." : "Upload images"}
+        </span>
+        <span className="text-[10px] text-muted-foreground/60">
+          PNG, JPG, SVG up to 10MB
+        </span>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={handleFileUpload}
+        />
       </label>
       <div className="grid grid-cols-2 gap-2">
         {uploads.map((u, i) => (
@@ -749,7 +1192,11 @@ function UploadsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }
             onClick={() => editor.addImage(u.url)}
             className="aspect-square rounded-lg overflow-hidden border border-border hover:ring-2 hover:ring-primary transition-all relative group"
           >
-            <img src={u.url} alt={u.name} className="w-full h-full object-cover" />
+            <img
+              src={u.url}
+              alt={u.name}
+              className="w-full h-full object-cover"
+            />
             <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <p className="text-[9px] text-white truncate">{u.name}</p>
             </div>
@@ -760,7 +1207,9 @@ function UploadsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }
         <div className="text-center py-6 text-muted-foreground">
           <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p className="text-xs">No uploads yet</p>
-          <p className="text-[10px] text-muted-foreground/60 mt-1">Upload images to use in your designs</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-1">
+            Upload images to use in your designs
+          </p>
         </div>
       )}
     </div>
@@ -768,7 +1217,11 @@ function UploadsPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }
 }
 
 // ─── Brand Kit Panel ─────────────────────────────────────────
-function BrandPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
+function BrandPanel({
+  editor,
+}: {
+  editor: ReturnType<typeof useCanvasEditor>;
+}) {
   const [brandColors, setBrandColors] = useState([
     { name: "Primary", hex: "#6366f1" },
     { name: "Secondary", hex: "#ec4899" },
@@ -792,7 +1245,9 @@ function BrandPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) 
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-xs text-muted-foreground font-medium mb-2">Brand Colors</p>
+        <p className="text-xs text-muted-foreground font-medium mb-2">
+          Brand Colors
+        </p>
         <div className="flex flex-wrap gap-2">
           {brandColors.map((c, i) => (
             <div key={i} className="text-center">
@@ -801,7 +1256,9 @@ function BrandPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) 
                 style={{ background: c.hex }}
                 onClick={() => editor.updateActiveObject({ fill: c.hex })}
               />
-              <p className="text-[9px] text-muted-foreground mt-0.5">{c.name}</p>
+              <p className="text-[9px] text-muted-foreground mt-0.5">
+                {c.name}
+              </p>
             </div>
           ))}
         </div>
@@ -809,12 +1266,12 @@ function BrandPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) 
           <input
             type="color"
             value={newColor}
-            onChange={(e) => setNewColor(e.target.value)}
+            onChange={e => setNewColor(e.target.value)}
             className="w-8 h-8 rounded border border-border cursor-pointer"
           />
           <Input
             value={newColor}
-            onChange={(e) => setNewColor(e.target.value)}
+            onChange={e => setNewColor(e.target.value)}
             className="h-7 text-xs bg-secondary flex-1"
             placeholder="#hex"
           />
@@ -822,7 +1279,10 @@ function BrandPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) 
             size="sm"
             className="h-7 px-2 text-xs"
             onClick={() => {
-              setBrandColors([...brandColors, { name: `Color ${brandColors.length + 1}`, hex: newColor }]);
+              setBrandColors([
+                ...brandColors,
+                { name: `Color ${brandColors.length + 1}`, hex: newColor },
+              ]);
               toast.success("Color added to brand kit");
             }}
           >
@@ -834,9 +1294,11 @@ function BrandPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) 
       <Separator />
 
       <div>
-        <p className="text-xs text-muted-foreground font-medium mb-2">Brand Fonts</p>
+        <p className="text-xs text-muted-foreground font-medium mb-2">
+          Brand Fonts
+        </p>
         <div className="space-y-1.5">
-          {brandFonts.map((font) => (
+          {brandFonts.map(font => (
             <button
               key={font.name}
               className="w-full p-2 rounded-lg bg-secondary hover:bg-accent border border-border text-left transition-colors flex items-center justify-between"
@@ -845,8 +1307,15 @@ function BrandPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) 
                 toast.success(`Applied ${font.name}`);
               }}
             >
-              <span className="text-sm text-card-foreground" style={{ fontFamily: font.name }}>{font.name}</span>
-              <span className="text-[10px] text-muted-foreground">{font.style}</span>
+              <span
+                className="text-sm text-card-foreground"
+                style={{ fontFamily: font.name }}
+              >
+                {font.name}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {font.style}
+              </span>
             </button>
           ))}
         </div>
@@ -859,17 +1328,22 @@ function BrandPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) 
         <label className="flex flex-col items-center justify-center w-full h-16 border-2 border-dashed border-border rounded-lg hover:border-primary cursor-pointer transition-colors bg-secondary/50">
           <Upload className="w-4 h-4 text-muted-foreground mb-0.5" />
           <span className="text-[10px] text-muted-foreground">Upload logo</span>
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              const reader = new FileReader();
-              reader.onload = (ev) => {
-                editor.addImage(ev.target?.result as string);
-                toast.success("Logo added to canvas");
-              };
-              reader.readAsDataURL(file);
-            }
-          }} />
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                  editor.addImage(ev.target?.result as string);
+                  toast.success("Logo added to canvas");
+                };
+                reader.readAsDataURL(file);
+              }
+            }}
+          />
         </label>
       </div>
     </div>
@@ -877,7 +1351,11 @@ function BrandPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) 
 }
 
 // ─── AI Tools Panel ──────────────────────────────────────────
-function AIPanel({ editor, canvasWidth, canvasHeight }: {
+function AIPanel({
+  editor,
+  canvasWidth,
+  canvasHeight,
+}: {
   editor: ReturnType<typeof useCanvasEditor>;
   canvasWidth: number;
   canvasHeight: number;
@@ -977,7 +1455,7 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
         </p>
         <textarea
           value={aiPrompt}
-          onChange={(e) => setAiPrompt(e.target.value)}
+          onChange={e => setAiPrompt(e.target.value)}
           placeholder="Describe an element to generate..."
           className="w-full h-16 text-xs bg-secondary rounded-md border border-border p-2 resize-none text-card-foreground placeholder:text-muted-foreground"
         />
@@ -988,9 +1466,13 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
           onClick={handleGenerateElement}
         >
           {generateImageMut.isPending ? (
-            <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Generating...</>
+            <>
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Generating...
+            </>
           ) : (
-            <><Sparkles className="w-3 h-3 mr-1" /> Generate Element</>
+            <>
+              <Sparkles className="w-3 h-3 mr-1" /> Generate Element
+            </>
           )}
         </Button>
       </div>
@@ -1002,7 +1484,7 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
         </p>
         <textarea
           value={bgPrompt}
-          onChange={(e) => setBgPrompt(e.target.value)}
+          onChange={e => setBgPrompt(e.target.value)}
           placeholder="Describe a background..."
           className="w-full h-12 text-xs bg-background rounded-md border border-border p-2 resize-none text-card-foreground placeholder:text-muted-foreground"
         />
@@ -1014,9 +1496,13 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
           onClick={handleGenerateBackground}
         >
           {generateBgMut.isPending ? (
-            <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Generating...</>
+            <>
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Generating...
+            </>
           ) : (
-            <><Wand2 className="w-3 h-3 mr-1" /> Generate Background</>
+            <>
+              <Wand2 className="w-3 h-3 mr-1" /> Generate Background
+            </>
           )}
         </Button>
       </div>
@@ -1025,14 +1511,31 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
 
       {/* AI Layout Suggestions */}
       <div>
-        <p className="text-xs text-muted-foreground font-medium mb-2">AI Layout Suggestions</p>
+        <p className="text-xs text-muted-foreground font-medium mb-2">
+          AI Layout Suggestions
+        </p>
         <div className="space-y-1.5">
           {[
-            { purpose: "Business flyer with headline, body text, and call to action", label: "Business Flyer" },
-            { purpose: "Social media post with bold headline and product showcase", label: "Social Post" },
-            { purpose: "Event invitation with date, venue, and RSVP details", label: "Event Invite" },
-            { purpose: "Professional resume with sections for experience and skills", label: "Resume" },
-          ].map((layout) => (
+            {
+              purpose:
+                "Business flyer with headline, body text, and call to action",
+              label: "Business Flyer",
+            },
+            {
+              purpose:
+                "Social media post with bold headline and product showcase",
+              label: "Social Post",
+            },
+            {
+              purpose: "Event invitation with date, venue, and RSVP details",
+              label: "Event Invite",
+            },
+            {
+              purpose:
+                "Professional resume with sections for experience and skills",
+              label: "Resume",
+            },
+          ].map(layout => (
             <button
               key={layout.label}
               className="w-full flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-accent transition-colors text-left"
@@ -1043,8 +1546,12 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
                 <Bot className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <p className="text-xs font-medium text-card-foreground">{layout.label}</p>
-                <p className="text-[10px] text-muted-foreground">Auto-generate layout</p>
+                <p className="text-xs font-medium text-card-foreground">
+                  {layout.label}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  Auto-generate layout
+                </p>
               </div>
             </button>
           ))}
@@ -1055,9 +1562,11 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
 
       {/* Magic Resize */}
       <div>
-        <p className="text-xs text-muted-foreground font-medium mb-2">Magic Resize</p>
+        <p className="text-xs text-muted-foreground font-medium mb-2">
+          Magic Resize
+        </p>
         <div className="grid grid-cols-2 gap-1.5">
-          {magicResizePresets.map((preset) => (
+          {magicResizePresets.map(preset => (
             <button
               key={preset.key}
               className="text-left p-2 rounded-lg bg-secondary hover:bg-accent border border-border transition-colors"
@@ -1068,7 +1577,9 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
                 }
               }}
             >
-              <p className="text-[10px] font-medium text-card-foreground">{preset.label}</p>
+              <p className="text-[10px] font-medium text-card-foreground">
+                {preset.label}
+              </p>
               <p className="text-[9px] text-muted-foreground">{preset.size}</p>
             </button>
           ))}
@@ -1079,20 +1590,44 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
 
       {/* Image Filters */}
       <div>
-        <p className="text-xs text-muted-foreground font-medium mb-2">Image Adjustments</p>
-        <p className="text-[10px] text-muted-foreground mb-2">Select an image on canvas, then adjust</p>
+        <p className="text-xs text-muted-foreground font-medium mb-2">
+          Image Adjustments
+        </p>
+        <p className="text-[10px] text-muted-foreground mb-2">
+          Select an image on canvas, then adjust
+        </p>
         <div className="space-y-3">
           {[
-            { icon: Sun, label: "Brightness", prop: "brightness", min: -100, max: 100 },
-            { icon: Contrast, label: "Contrast", prop: "contrast", min: -100, max: 100 },
-            { icon: Droplets, label: "Saturation", prop: "saturation", min: -100, max: 100 },
+            {
+              icon: Sun,
+              label: "Brightness",
+              prop: "brightness",
+              min: -100,
+              max: 100,
+            },
+            {
+              icon: Contrast,
+              label: "Contrast",
+              prop: "contrast",
+              min: -100,
+              max: 100,
+            },
+            {
+              icon: Droplets,
+              label: "Saturation",
+              prop: "saturation",
+              min: -100,
+              max: 100,
+            },
             { icon: Focus, label: "Blur", prop: "blur", min: 0, max: 20 },
-          ].map((filter) => (
+          ].map(filter => (
             <div key={filter.prop} className="space-y-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <filter.icon className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground">{filter.label}</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {filter.label}
+                  </span>
                 </div>
                 <span className="text-[10px] text-card-foreground">0</span>
               </div>
@@ -1102,7 +1637,9 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
                 max={filter.max}
                 step={1}
                 onValueChange={([v]) => {
-                  toast.info(`${filter.label}: ${v} (applied to selected image)`);
+                  toast.info(
+                    `${filter.label}: ${v} (applied to selected image)`
+                  );
                 }}
                 className="w-full"
               />
@@ -1115,7 +1652,11 @@ function AIPanel({ editor, canvasWidth, canvasHeight }: {
 }
 
 // ─── Layers Panel ────────────────────────────────────────────
-function LayersPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
+function LayersPanel({
+  editor,
+}: {
+  editor: ReturnType<typeof useCanvasEditor>;
+}) {
   const objects = editor.getObjects();
 
   return (
@@ -1124,33 +1665,55 @@ function LayersPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> })
         <div className="text-center py-8 text-muted-foreground">
           <Layers className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p className="text-xs">No elements on canvas</p>
-          <p className="text-[10px] text-muted-foreground/60 mt-1">Add elements to see layers</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-1">
+            Add elements to see layers
+          </p>
         </div>
       )}
       {[...objects].reverse().map((obj, i) => {
         const realIndex = objects.length - 1 - i;
-        const typeName = obj.type === "textbox" ? "Text" : obj.type === "image" ? "Image" : obj.type === "group" ? "Group" : obj.type || "Element";
+        const typeName =
+          obj.type === "textbox"
+            ? "Text"
+            : obj.type === "image"
+              ? "Image"
+              : obj.type === "group"
+                ? "Group"
+                : obj.type || "Element";
         const isSelected = editor.editorState.selectedObjects.includes(obj);
         return (
           <button
             key={i}
             onClick={() => editor.selectObject(realIndex)}
             className={`w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-left ${
-              isSelected ? "bg-primary/15 border border-primary/30" : "hover:bg-accent border border-transparent"
+              isSelected
+                ? "bg-primary/15 border border-primary/30"
+                : "hover:bg-accent border border-transparent"
             }`}
           >
             <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center shrink-0">
-              {obj.type === "textbox" ? <Type className="w-3.5 h-3.5 text-muted-foreground" /> :
-               obj.type === "image" ? <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" /> :
-               obj.type === "group" ? <Group className="w-3.5 h-3.5 text-muted-foreground" /> :
-               <Square className="w-3.5 h-3.5 text-muted-foreground" />}
+              {obj.type === "textbox" ? (
+                <Type className="w-3.5 h-3.5 text-muted-foreground" />
+              ) : obj.type === "image" ? (
+                <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
+              ) : obj.type === "group" ? (
+                <Group className="w-3.5 h-3.5 text-muted-foreground" />
+              ) : (
+                <Square className="w-3.5 h-3.5 text-muted-foreground" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-card-foreground truncate capitalize">{typeName}</p>
-              <p className="text-[10px] text-muted-foreground">Layer {realIndex + 1}</p>
+              <p className="text-xs text-card-foreground truncate capitalize">
+                {typeName}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                Layer {realIndex + 1}
+              </p>
             </div>
             <div className="flex items-center gap-1">
-              {obj.lockMovementX && <Lock className="w-3 h-3 text-muted-foreground" />}
+              {obj.lockMovementX && (
+                <Lock className="w-3 h-3 text-muted-foreground" />
+              )}
               <Eye className="w-3.5 h-3.5 text-muted-foreground" />
             </div>
           </button>
@@ -1161,7 +1724,11 @@ function LayersPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> })
 }
 
 // ─── Properties Panel ────────────────────────────────────────
-function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
+function PropertiesPanel({
+  editor,
+  canvasWidth,
+  canvasHeight,
+}: {
   editor: ReturnType<typeof useCanvasEditor>;
   canvasWidth: number;
   canvasHeight: number;
@@ -1169,23 +1736,30 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
   const selectedObj = editor.editorState.selectedObjects[0];
   if (!selectedObj) return null;
 
-  const isText = selectedObj.type === "textbox" || selectedObj.type === "i-text";
+  const isText =
+    selectedObj.type === "textbox" || selectedObj.type === "i-text";
 
   return (
     <ScrollArea className="h-full">
       <div className="p-3 space-y-4">
-        <h3 className="text-xs font-semibold text-card-foreground uppercase tracking-wider">Properties</h3>
+        <h3 className="text-xs font-semibold text-card-foreground uppercase tracking-wider">
+          Properties
+        </h3>
 
         {/* Position & Size */}
         <div className="space-y-2">
-          <p className="text-[10px] text-muted-foreground font-medium uppercase">Position & Size</p>
+          <p className="text-[10px] text-muted-foreground font-medium uppercase">
+            Position & Size
+          </p>
           <div className="grid grid-cols-2 gap-1.5">
             <div>
               <label className="text-[10px] text-muted-foreground">X</label>
               <Input
                 type="number"
                 value={Math.round(selectedObj.left || 0)}
-                onChange={(e) => editor.updateActiveObject({ left: Number(e.target.value) })}
+                onChange={e =>
+                  editor.updateActiveObject({ left: Number(e.target.value) })
+                }
                 className="h-7 text-xs bg-secondary"
               />
             </div>
@@ -1194,7 +1768,9 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
               <Input
                 type="number"
                 value={Math.round(selectedObj.top || 0)}
-                onChange={(e) => editor.updateActiveObject({ top: Number(e.target.value) })}
+                onChange={e =>
+                  editor.updateActiveObject({ top: Number(e.target.value) })
+                }
                 className="h-7 text-xs bg-secondary"
               />
             </div>
@@ -1202,10 +1778,14 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
               <label className="text-[10px] text-muted-foreground">W</label>
               <Input
                 type="number"
-                value={Math.round((selectedObj.width || 0) * (selectedObj.scaleX || 1))}
-                onChange={(e) => {
+                value={Math.round(
+                  (selectedObj.width || 0) * (selectedObj.scaleX || 1)
+                )}
+                onChange={e => {
                   const w = Number(e.target.value);
-                  editor.updateActiveObject({ scaleX: w / (selectedObj.width || 1) });
+                  editor.updateActiveObject({
+                    scaleX: w / (selectedObj.width || 1),
+                  });
                 }}
                 className="h-7 text-xs bg-secondary"
               />
@@ -1214,10 +1794,14 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
               <label className="text-[10px] text-muted-foreground">H</label>
               <Input
                 type="number"
-                value={Math.round((selectedObj.height || 0) * (selectedObj.scaleY || 1))}
-                onChange={(e) => {
+                value={Math.round(
+                  (selectedObj.height || 0) * (selectedObj.scaleY || 1)
+                )}
+                onChange={e => {
                   const h = Number(e.target.value);
-                  editor.updateActiveObject({ scaleY: h / (selectedObj.height || 1) });
+                  editor.updateActiveObject({
+                    scaleY: h / (selectedObj.height || 1),
+                  });
                 }}
                 className="h-7 text-xs bg-secondary"
               />
@@ -1225,20 +1809,26 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
           </div>
           <div className="grid grid-cols-2 gap-1.5">
             <div>
-              <label className="text-[10px] text-muted-foreground">Rotation</label>
+              <label className="text-[10px] text-muted-foreground">
+                Rotation
+              </label>
               <Input
                 type="number"
                 value={Math.round(selectedObj.angle || 0)}
-                onChange={(e) => editor.updateActiveObject({ angle: Number(e.target.value) })}
+                onChange={e =>
+                  editor.updateActiveObject({ angle: Number(e.target.value) })
+                }
                 className="h-7 text-xs bg-secondary"
               />
             </div>
             <div>
-              <label className="text-[10px] text-muted-foreground">Corner Radius</label>
+              <label className="text-[10px] text-muted-foreground">
+                Corner Radius
+              </label>
               <Input
                 type="number"
                 value={(selectedObj as any).rx || 0}
-                onChange={(e) => {
+                onChange={e => {
                   const r = Number(e.target.value);
                   editor.updateActiveObject({ rx: r, ry: r });
                 }}
@@ -1253,7 +1843,9 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
         {/* Opacity */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] text-muted-foreground font-medium uppercase">Opacity</p>
+            <p className="text-[10px] text-muted-foreground font-medium uppercase">
+              Opacity
+            </p>
             <span className="text-xs text-card-foreground">
               {Math.round((selectedObj.opacity ?? 1) * 100)}%
             </span>
@@ -1263,7 +1855,9 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
             min={0}
             max={100}
             step={1}
-            onValueChange={([v]) => editor.updateActiveObject({ opacity: v / 100 })}
+            onValueChange={([v]) =>
+              editor.updateActiveObject({ opacity: v / 100 })
+            }
           />
         </div>
 
@@ -1271,22 +1865,37 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
 
         {/* Fill Color */}
         <div className="space-y-2">
-          <p className="text-[10px] text-muted-foreground font-medium uppercase">Fill</p>
+          <p className="text-[10px] text-muted-foreground font-medium uppercase">
+            Fill
+          </p>
           <div className="flex items-center gap-2">
             <input
               type="color"
               value={(selectedObj.fill as string) || "#000000"}
-              onChange={(e) => editor.updateActiveObject({ fill: e.target.value })}
+              onChange={e =>
+                editor.updateActiveObject({ fill: e.target.value })
+              }
               className="w-8 h-8 rounded border border-border cursor-pointer"
             />
             <Input
               value={(selectedObj.fill as string) || "#000000"}
-              onChange={(e) => editor.updateActiveObject({ fill: e.target.value })}
+              onChange={e =>
+                editor.updateActiveObject({ fill: e.target.value })
+              }
               className="h-7 text-xs bg-secondary flex-1"
             />
           </div>
           <div className="flex flex-wrap gap-1">
-            {["#000000", "#ffffff", "#6366f1", "#ec4899", "#14b8a6", "#f59e0b", "#ef4444", "#22c55e"].map((c) => (
+            {[
+              "#000000",
+              "#ffffff",
+              "#6366f1",
+              "#ec4899",
+              "#14b8a6",
+              "#f59e0b",
+              "#ef4444",
+              "#22c55e",
+            ].map(c => (
               <button
                 key={c}
                 onClick={() => editor.updateActiveObject({ fill: c })}
@@ -1299,18 +1908,26 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
 
         {/* Stroke */}
         <div className="space-y-2">
-          <p className="text-[10px] text-muted-foreground font-medium uppercase">Stroke</p>
+          <p className="text-[10px] text-muted-foreground font-medium uppercase">
+            Stroke
+          </p>
           <div className="flex items-center gap-2">
             <input
               type="color"
               value={(selectedObj.stroke as string) || "#000000"}
-              onChange={(e) => editor.updateActiveObject({ stroke: e.target.value })}
+              onChange={e =>
+                editor.updateActiveObject({ stroke: e.target.value })
+              }
               className="w-8 h-8 rounded border border-border cursor-pointer"
             />
             <Input
               type="number"
               value={selectedObj.strokeWidth || 0}
-              onChange={(e) => editor.updateActiveObject({ strokeWidth: Number(e.target.value) })}
+              onChange={e =>
+                editor.updateActiveObject({
+                  strokeWidth: Number(e.target.value),
+                })
+              }
               className="h-7 text-xs bg-secondary w-16"
               placeholder="Width"
             />
@@ -1322,66 +1939,119 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
           <>
             <Separator />
             <div className="space-y-2">
-              <p className="text-[10px] text-muted-foreground font-medium uppercase">Typography</p>
+              <p className="text-[10px] text-muted-foreground font-medium uppercase">
+                Typography
+              </p>
               <select
                 value={(selectedObj as any).fontFamily || "Inter"}
-                onChange={(e) => editor.updateActiveObject({ fontFamily: e.target.value })}
+                onChange={e =>
+                  editor.updateActiveObject({ fontFamily: e.target.value })
+                }
                 className="w-full h-7 text-xs bg-secondary border border-border rounded-md px-2 text-card-foreground"
               >
-                {["Inter", "Montserrat", "Poppins", "Playfair Display", "Roboto", "Lato", "Open Sans", "Raleway", "Oswald", "Merriweather"].map((f) => (
-                  <option key={f} value={f}>{f}</option>
+                {[
+                  "Inter",
+                  "Montserrat",
+                  "Poppins",
+                  "Playfair Display",
+                  "Roboto",
+                  "Lato",
+                  "Open Sans",
+                  "Raleway",
+                  "Oswald",
+                  "Merriweather",
+                ].map(f => (
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
                 ))}
               </select>
               <div className="flex gap-1.5">
                 <Input
                   type="number"
                   value={(selectedObj as any).fontSize || 16}
-                  onChange={(e) => editor.updateActiveObject({ fontSize: Number(e.target.value) })}
+                  onChange={e =>
+                    editor.updateActiveObject({
+                      fontSize: Number(e.target.value),
+                    })
+                  }
                   className="h-7 text-xs bg-secondary w-16"
                 />
                 <Button
-                  variant={(selectedObj as any).fontWeight === "bold" ? "secondary" : "ghost"}
+                  variant={
+                    (selectedObj as any).fontWeight === "bold"
+                      ? "secondary"
+                      : "ghost"
+                  }
                   size="icon"
                   className="w-7 h-7"
-                  onClick={() => editor.updateActiveObject({
-                    fontWeight: (selectedObj as any).fontWeight === "bold" ? "normal" : "bold"
-                  })}
+                  onClick={() =>
+                    editor.updateActiveObject({
+                      fontWeight:
+                        (selectedObj as any).fontWeight === "bold"
+                          ? "normal"
+                          : "bold",
+                    })
+                  }
                 >
                   <Bold className="w-3.5 h-3.5" />
                 </Button>
                 <Button
-                  variant={(selectedObj as any).fontStyle === "italic" ? "secondary" : "ghost"}
+                  variant={
+                    (selectedObj as any).fontStyle === "italic"
+                      ? "secondary"
+                      : "ghost"
+                  }
                   size="icon"
                   className="w-7 h-7"
-                  onClick={() => editor.updateActiveObject({
-                    fontStyle: (selectedObj as any).fontStyle === "italic" ? "normal" : "italic"
-                  })}
+                  onClick={() =>
+                    editor.updateActiveObject({
+                      fontStyle:
+                        (selectedObj as any).fontStyle === "italic"
+                          ? "normal"
+                          : "italic",
+                    })
+                  }
                 >
                   <Italic className="w-3.5 h-3.5" />
                 </Button>
                 <Button
-                  variant={(selectedObj as any).underline ? "secondary" : "ghost"}
+                  variant={
+                    (selectedObj as any).underline ? "secondary" : "ghost"
+                  }
                   size="icon"
                   className="w-7 h-7"
-                  onClick={() => editor.updateActiveObject({
-                    underline: !(selectedObj as any).underline
-                  })}
+                  onClick={() =>
+                    editor.updateActiveObject({
+                      underline: !(selectedObj as any).underline,
+                    })
+                  }
                 >
                   <Underline className="w-3.5 h-3.5" />
                 </Button>
               </div>
               <div className="flex gap-1">
-                {["left", "center", "right"].map((align) => (
+                {["left", "center", "right"].map(align => (
                   <Button
                     key={align}
-                    variant={(selectedObj as any).textAlign === align ? "secondary" : "ghost"}
+                    variant={
+                      (selectedObj as any).textAlign === align
+                        ? "secondary"
+                        : "ghost"
+                    }
                     size="icon"
                     className="w-7 h-7"
-                    onClick={() => editor.updateActiveObject({ textAlign: align })}
+                    onClick={() =>
+                      editor.updateActiveObject({ textAlign: align })
+                    }
                   >
-                    {align === "left" ? <AlignLeft className="w-3.5 h-3.5" /> :
-                     align === "center" ? <AlignCenter className="w-3.5 h-3.5" /> :
-                     <AlignRight className="w-3.5 h-3.5" />}
+                    {align === "left" ? (
+                      <AlignLeft className="w-3.5 h-3.5" />
+                    ) : align === "center" ? (
+                      <AlignCenter className="w-3.5 h-3.5" />
+                    ) : (
+                      <AlignRight className="w-3.5 h-3.5" />
+                    )}
                   </Button>
                 ))}
               </div>
@@ -1389,21 +2059,33 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
               {/* Line Height & Letter Spacing */}
               <div className="grid grid-cols-2 gap-1.5">
                 <div>
-                  <label className="text-[10px] text-muted-foreground">Line Height</label>
+                  <label className="text-[10px] text-muted-foreground">
+                    Line Height
+                  </label>
                   <Input
                     type="number"
                     step="0.1"
                     value={(selectedObj as any).lineHeight || 1.2}
-                    onChange={(e) => editor.updateActiveObject({ lineHeight: Number(e.target.value) })}
+                    onChange={e =>
+                      editor.updateActiveObject({
+                        lineHeight: Number(e.target.value),
+                      })
+                    }
                     className="h-7 text-xs bg-secondary"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground">Spacing</label>
+                  <label className="text-[10px] text-muted-foreground">
+                    Spacing
+                  </label>
                   <Input
                     type="number"
                     value={(selectedObj as any).charSpacing || 0}
-                    onChange={(e) => editor.updateActiveObject({ charSpacing: Number(e.target.value) })}
+                    onChange={e =>
+                      editor.updateActiveObject({
+                        charSpacing: Number(e.target.value),
+                      })
+                    }
                     className="h-7 text-xs bg-secondary"
                   />
                 </div>
@@ -1416,26 +2098,58 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
 
         {/* Alignment */}
         <div className="space-y-2">
-          <p className="text-[10px] text-muted-foreground font-medium uppercase">Align on Canvas</p>
+          <p className="text-[10px] text-muted-foreground font-medium uppercase">
+            Align on Canvas
+          </p>
           <div className="grid grid-cols-3 gap-1">
-            <Button variant="ghost" size="icon" className="w-full h-7" onClick={() => editor.alignObjects("left")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-full h-7"
+              onClick={() => editor.alignObjects("left")}
+            >
               <AlignStartVertical className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="w-full h-7" onClick={() => editor.alignObjects("center")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-full h-7"
+              onClick={() => editor.alignObjects("center")}
+            >
               <AlignCenterVertical className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="w-full h-7" onClick={() => editor.alignObjects("right")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-full h-7"
+              onClick={() => editor.alignObjects("right")}
+            >
               <AlignEndVertical className="w-3.5 h-3.5" />
             </Button>
           </div>
           <div className="grid grid-cols-3 gap-1">
-            <Button variant="ghost" size="icon" className="w-full h-7" onClick={() => editor.alignObjects("top")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-full h-7"
+              onClick={() => editor.alignObjects("top")}
+            >
               <ChevronsUp className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="w-full h-7" onClick={() => editor.alignObjects("middle")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-full h-7"
+              onClick={() => editor.alignObjects("middle")}
+            >
               <AlignCenterVertical className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="w-full h-7" onClick={() => editor.alignObjects("bottom")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-full h-7"
+              onClick={() => editor.alignObjects("bottom")}
+            >
               <ChevronsDown className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -1445,16 +2159,25 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
 
         {/* Canvas Background */}
         <div className="space-y-2">
-          <p className="text-[10px] text-muted-foreground font-medium uppercase">Canvas Background</p>
+          <p className="text-[10px] text-muted-foreground font-medium uppercase">
+            Canvas Background
+          </p>
           <div className="flex items-center gap-2">
             <input
               type="color"
               defaultValue="#ffffff"
-              onChange={(e) => editor.setBackground(e.target.value)}
+              onChange={e => editor.setBackground(e.target.value)}
               className="w-8 h-8 rounded border border-border cursor-pointer"
             />
             <div className="flex gap-1">
-              {["#ffffff", "#f8fafc", "#1e293b", "#0f172a", "#fef3c7", "#fce7f3"].map((c) => (
+              {[
+                "#ffffff",
+                "#f8fafc",
+                "#1e293b",
+                "#0f172a",
+                "#fef3c7",
+                "#fce7f3",
+              ].map(c => (
                 <button
                   key={c}
                   onClick={() => editor.setBackground(c)}
@@ -1470,10 +2193,20 @@ function PropertiesPanel({ editor, canvasWidth, canvasHeight }: {
 
         {/* Actions */}
         <div className="space-y-1.5">
-          <Button variant="ghost" size="sm" className="w-full justify-start text-xs h-7 text-card-foreground" onClick={editor.duplicateSelected}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-xs h-7 text-card-foreground"
+            onClick={editor.duplicateSelected}
+          >
             <Copy className="w-3.5 h-3.5 mr-2" /> Duplicate
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start text-xs h-7 text-destructive" onClick={editor.deleteSelected}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-xs h-7 text-destructive"
+            onClick={editor.deleteSelected}
+          >
             <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
           </Button>
         </div>

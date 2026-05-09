@@ -22,7 +22,8 @@ async function createPrismaClient(): Promise<PrismaClientInstance> {
 
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["query", "error"] : ["error"],
+    log:
+      process.env.NODE_ENV === "development" ? ["query", "error"] : ["error"],
   });
 }
 

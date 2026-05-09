@@ -27,7 +27,8 @@ class ErrorBoundary extends React.Component<
           <div className="max-w-md rounded-xl border border-border bg-card p-6 text-center">
             <h1 className="text-xl font-semibold">Something went wrong</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              The editor hit an unexpected error. Refreshing the page usually clears it.
+              The editor hit an unexpected error. Refreshing the page usually
+              clears it.
             </p>
           </div>
         </div>

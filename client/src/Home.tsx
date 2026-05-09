@@ -58,12 +58,22 @@ type CuratedTemplate = {
 
 const DESIGN_PRESETS = [
   { key: "instagram-post", label: "Instagram Post", width: 1080, height: 1080 },
-  { key: "instagram-story", label: "Instagram Story", width: 1080, height: 1920 },
+  {
+    key: "instagram-story",
+    label: "Instagram Story",
+    width: 1080,
+    height: 1920,
+  },
   { key: "facebook-post", label: "Facebook Post", width: 1200, height: 630 },
   { key: "facebook-story", label: "Facebook Story", width: 1080, height: 1920 },
   { key: "pinterest-pin", label: "Pinterest Pin", width: 1000, height: 1500 },
   { key: "x-post", label: "Twitter/X Post", width: 1600, height: 900 },
-  { key: "youtube-thumbnail", label: "YouTube Thumbnail", width: 1280, height: 720 },
+  {
+    key: "youtube-thumbnail",
+    label: "YouTube Thumbnail",
+    width: 1280,
+    height: 720,
+  },
   { key: "linkedin-post", label: "LinkedIn Post", width: 1200, height: 627 },
   { key: "flyer-letter", label: "Flyer (Letter)", width: 2550, height: 3300 },
   { key: "flyer-a4", label: "Flyer (A4)", width: 2480, height: 3508 },
@@ -140,16 +150,33 @@ const CURATED_TEMPLATE_IDEAS: CuratedTemplate[] = [
 const FOOTER_LINKS = [
   { key: "contact", title: "Contact", href: "/contact" },
   { key: "privacy-policy", title: "Privacy Policy", href: "/privacy-policy" },
-  { key: "terms-of-service", title: "Terms of Service", href: "/terms-of-service" },
-  { key: "refund-return-policy", title: "Refund / Return Policy", href: "/refund-policy" },
+  {
+    key: "terms-of-service",
+    title: "Terms of Service",
+    href: "/terms-of-service",
+  },
+  {
+    key: "refund-return-policy",
+    title: "Refund / Return Policy",
+    href: "/refund-policy",
+  },
 ] as const;
 
 function matchesTemplateCategory(template: any, activeTab: string) {
   if (activeTab === "all") return true;
 
-  const haystack = `${template?.category || ""} ${template?.name || ""}`.toLowerCase();
+  const haystack =
+    `${template?.category || ""} ${template?.name || ""}`.toLowerCase();
   const matchers: Record<string, string[]> = {
-    "social-media": ["social", "instagram", "facebook", "pinterest", "linkedin", "youtube", "post"],
+    "social-media": [
+      "social",
+      "instagram",
+      "facebook",
+      "pinterest",
+      "linkedin",
+      "youtube",
+      "post",
+    ],
     menu: ["menu", "restaurant", "food"],
     invitation: ["invitation", "invite", "event", "wedding"],
     certificate: ["certificate", "award", "diploma"],
@@ -164,7 +191,7 @@ function matchesTemplateCategory(template: any, activeTab: string) {
     print: ["print", "menu", "flyer", "poster", "brochure"],
   };
 
-  return (matchers[activeTab] || []).some((term) => haystack.includes(term));
+  return (matchers[activeTab] || []).some(term => haystack.includes(term));
 }
 
 function SiteFooter() {
@@ -174,15 +201,19 @@ function SiteFooter() {
     <footer className="mt-16 border-t border-border bg-card/50 px-6 py-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground" style={{ fontFamily: '"Cinzel Decorative", serif' }}>
+          <p
+            className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
+            style={{ fontFamily: '"Cinzel Decorative", serif' }}
+          >
             ManuScript Studio
           </p>
           <p className="mt-2 max-w-xl text-xs leading-6 text-muted-foreground">
-            Custom image editing, templates, branding systems, listing mockups, and digital marketing assets in one studio workspace.
+            Custom image editing, templates, branding systems, listing mockups,
+            and digital marketing assets in one studio workspace.
           </p>
         </div>
         <nav className="flex flex-wrap items-center gap-2 md:justify-end">
-          {FOOTER_LINKS.map((link) => (
+          {FOOTER_LINKS.map(link => (
             <Button
               key={link.key}
               type="button"
@@ -216,7 +247,14 @@ export default function Home() {
     );
   }
 
-  return <Dashboard user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} setLocation={setLocation} />;
+  return (
+    <Dashboard
+      user={user}
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+      setLocation={setLocation}
+    />
+  );
 }
 
 function Dashboard({
@@ -230,36 +268,50 @@ function Dashboard({
   setSearchQuery: (q: string) => void;
   setLocation: (path: string) => void;
 }) {
-  const { data: myProjects, isLoading: projectsLoading, refetch: refetchProjects } = trpc.projects.list.useQuery();
-  const { data: dbTemplates, isLoading: templatesLoading } = trpc.templates.list.useQuery(undefined);
+  const {
+    data: myProjects,
+    isLoading: projectsLoading,
+    refetch: refetchProjects,
+  } = trpc.projects.list.useQuery();
+  const { data: dbTemplates, isLoading: templatesLoading } =
+    trpc.templates.list.useQuery(undefined);
   const deleteMutation = trpc.projects.delete.useMutation();
   const [activeTab, setActiveTab] = useState("all");
   const [aiSearchEnabled, setAiSearchEnabled] = useState(false);
   const [showAllPresets, setShowAllPresets] = useState(false);
   const [showAllTemplates, setShowAllTemplates] = useState(false);
-  const [pendingPreset, setPendingPreset] = useState<{ width: number; height: number; label: string } | null>(null);
+  const [pendingPreset, setPendingPreset] = useState<{
+    width: number;
+    height: number;
+    label: string;
+  } | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
 
   const filteredTemplates = useMemo(() => {
     const templates = dbTemplates || [];
-    return templates.filter((template: any) => matchesTemplateCategory(template, activeTab));
+    return templates.filter((template: any) =>
+      matchesTemplateCategory(template, activeTab)
+    );
   }, [dbTemplates, activeTab]);
 
   const visiblePresets = useMemo(
     () => (showAllPresets ? DESIGN_PRESETS : DESIGN_PRESETS.slice(0, 10)),
-    [showAllPresets],
+    [showAllPresets]
   );
 
   const visibleCuratedTemplates = useMemo(() => {
     const matches = CURATED_TEMPLATE_IDEAS.filter(
-      (template) => activeTab === "all" || template.categories.includes(activeTab),
+      template => activeTab === "all" || template.categories.includes(activeTab)
     );
     return showAllTemplates ? matches : matches.slice(0, 2);
   }, [activeTab, showAllTemplates]);
 
   const visibleDbTemplates = useMemo(
-    () => (showAllTemplates ? filteredTemplates.slice(0, 10) : filteredTemplates.slice(0, 6)),
-    [filteredTemplates, showAllTemplates],
+    () =>
+      showAllTemplates
+        ? filteredTemplates.slice(0, 10)
+        : filteredTemplates.slice(0, 6),
+    [filteredTemplates, showAllTemplates]
   );
 
   const handleDeleteProject = async (id: string) => {
@@ -272,7 +324,11 @@ function Dashboard({
     }
   };
 
-  const openCreateDialog = (preset: { width: number; height: number; label: string }) => {
+  const openCreateDialog = (preset: {
+    width: number;
+    height: number;
+    label: string;
+  }) => {
     setNewProjectName(preset.label);
     setPendingPreset(preset);
   };
@@ -280,7 +336,9 @@ function Dashboard({
   const handleCreateProject = () => {
     if (!pendingPreset) return;
     const name = newProjectName.trim() || pendingPreset.label;
-    setLocation(`/editor?w=${pendingPreset.width}&h=${pendingPreset.height}&name=${encodeURIComponent(name)}`);
+    setLocation(
+      `/editor?w=${pendingPreset.width}&h=${pendingPreset.height}&name=${encodeURIComponent(name)}`
+    );
     setPendingPreset(null);
     setNewProjectName("");
   };
@@ -304,15 +362,19 @@ function Dashboard({
         <div className="mx-auto flex h-20 max-w-7xl items-center gap-4">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 rounded-md ring-2 ring-red-700/60 bg-black overflow-hidden">
-  <img
-    src="/icon-192.png"
-    alt="ManuScript Studio logo"
-    className="h-full w-full object-contain"
-  />
-</div>
+              <img
+                src="/icon-192.png"
+                alt="ManuScript Studio logo"
+                className="h-full w-full object-contain"
+              />
+            </div>
             <h1
               className="hidden uppercase tracking-[0.12em] text-foreground sm:inline-flex"
-              style={{ fontSize: "18px", fontWeight: 700, fontFamily: '"Cinzel Decorative", serif' }}
+              style={{
+                fontSize: "18px",
+                fontWeight: 700,
+                fontFamily: '"Cinzel Decorative", serif',
+              }}
             >
               ManuScript Studio
             </h1>
@@ -322,9 +384,13 @@ function Dashboard({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder={aiSearchEnabled ? "What are you trying to make with AI?" : "What are you trying to make?"}
+                placeholder={
+                  aiSearchEnabled
+                    ? "What are you trying to make with AI?"
+                    : "What are you trying to make?"
+                }
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
                 className="h-10 border-border bg-secondary pl-9"
               />
             </div>
@@ -332,9 +398,10 @@ function Dashboard({
               type="button"
               variant={aiSearchEnabled ? "default" : "outline"}
               className="h-10 gap-2 bg-transparent"
-              onClick={() => setAiSearchEnabled((current) => !current)}
+              onClick={() => setAiSearchEnabled(current => !current)}
             >
-              <Sparkles className="h-4 w-4" /> {aiSearchEnabled ? "AI On" : "AI"}
+              <Sparkles className="h-4 w-4" />{" "}
+              {aiSearchEnabled ? "AI On" : "AI"}
             </Button>
           </div>
 
@@ -347,7 +414,9 @@ function Dashboard({
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
               {user?.name?.[0] || "U"}
             </div>
-            <span className="hidden text-xs font-medium text-foreground lg:inline">Customer Dashboard</span>
+            <span className="hidden text-xs font-medium text-foreground lg:inline">
+              Customer Dashboard
+            </span>
           </Button>
         </div>
       </header>
@@ -355,23 +424,34 @@ function Dashboard({
       <main className="mx-auto max-w-7xl px-6 py-8">
         <section className="mb-12 text-center">
           <div className="mx-auto mb-6 max-w-3xl">
-            <h2 className="text-2xl font-semibold text-foreground">Create a design</h2>
+            <h2 className="text-2xl font-semibold text-foreground">
+              Create a design
+            </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Start faster with the most-requested social, print, product, and marketing canvas sizes.
+              Start faster with the most-requested social, print, product, and
+              marketing canvas sizes.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-            {visiblePresets.map((preset) => (
+            {visiblePresets.map(preset => (
               <button
                 key={preset.key}
-                onClick={() => openCreateDialog({ width: preset.width, height: preset.height, label: preset.label })}
+                onClick={() =>
+                  openCreateDialog({
+                    width: preset.width,
+                    height: preset.height,
+                    label: preset.label,
+                  })
+                }
                 className="group flex flex-col items-center gap-3 rounded-2xl border border-border bg-card/60 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
               >
                 <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-border bg-secondary transition-all group-hover:border-primary/50">
                   <Plus className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-primary" />
                 </div>
                 <div>
-                  <span className="block text-xs font-medium text-foreground">{preset.label}</span>
+                  <span className="block text-xs font-medium text-foreground">
+                    {preset.label}
+                  </span>
                   <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                     {preset.width}×{preset.height}
                   </span>
@@ -380,28 +460,40 @@ function Dashboard({
             ))}
 
             <button
-              onClick={() => openCreateDialog({ width: 1080, height: 1080, label: "Custom Design" })}
+              onClick={() =>
+                openCreateDialog({
+                  width: 1080,
+                  height: 1080,
+                  label: "Custom Design",
+                })
+              }
               className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card/40 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
             >
               <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-dashed border-border transition-all group-hover:border-primary/50">
                 <Plus className="h-6 w-6 text-muted-foreground group-hover:text-primary" />
               </div>
               <div>
-                <span className="block text-xs font-medium text-foreground">Custom Size</span>
-                <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Open editor</span>
+                <span className="block text-xs font-medium text-foreground">
+                  Custom Size
+                </span>
+                <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                  Open editor
+                </span>
               </div>
             </button>
 
             <button
               type="button"
-              onClick={() => setShowAllPresets((current) => !current)}
+              onClick={() => setShowAllPresets(current => !current)}
               className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card/60 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
             >
               <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <LayoutTemplate className="h-6 w-6" />
               </div>
               <div>
-                <span className="block text-xs font-medium text-foreground">{showAllPresets ? "Show Fewer" : "View More"}</span>
+                <span className="block text-xs font-medium text-foreground">
+                  {showAllPresets ? "Show Fewer" : "View More"}
+                </span>
                 <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                   More preset sizes
                 </span>
@@ -412,21 +504,33 @@ function Dashboard({
 
         <section className="mb-12 text-center">
           <div className="mx-auto mb-6 max-w-3xl">
-            <h2 className="text-2xl font-semibold text-foreground">Start from a template</h2>
+            <h2 className="text-2xl font-semibold text-foreground">
+              Start from a template
+            </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Explore broader categories inspired by modern template libraries, then jump into a ready-made layout.
+              Explore broader categories inspired by modern template libraries,
+              then jump into a ready-made layout.
             </p>
             <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-              {(dbTemplates?.length || 0) + CURATED_TEMPLATE_IDEAS.length} homepage-ready options
+              {(dbTemplates?.length || 0) + CURATED_TEMPLATE_IDEAS.length}{" "}
+              homepage-ready options
             </p>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <div className="flex justify-center">
               <ScrollArea className="w-full max-w-6xl whitespace-nowrap">
                 <TabsList className="mb-6 inline-flex h-auto flex-nowrap gap-1 bg-secondary p-1">
-                  {TEMPLATE_CATEGORIES.map((category) => (
-                    <TabsTrigger key={category.value} value={category.value} className="px-4">
+                  {TEMPLATE_CATEGORIES.map(category => (
+                    <TabsTrigger
+                      key={category.value}
+                      value={category.value}
+                      className="px-4"
+                    >
                       {category.label}
                     </TabsTrigger>
                   ))}
@@ -439,13 +543,16 @@ function Dashboard({
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : visibleDbTemplates.length > 0 || visibleCuratedTemplates.length > 0 ? (
+              ) : visibleDbTemplates.length > 0 ||
+                visibleCuratedTemplates.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 text-left sm:grid-cols-2 lg:grid-cols-4">
                   {visibleDbTemplates.map((template: any, index: number) => (
                     <button
                       key={template.id}
                       onClick={() =>
-                        setLocation(`/editor?template=${template.id}&w=${template.canvasWidth}&h=${template.canvasHeight}`)
+                        setLocation(
+                          `/editor?template=${template.id}&w=${template.canvasWidth}&h=${template.canvasHeight}`
+                        )
                       }
                       className="group"
                     >
@@ -458,11 +565,16 @@ function Dashboard({
                         <div className="flex h-full w-full flex-col items-center justify-center p-5 text-center">
                           <div
                             className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl"
-                            style={{ background: templateColors[index % templateColors.length] }}
+                            style={{
+                              background:
+                                templateColors[index % templateColors.length],
+                            }}
                           >
                             <FileText className="h-5 w-5 text-white" />
                           </div>
-                          <p className="text-sm font-semibold text-card-foreground">{template.name}</p>
+                          <p className="text-sm font-semibold text-card-foreground">
+                            {template.name}
+                          </p>
                           <p className="mt-1 text-[11px] text-muted-foreground">
                             {template.canvasWidth}×{template.canvasHeight}
                           </p>
@@ -473,42 +585,61 @@ function Dashboard({
                           </span>
                         </div>
                       </div>
-                      <p className="truncate text-xs text-muted-foreground">{template.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {template.name}
+                      </p>
                     </button>
                   ))}
 
-                  {visibleCuratedTemplates.map((template) => {
+                  {visibleCuratedTemplates.map(template => {
                     const Icon = template.icon;
                     return (
                       <button
                         key={template.id}
                         type="button"
-                        onClick={() => setLocation(`/editor?w=${template.width}&h=${template.height}&preset=custom`)}
+                        onClick={() =>
+                          setLocation(
+                            `/editor?w=${template.width}&h=${template.height}&preset=custom`
+                          )
+                        }
                         className="group"
                       >
                         <div
                           className="relative mb-3 aspect-[3/4] overflow-hidden rounded-2xl border border-border p-5 transition-all group-hover:ring-2 group-hover:ring-primary"
-                          style={{ background: `linear-gradient(145deg, ${template.color}18, ${template.color}55)` }}
+                          style={{
+                            background: `linear-gradient(145deg, ${template.color}18, ${template.color}55)`,
+                          }}
                         >
                           <div className="flex h-full flex-col justify-between">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl text-white" style={{ background: template.color }}>
+                            <div
+                              className="flex h-12 w-12 items-center justify-center rounded-xl text-white"
+                              style={{ background: template.color }}
+                            >
                               <Icon className="h-5 w-5" />
                             </div>
                             <div>
-                              <p className="text-base font-semibold text-card-foreground">{template.title}</p>
-                              <p className="mt-2 text-xs leading-6 text-muted-foreground">{template.subtitle}</p>
-                              <p className="mt-3 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{template.size}</p>
+                              <p className="text-base font-semibold text-card-foreground">
+                                {template.title}
+                              </p>
+                              <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                                {template.subtitle}
+                              </p>
+                              <p className="mt-3 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                                {template.size}
+                              </p>
                             </div>
                           </div>
                         </div>
-                        <p className="truncate text-xs text-muted-foreground">{template.title}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {template.title}
+                        </p>
                       </button>
                     );
                   })}
 
                   <button
                     type="button"
-                    onClick={() => setShowAllTemplates((current) => !current)}
+                    onClick={() => setShowAllTemplates(current => !current)}
                     className="group rounded-2xl border border-dashed border-border bg-card/40 p-5 text-left transition-all hover:border-primary/50 hover:bg-primary/5"
                   >
                     <div className="flex h-full min-h-[16rem] flex-col justify-between">
@@ -517,10 +648,13 @@ function Dashboard({
                       </div>
                       <div>
                         <p className="text-base font-semibold text-card-foreground">
-                          {showAllTemplates ? "Show Fewer Templates" : "See All Templates"}
+                          {showAllTemplates
+                            ? "Show Fewer Templates"
+                            : "See All Templates"}
                         </p>
                         <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                          Browse more homepage categories and expand the current template selection.
+                          Browse more homepage categories and expand the current
+                          template selection.
                         </p>
                       </div>
                     </div>
@@ -529,7 +663,9 @@ function Dashboard({
               ) : (
                 <div className="rounded-2xl border border-dashed border-border py-12 text-center">
                   <LayoutTemplate className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
-                  <p className="text-sm text-muted-foreground">No templates in this category yet</p>
+                  <p className="text-sm text-muted-foreground">
+                    No templates in this category yet
+                  </p>
                 </div>
               )}
             </TabsContent>
@@ -539,19 +675,36 @@ function Dashboard({
         <section>
           <div className="mb-4 flex flex-col items-center justify-between gap-3 text-center md:flex-row md:text-left">
             <div>
-              <h2 className="text-2xl font-semibold text-foreground">Recent designs</h2>
+              <h2 className="text-2xl font-semibold text-foreground">
+                Recent designs
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Your latest customer workspace files stay connected here for quick access.
+                Your latest customer workspace files stay connected here for
+                quick access.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+              >
                 <Clock className="mr-1 h-4 w-4" /> Recent
               </Button>
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+              >
                 <Star className="mr-1 h-4 w-4" /> Starred
               </Button>
-              <Button type="button" variant="outline" size="sm" className="bg-transparent" onClick={() => setLocation("/")}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="bg-transparent"
+                onClick={() => setLocation("/")}
+              >
                 Customer Dashboard
               </Button>
             </div>
@@ -566,21 +719,34 @@ function Dashboard({
               {myProjects.map((project: any) => (
                 <div key={project.id} className="group relative">
                   <button
-                    onClick={() => setLocation(`/editor?project=${project.id}&w=${project.canvasWidth}&h=${project.canvasHeight}`)}
+                    onClick={() =>
+                      setLocation(
+                        `/editor?project=${project.id}&w=${project.canvasWidth}&h=${project.canvasHeight}`
+                      )
+                    }
                     className="w-full rounded-2xl border border-transparent p-1 text-left transition-all hover:border-border"
                   >
                     <div className="mb-2 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl border border-border bg-secondary transition-all group-hover:ring-2 group-hover:ring-primary">
                       {project.thumbnailUrl ? (
-                        <img src={project.thumbnailUrl} alt={project.name} className="h-full w-full object-cover" />
+                        <img
+                          src={project.thumbnailUrl}
+                          alt={project.name}
+                          className="h-full w-full object-cover"
+                        />
                       ) : (
                         <FileText className="h-8 w-8 text-muted-foreground/30" />
                       )}
                     </div>
-                    <p className="truncate text-sm font-medium text-card-foreground">{project.name}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {project.canvasWidth}×{project.canvasHeight} · {new Date(project.updatedAt).toLocaleDateString()}
+                    <p className="truncate text-sm font-medium text-card-foreground">
+                      {project.name}
                     </p>
-                    <p className="mt-1 text-[11px] text-muted-foreground">Saved to your customer workspace</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {project.canvasWidth}×{project.canvasHeight} ·{" "}
+                      {new Date(project.updatedAt).toLocaleDateString()}
+                    </p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      Saved to your customer workspace
+                    </p>
                   </button>
                   <button
                     onClick={() => handleDeleteProject(project.id)}
@@ -594,12 +760,22 @@ function Dashboard({
           ) : (
             <div className="rounded-2xl border border-dashed border-border py-16 text-center">
               <Folder className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">No designs yet in your customer workspace</p>
+              <p className="text-sm text-muted-foreground">
+                No designs yet in your customer workspace
+              </p>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                <Button type="button" variant="outline" className="gap-1.5 bg-transparent" onClick={() => setLocation("/")}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-1.5 bg-transparent"
+                  onClick={() => setLocation("/")}
+                >
                   Customer Dashboard
                 </Button>
-                <Button onClick={() => setLocation("/editor")} className="gap-1.5">
+                <Button
+                  onClick={() => setLocation("/editor")}
+                  className="gap-1.5"
+                >
                   <Plus className="h-4 w-4" /> Create your first design
                 </Button>
               </div>
@@ -610,24 +786,35 @@ function Dashboard({
 
       <SiteFooter />
 
-      <Dialog open={!!pendingPreset} onOpenChange={(open) => { if (!open) setPendingPreset(null); }}>
+      <Dialog
+        open={!!pendingPreset}
+        onOpenChange={open => {
+          if (!open) setPendingPreset(null);
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Name your project</DialogTitle>
           </DialogHeader>
           <div className="py-2">
-            <label className="text-sm text-muted-foreground mb-1.5 block">Project name</label>
+            <label className="text-sm text-muted-foreground mb-1.5 block">
+              Project name
+            </label>
             <Input
               value={newProjectName}
-              onChange={(e) => setNewProjectName(e.target.value)}
+              onChange={e => setNewProjectName(e.target.value)}
               placeholder="e.g. Summer Campaign"
               className="h-10"
               autoFocus
-              onKeyDown={(e) => { if (e.key === "Enter") handleCreateProject(); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") handleCreateProject();
+              }}
             />
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setPendingPreset(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setPendingPreset(null)}>
+              Cancel
+            </Button>
             <Button onClick={handleCreateProject}>
               <Plus className="h-4 w-4 mr-1.5" /> Create Design
             </Button>
@@ -644,13 +831,16 @@ function LandingPage() {
       <header className="sticky top-0 z-50 flex h-16 items-center border-b border-border bg-card/80 px-6 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg ring-2 ring-red-700/60 bg-black overflow-hidden">
-  <img
-    src="/icon-192.png"
-    alt="ManuScript Studio logo"
-    className="h-full w-full object-contain"
-  />
-</div>
-          <h1 className="text-lg font-bold uppercase tracking-[0.08em] text-foreground" style={{ fontFamily: '"Cinzel Decorative", serif' }}>
+            <img
+              src="/icon-192.png"
+              alt="ManuScript Studio logo"
+              className="h-full w-full object-contain"
+            />
+          </div>
+          <h1
+            className="text-lg font-bold uppercase tracking-[0.08em] text-foreground"
+            style={{ fontFamily: '"Cinzel Decorative", serif' }}
+          >
             ManuScript Studio
           </h1>
         </div>
@@ -672,8 +862,9 @@ function LandingPage() {
               <span className="text-primary">Publish everywhere.</span>
             </h1>
             <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
-              A professional design platform with drag-and-drop editing, AI-powered tools, royalty-free assets,
-              product mockup support, and developer integrations. Create polished visuals in minutes.
+              A professional design platform with drag-and-drop editing,
+              AI-powered tools, royalty-free assets, product mockup support, and
+              developer integrations. Create polished visuals in minutes.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Button size="lg" asChild>
@@ -681,7 +872,12 @@ function LandingPage() {
                   Start Designing <ArrowRight className="h-4 w-4" />
                 </a>
               </Button>
-              <Button size="lg" variant="outline" className="gap-2 bg-transparent" asChild>
+              <Button
+                size="lg"
+                variant="outline"
+                className="gap-2 bg-transparent"
+                asChild
+              >
                 <a href="/api-docs">
                   <Code2 className="h-4 w-4" /> View API Docs
                 </a>
@@ -692,26 +888,71 @@ function LandingPage() {
 
         <section className="bg-card/50 px-6 py-20">
           <div className="mx-auto max-w-6xl">
-            <h2 className="mb-12 text-center text-3xl font-bold text-foreground">Everything you need to create</h2>
+            <h2 className="mb-12 text-center text-3xl font-bold text-foreground">
+              Everything you need to create
+            </h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[
-                { icon: Layers, title: "Drag & Drop Editor", desc: "Intuitive canvas with layers, grouping, and precise element control." },
-                { icon: Wand2, title: "AI Magic Tools", desc: "Background removal, smart erase, image enhancement, and AI generation." },
-                { icon: LayoutTemplate, title: "Template Library", desc: "Expanded templates for menus, invitations, flyers, product promos, and more." },
-                { icon: ImageIcon, title: "Asset Database", desc: "Royalty-free photos, icons, shapes, and visual building blocks." },
-                { icon: Palette, title: "Brand Kit", desc: "Store colors, fonts, and logos for consistent brand execution." },
-                { icon: Bot, title: "AI Assistant", desc: "Conversational AI that helps shape prompts, layouts, and copy." },
-                { icon: Download, title: "Multi-Format Export", desc: "Export as PNG, JPG, or PDF in the sizes your workflow needs." },
-                { icon: Zap, title: "Workflow Bridge", desc: "Move studio assets cleanly into your connected production flow." },
-                { icon: Code2, title: "API Integrations", desc: "Keep integrations on a dedicated page while the homepage stays conversion-focused." },
+                {
+                  icon: Layers,
+                  title: "Drag & Drop Editor",
+                  desc: "Intuitive canvas with layers, grouping, and precise element control.",
+                },
+                {
+                  icon: Wand2,
+                  title: "AI Magic Tools",
+                  desc: "Background removal, smart erase, image enhancement, and AI generation.",
+                },
+                {
+                  icon: LayoutTemplate,
+                  title: "Template Library",
+                  desc: "Expanded templates for menus, invitations, flyers, product promos, and more.",
+                },
+                {
+                  icon: ImageIcon,
+                  title: "Asset Database",
+                  desc: "Royalty-free photos, icons, shapes, and visual building blocks.",
+                },
+                {
+                  icon: Palette,
+                  title: "Brand Kit",
+                  desc: "Store colors, fonts, and logos for consistent brand execution.",
+                },
+                {
+                  icon: Bot,
+                  title: "AI Assistant",
+                  desc: "Conversational AI that helps shape prompts, layouts, and copy.",
+                },
+                {
+                  icon: Download,
+                  title: "Multi-Format Export",
+                  desc: "Export as PNG, JPG, or PDF in the sizes your workflow needs.",
+                },
+                {
+                  icon: Zap,
+                  title: "Workflow Bridge",
+                  desc: "Move studio assets cleanly into your connected production flow.",
+                },
+                {
+                  icon: Code2,
+                  title: "API Integrations",
+                  desc: "Keep integrations on a dedicated page while the homepage stays conversion-focused.",
+                },
               ].map((feature, index) => (
-                <Card key={index} className="border-border bg-card transition-colors hover:border-primary/50">
+                <Card
+                  key={index}
+                  className="border-border bg-card transition-colors hover:border-primary/50"
+                >
                   <CardContent className="p-6">
                     <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                       <feature.icon className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="mb-1.5 text-sm font-semibold text-card-foreground">{feature.title}</h3>
-                    <p className="text-xs leading-relaxed text-muted-foreground">{feature.desc}</p>
+                    <h3 className="mb-1.5 text-sm font-semibold text-card-foreground">
+                      {feature.title}
+                    </h3>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      {feature.desc}
+                    </p>
                   </CardContent>
                 </Card>
               ))}
@@ -721,19 +962,39 @@ function LandingPage() {
 
         <section className="px-6 py-20">
           <div className="mx-auto max-w-4xl">
-            <h2 className="mb-12 text-center text-3xl font-bold text-foreground">How it works</h2>
+            <h2 className="mb-12 text-center text-3xl font-bold text-foreground">
+              How it works
+            </h2>
             <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
               {[
-                { step: "1", title: "Choose a template", desc: "Browse professional layouts or start from a blank canvas in any size." },
-                { step: "2", title: "Customize your design", desc: "Edit text, images, branding, and layout with fast creative controls." },
-                { step: "3", title: "Export & share", desc: "Deliver polished assets for social, product listings, print, or presentations." },
-              ].map((item) => (
+                {
+                  step: "1",
+                  title: "Choose a template",
+                  desc: "Browse professional layouts or start from a blank canvas in any size.",
+                },
+                {
+                  step: "2",
+                  title: "Customize your design",
+                  desc: "Edit text, images, branding, and layout with fast creative controls.",
+                },
+                {
+                  step: "3",
+                  title: "Export & share",
+                  desc: "Deliver polished assets for social, product listings, print, or presentations.",
+                },
+              ].map(item => (
                 <div key={item.step} className="text-center">
                   <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
-                    <span className="text-lg font-bold text-primary">{item.step}</span>
+                    <span className="text-lg font-bold text-primary">
+                      {item.step}
+                    </span>
                   </div>
-                  <h3 className="mb-2 text-sm font-semibold text-foreground">{item.title}</h3>
-                  <p className="text-xs leading-relaxed text-muted-foreground">{item.desc}</p>
+                  <h3 className="mb-2 text-sm font-semibold text-foreground">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {item.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -742,9 +1003,12 @@ function LandingPage() {
 
         <section className="bg-card/50 px-6 py-20">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="mb-4 text-3xl font-bold text-foreground">Ready to create?</h2>
+            <h2 className="mb-4 text-3xl font-bold text-foreground">
+              Ready to create?
+            </h2>
             <p className="mb-8 text-muted-foreground">
-              Join ManuScript Studio and start building polished digital assets with AI-assisted editing and flexible templates.
+              Join ManuScript Studio and start building polished digital assets
+              with AI-assisted editing and flexible templates.
             </p>
             <Button size="lg" asChild>
               <a href={getLoginUrl()} className="gap-2">

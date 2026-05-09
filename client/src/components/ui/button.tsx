@@ -4,7 +4,8 @@ import { cn, renderWithOptionalSlot } from "@/lib/utils";
 const variantClasses = {
   default: "bg-primary text-primary-foreground hover:opacity-90",
   ghost: "bg-transparent text-foreground hover:bg-accent",
-  outline: "border border-border bg-transparent text-foreground hover:bg-accent",
+  outline:
+    "border border-border bg-transparent text-foreground hover:bg-accent",
   secondary: "bg-secondary text-secondary-foreground hover:bg-accent",
 };
 
@@ -32,13 +33,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       ...props
     },
-    ref,
+    ref
   ) => {
     const classes = cn(
       "inline-flex items-center justify-center rounded-lg font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
       variantClasses[variant],
       sizeClasses[size],
-      className,
+      className
     );
 
     if (asChild) {
@@ -52,7 +53,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {children}
       </button>
     );
-  },
+  }
 );
 
 Button.displayName = "Button";

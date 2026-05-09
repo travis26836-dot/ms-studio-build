@@ -19,7 +19,8 @@ export default function AIChatPanel({ onClose }: AIChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi! I'm your AI design assistant. I can help you with:\n\n- **Layout suggestions** for your design\n- **Color palette** recommendations\n- **Copy writing** for headlines and body text\n- **Design feedback** and improvements\n\nWhat would you like to create?",
+      content:
+        "Hi! I'm your AI design assistant. I can help you with:\n\n- **Layout suggestions** for your design\n- **Color palette** recommendations\n- **Copy writing** for headlines and body text\n- **Design feedback** and improvements\n\nWhat would you like to create?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -37,26 +38,27 @@ export default function AIChatPanel({ onClose }: AIChatPanelProps) {
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
     try {
       const result = await chatMutation.mutateAsync({
         message: input,
-        history: messages.map((m) => ({ role: m.role, content: m.content })),
+        history: messages.map(m => ({ role: m.role, content: m.content })),
       });
 
-      setMessages((prev) => [
+      setMessages(prev => [
         ...prev,
         { role: "assistant", content: result.response },
       ]);
     } catch {
-      setMessages((prev) => [
+      setMessages(prev => [
         ...prev,
         {
           role: "assistant",
-          content: "I'm having trouble connecting right now. Please try again in a moment.",
+          content:
+            "I'm having trouble connecting right now. Please try again in a moment.",
         },
       ]);
     }
@@ -73,11 +75,20 @@ export default function AIChatPanel({ onClose }: AIChatPanelProps) {
             <Bot className="w-4 h-4 text-primary" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-card-foreground">AI Assistant</h3>
-            <p className="text-[10px] text-muted-foreground">Design help & suggestions</p>
+            <h3 className="text-sm font-semibold text-card-foreground">
+              AI Assistant
+            </h3>
+            <p className="text-[10px] text-muted-foreground">
+              Design help & suggestions
+            </p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="w-7 h-7" onClick={onClose}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="w-7 h-7"
+          onClick={onClose}
+        >
           <X className="w-4 h-4" />
         </Button>
       </div>
@@ -86,7 +97,10 @@ export default function AIChatPanel({ onClose }: AIChatPanelProps) {
       <ScrollArea className="flex-1 p-3" ref={scrollRef}>
         <div className="space-y-4">
           {messages.map((msg, i) => (
-            <div key={i} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : ""}`}>
+            <div
+              key={i}
+              className={`flex gap-2 ${msg.role === "user" ? "justify-end" : ""}`}
+            >
               {msg.role === "assistant" && (
                 <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
                   <Sparkles className="w-3 h-3 text-primary" />
@@ -119,9 +133,18 @@ export default function AIChatPanel({ onClose }: AIChatPanelProps) {
               </div>
               <div className="bg-secondary rounded-xl px-3 py-2">
                 <div className="flex gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "300ms" }} />
+                  <div
+                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <div
+                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <div
+                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  />
                 </div>
               </div>
             </div>
@@ -134,8 +157,8 @@ export default function AIChatPanel({ onClose }: AIChatPanelProps) {
         <div className="flex gap-1.5">
           <Input
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
             placeholder="Ask for design help..."
             className="h-8 text-xs bg-secondary"
             disabled={isLoading}

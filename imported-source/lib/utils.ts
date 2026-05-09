@@ -6,7 +6,7 @@ export function cn(...values: Array<string | false | null | undefined>) {
 
 export function composeEventHandlers<E>(
   theirHandler: ((event: E) => void) | undefined,
-  ourHandler: (event: E) => void,
+  ourHandler: (event: E) => void
 ) {
   return (event: E) => {
     theirHandler?.(event);
@@ -16,7 +16,7 @@ export function composeEventHandlers<E>(
 
 export function renderWithOptionalSlot(
   children: React.ReactNode,
-  props: Record<string, unknown>,
+  props: Record<string, unknown>
 ) {
   if (React.isValidElement(children)) {
     const child = children as React.ReactElement<any>;
@@ -26,7 +26,10 @@ export function renderWithOptionalSlot(
       className: cn(props.className as string, child.props.className),
       onClick:
         props.onClick && child.props.onClick
-          ? composeEventHandlers(child.props.onClick, props.onClick as (event: unknown) => void)
+          ? composeEventHandlers(
+              child.props.onClick,
+              props.onClick as (event: unknown) => void
+            )
           : (props.onClick ?? child.props.onClick),
     });
   }

@@ -30,7 +30,7 @@ export function Slider({
       min={min}
       max={max}
       step={step}
-      onChange={(event) => onValueChange?.([Number(event.target.value)])}
+      onChange={event => onValueChange?.([Number(event.target.value)])}
     />
   );
 }

@@ -47,7 +47,7 @@ The `plan` field on `Customer` is the **canonical plan string** used throughout 
 
 ```ts
 function planFromPriceId(priceId: string): "free" | "pro" | "team" {
-  if (priceId === process.env.STRIPE_PRICE_PRO)  return "pro";
+  if (priceId === process.env.STRIPE_PRICE_PRO) return "pro";
   if (priceId === process.env.STRIPE_PRICE_TEAM) return "team";
   return "free";
 }
@@ -62,59 +62,80 @@ Add this route to `server/index.ts` **before** `express.json()` middleware (Stri
 ```ts
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2023-10-16" });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2023-10-16",
+});
 
 // Must use express.raw() — NOT express.json() — for Stripe webhook verification
-app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
-  const sig = req.headers["stripe-signature"] as string;
-  let event: Stripe.Event;
+app.post(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const sig = req.headers["stripe-signature"] as string;
+    let event: Stripe.Event;
 
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-  } catch {
-    return res.status(400).send("Webhook signature verification failed");
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET!
+      );
+    } catch {
+      return res.status(400).send("Webhook signature verification failed");
+    }
+
+    const prisma = await getPrisma();
+
+    if (
+      event.type === "customer.subscription.updated" ||
+      event.type === "customer.subscription.created"
+    ) {
+      const sub = event.data.object as Stripe.Subscription;
+      const priceId = sub.items.data[0].price.id;
+      const plan = planFromPriceId(priceId);
+
+      await prisma.subscription.upsert({
+        where: { stripeCustomerId: sub.customer as string },
+        update: {
+          stripePriceId: priceId,
+          status: sub.status,
+          currentPeriodEnd: new Date(sub.current_period_end * 1000),
+        },
+        create: {
+          stripeCustomerId: sub.customer as string,
+          stripePriceId: priceId,
+          status: sub.status,
+          currentPeriodEnd: new Date(sub.current_period_end * 1000),
+          userId: "MUST_RESOLVE_FROM_METADATA", // store userId in Stripe metadata at checkout
+        },
+      });
+
+      // Keep Customer.plan in sync
+      await prisma.customer.updateMany({
+        where: {
+          user: { subscription: { stripeCustomerId: sub.customer as string } },
+        },
+        data: { plan },
+      });
+    }
+
+    if (event.type === "customer.subscription.deleted") {
+      const sub = event.data.object as Stripe.Subscription;
+      await prisma.subscription.updateMany({
+        where: { stripeCustomerId: sub.customer as string },
+        data: { status: "canceled" },
+      });
+      await prisma.customer.updateMany({
+        where: {
+          user: { subscription: { stripeCustomerId: sub.customer as string } },
+        },
+        data: { plan: "free" },
+      });
+    }
+
+    return res.json({ received: true });
   }
-
-  const prisma = await getPrisma();
-
-  if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.created") {
-    const sub = event.data.object as Stripe.Subscription;
-    const priceId = sub.items.data[0].price.id;
-    const plan = planFromPriceId(priceId);
-
-    await prisma.subscription.upsert({
-      where: { stripeCustomerId: sub.customer as string },
-      update: { stripePriceId: priceId, status: sub.status, currentPeriodEnd: new Date(sub.current_period_end * 1000) },
-      create: {
-        stripeCustomerId: sub.customer as string,
-        stripePriceId: priceId,
-        status: sub.status,
-        currentPeriodEnd: new Date(sub.current_period_end * 1000),
-        userId: "MUST_RESOLVE_FROM_METADATA", // store userId in Stripe metadata at checkout
-      },
-    });
-
-    // Keep Customer.plan in sync
-    await prisma.customer.updateMany({
-      where: { user: { subscription: { stripeCustomerId: sub.customer as string } } },
-      data: { plan },
-    });
-  }
-
-  if (event.type === "customer.subscription.deleted") {
-    const sub = event.data.object as Stripe.Subscription;
-    await prisma.subscription.updateMany({
-      where: { stripeCustomerId: sub.customer as string },
-      data: { status: "canceled" },
-    });
-    await prisma.customer.updateMany({
-      where: { user: { subscription: { stripeCustomerId: sub.customer as string } } },
-      data: { plan: "free" },
-    });
-  }
-
-  return res.json({ received: true });
-});
+);
 ```
 
 ---
@@ -147,7 +168,9 @@ app.post("/api/stripe/checkout", async (req, res) => {
 
 ```ts
 // In any authenticated route that requires a paid plan:
-const customer = await prisma.customer.findUnique({ where: { userId: user.id } });
+const customer = await prisma.customer.findUnique({
+  where: { userId: user.id },
+});
 if (!customer || customer.plan === "free") {
   return res.status(402).json({ error: "Upgrade required" });
 }

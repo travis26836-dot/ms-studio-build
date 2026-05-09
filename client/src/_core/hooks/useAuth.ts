@@ -8,7 +8,11 @@ export function useAuth() {
     user: user
       ? {
           id: user.id,
-          name: user.fullName ?? user.username ?? user.primaryEmailAddress?.emailAddress ?? "",
+          name:
+            user.fullName ??
+            user.username ??
+            user.primaryEmailAddress?.emailAddress ??
+            "",
           email: user.primaryEmailAddress?.emailAddress ?? "",
           role: "user" as const,
         }

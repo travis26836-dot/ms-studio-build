@@ -42,7 +42,9 @@ function buildCanvasState(input: {
     canvasData: input.canvasData,
     canvasWidth: input.canvasWidth,
     canvasHeight: input.canvasHeight,
-    ...(typeof input.thumbnailUrl === "string" ? { thumbnailUrl: input.thumbnailUrl } : {}),
+    ...(typeof input.thumbnailUrl === "string"
+      ? { thumbnailUrl: input.thumbnailUrl }
+      : {}),
   };
 }
 
@@ -62,10 +64,14 @@ function normalizeCanvasState(raw: unknown): CanvasStateRecord {
   if (raw && typeof raw === "object") {
     const state = raw as CanvasStateRecord;
     return {
-      canvasData: typeof state.canvasData === "string" ? state.canvasData : undefined,
-      canvasWidth: typeof state.canvasWidth === "number" ? state.canvasWidth : undefined,
-      canvasHeight: typeof state.canvasHeight === "number" ? state.canvasHeight : undefined,
-      thumbnailUrl: typeof state.thumbnailUrl === "string" ? state.thumbnailUrl : undefined,
+      canvasData:
+        typeof state.canvasData === "string" ? state.canvasData : undefined,
+      canvasWidth:
+        typeof state.canvasWidth === "number" ? state.canvasWidth : undefined,
+      canvasHeight:
+        typeof state.canvasHeight === "number" ? state.canvasHeight : undefined,
+      thumbnailUrl:
+        typeof state.thumbnailUrl === "string" ? state.thumbnailUrl : undefined,
     };
   }
 
@@ -90,26 +96,37 @@ function normalizeTags(raw: unknown) {
     new Set(
       raw
         .filter((item): item is string => typeof item === "string")
-        .map((item) => item.trim())
-        .filter(Boolean),
-    ),
+        .map(item => item.trim())
+        .filter(Boolean)
+    )
   ).slice(0, 20);
 }
 
 function buildPortalProjectState(input: { slug?: string }) {
   return {
     kind: PORTAL_PROJECT_KIND,
-    ...(typeof input.slug === "string" && input.slug.trim() ? { slug: slugify(input.slug) } : {}),
+    ...(typeof input.slug === "string" && input.slug.trim()
+      ? { slug: slugify(input.slug) }
+      : {}),
   };
 }
 
-function buildPortalContentState(input: { content: string; projectId: string; slug?: string; tags?: string[] }) {
+function buildPortalContentState(input: {
+  content: string;
+  projectId: string;
+  slug?: string;
+  tags?: string[];
+}) {
   return {
     kind: PORTAL_CONTENT_KIND,
     content: input.content,
     projectId: input.projectId,
-    ...(typeof input.slug === "string" && input.slug.trim() ? { slug: slugify(input.slug) } : {}),
-    ...(Array.isArray(input.tags) && input.tags.length > 0 ? { tags: normalizeTags(input.tags) } : {}),
+    ...(typeof input.slug === "string" && input.slug.trim()
+      ? { slug: slugify(input.slug) }
+      : {}),
+    ...(Array.isArray(input.tags) && input.tags.length > 0
+      ? { tags: normalizeTags(input.tags) }
+      : {}),
   };
 }
 
@@ -122,7 +139,8 @@ function normalizePortalContentState(raw: unknown): PortalContentStateRecord {
   return {
     kind: typeof state.kind === "string" ? state.kind : undefined,
     content: typeof state.content === "string" ? state.content : undefined,
-    projectId: typeof state.projectId === "string" ? state.projectId : undefined,
+    projectId:
+      typeof state.projectId === "string" ? state.projectId : undefined,
     slug: typeof state.slug === "string" ? state.slug : undefined,
     tags: normalizeTags(state.tags),
   };
@@ -161,7 +179,10 @@ function projectToClientShape(project: {
 }) {
   const normalized = normalizeCanvasState(project.canvasState);
   const rawCanvasData = normalized.canvasData;
-  const parsedCanvas = typeof rawCanvasData === "string" ? safeParseJson(rawCanvasData) : rawCanvasData;
+  const parsedCanvas =
+    typeof rawCanvasData === "string"
+      ? safeParseJson(rawCanvasData)
+      : rawCanvasData;
 
   return {
     id: project.id,
@@ -215,7 +236,10 @@ function portalProjectToClientShape(project: {
   };
 }
 
-async function getPortalCustomer(prisma: Awaited<ReturnType<typeof getPrisma>>, customerId: string) {
+async function getPortalCustomer(
+  prisma: Awaited<ReturnType<typeof getPrisma>>,
+  customerId: string
+) {
   const matchedCustomer = await prisma.customer.findUnique({
     where: { id: customerId },
   });
@@ -235,7 +259,7 @@ function normalizeEmail(raw: string) {
 
 async function resolvePortalCustomer(
   prisma: Awaited<ReturnType<typeof getPrisma>>,
-  input: { customerId?: string; email?: string; name?: string },
+  input: { customerId?: string; email?: string; name?: string }
 ) {
   if (typeof input.customerId === "string" && input.customerId.trim()) {
     const existing = await prisma.customer.findUnique({
@@ -253,7 +277,10 @@ async function resolvePortalCustomer(
   }
 
   const email = normalizeEmail(input.email as string);
-  const preferredName = typeof input.name === "string" && input.name.trim() ? input.name.trim() : "";
+  const preferredName =
+    typeof input.name === "string" && input.name.trim()
+      ? input.name.trim()
+      : "";
 
   const user = await prisma.user.upsert({
     where: { email },
@@ -291,7 +318,8 @@ async function resolvePortalCustomer(
 
 async function getOrCreateUser(req: express.Request) {
   const prisma = await getPrisma();
-  const clerkId = (req as express.Request & { auth?: { userId?: string } }).auth?.userId;
+  const clerkId = (req as express.Request & { auth?: { userId?: string } }).auth
+    ?.userId;
 
   if (!clerkId) return null;
 
@@ -365,13 +393,18 @@ async function startServer() {
       orderBy: { updatedAt: "desc" },
     });
 
-    const projectId = typeof req.query.projectId === "string" ? req.query.projectId : undefined;
+    const projectId =
+      typeof req.query.projectId === "string" ? req.query.projectId : undefined;
 
     return res.json(
       projects
-        .filter((project: { canvasState: unknown }) => isPortalContentState(project.canvasState))
+        .filter((project: { canvasState: unknown }) =>
+          isPortalContentState(project.canvasState)
+        )
         .map(portalContentToClientShape)
-        .filter((item: { projectId?: string }) => (projectId ? item.projectId === projectId : true)),
+        .filter((item: { projectId?: string }) =>
+          projectId ? item.projectId === projectId : true
+        )
     );
   });
 
@@ -390,8 +423,10 @@ async function startServer() {
 
     return res.json(
       projects
-        .filter((project: { canvasState: unknown }) => isPortalProjectState(project.canvasState))
-        .map(portalProjectToClientShape),
+        .filter((project: { canvasState: unknown }) =>
+          isPortalProjectState(project.canvasState)
+        )
+        .map(portalProjectToClientShape)
     );
   });
 
@@ -413,7 +448,9 @@ async function startServer() {
       data: {
         userId: customer.userId,
         name: name.trim(),
-        canvasState: buildPortalProjectState({ slug: typeof slug === "string" ? slug : name }),
+        canvasState: buildPortalProjectState({
+          slug: typeof slug === "string" ? slug : name,
+        }),
       },
     });
 
@@ -445,9 +482,13 @@ async function startServer() {
     const updated = await prisma.project.update({
       where: { id: existing.id },
       data: {
-        name: typeof name === "string" && name.trim() ? name.trim() : existing.name,
+        name:
+          typeof name === "string" && name.trim() ? name.trim() : existing.name,
         canvasState: buildPortalProjectState({
-          slug: typeof slug === "string" ? slug : currentState.slug ?? existing.name,
+          slug:
+            typeof slug === "string"
+              ? slug
+              : (currentState.slug ?? existing.name),
         }),
       },
     });
@@ -455,43 +496,51 @@ async function startServer() {
     return res.json(portalProjectToClientShape(updated));
   });
 
-  app.delete("/api/customer/:id/portal/projects/:projectId", async (req, res) => {
-    const prisma = await getPrisma();
-    const customer = await getPortalCustomer(prisma, req.params.id);
+  app.delete(
+    "/api/customer/:id/portal/projects/:projectId",
+    async (req, res) => {
+      const prisma = await getPrisma();
+      const customer = await getPortalCustomer(prisma, req.params.id);
 
-    if (!customer) {
-      return res.status(404).json({ error: "Not found" });
+      if (!customer) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      const allProjects = await prisma.project.findMany({
+        where: { userId: customer.userId },
+        orderBy: { updatedAt: "desc" },
+      });
+
+      const portalProject = allProjects.find(
+        (project: { id: string; canvasState: unknown }) =>
+          project.id === req.params.projectId &&
+          isPortalProjectState(project.canvasState)
+      );
+
+      if (!portalProject) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      const linkedContentIds = allProjects
+        .filter((project: { canvasState: unknown }) =>
+          isPortalContentState(project.canvasState)
+        )
+        .filter((project: { canvasState: unknown }) => {
+          const state = normalizePortalContentState(project.canvasState);
+          return state.projectId === portalProject.id;
+        })
+        .map((project: { id: string }) => project.id);
+
+      if (linkedContentIds.length > 0) {
+        await prisma.project.deleteMany({
+          where: { id: { in: linkedContentIds } },
+        });
+      }
+
+      await prisma.project.delete({ where: { id: portalProject.id } });
+      return res.status(204).end();
     }
-
-    const allProjects = await prisma.project.findMany({
-      where: { userId: customer.userId },
-      orderBy: { updatedAt: "desc" },
-    });
-
-    const portalProject = allProjects.find(
-      (project: { id: string; canvasState: unknown }) =>
-        project.id === req.params.projectId && isPortalProjectState(project.canvasState),
-    );
-
-    if (!portalProject) {
-      return res.status(404).json({ error: "Not found" });
-    }
-
-    const linkedContentIds = allProjects
-      .filter((project: { canvasState: unknown }) => isPortalContentState(project.canvasState))
-      .filter((project: { canvasState: unknown }) => {
-        const state = normalizePortalContentState(project.canvasState);
-        return state.projectId === portalProject.id;
-      })
-      .map((project: { id: string }) => project.id);
-
-    if (linkedContentIds.length > 0) {
-      await prisma.project.deleteMany({ where: { id: { in: linkedContentIds } } });
-    }
-
-    await prisma.project.delete({ where: { id: portalProject.id } });
-    return res.status(204).end();
-  });
+  );
 
   app.post("/api/customer/:id/content", async (req, res) => {
     const prisma = await getPrisma();
@@ -522,7 +571,7 @@ async function startServer() {
 
     const container = userProjects.find(
       (project: { id: string; canvasState: unknown }) =>
-        project.id === projectId && isPortalProjectState(project.canvasState),
+        project.id === projectId && isPortalProjectState(project.canvasState)
     );
 
     if (!container) {
@@ -566,7 +615,8 @@ async function startServer() {
 
     const currentState = normalizePortalContentState(existing.canvasState);
     const { name, content, projectId, slug, tags } = req.body;
-    const nextContent = typeof content === "string" ? content : currentState.content;
+    const nextContent =
+      typeof content === "string" ? content : currentState.content;
 
     if (typeof nextContent !== "string") {
       return res.status(400).json({ error: "Content is required" });
@@ -580,7 +630,7 @@ async function startServer() {
       });
       const container = userProjects.find(
         (project: { id: string; canvasState: unknown }) =>
-          project.id === projectId && isPortalProjectState(project.canvasState),
+          project.id === projectId && isPortalProjectState(project.canvasState)
       );
       if (!container) {
         return res.status(404).json({ error: "Project not found" });
@@ -595,14 +645,18 @@ async function startServer() {
     const updated = await prisma.project.update({
       where: { id: existing.id },
       data: {
-        name: typeof name === "string" && name.trim() ? name.trim() : existing.name,
+        name:
+          typeof name === "string" && name.trim() ? name.trim() : existing.name,
         canvasState: buildPortalContentState({
           content: nextContent,
           projectId: nextProjectId,
           slug:
             typeof slug === "string"
               ? slug
-              : currentState.slug ?? (typeof name === "string" && name.trim() ? name : existing.name),
+              : (currentState.slug ??
+                (typeof name === "string" && name.trim()
+                  ? name
+                  : existing.name)),
           tags: Array.isArray(tags) ? normalizeTags(tags) : currentState.tags,
         }),
       },
@@ -643,7 +697,9 @@ async function startServer() {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const sub = await prisma.subscription.findUnique({ where: { userId: user.id } });
+    const sub = await prisma.subscription.findUnique({
+      where: { userId: user.id },
+    });
     return res.json({ plan: user.customer?.plan ?? "free", subscription: sub });
   });
 
@@ -662,8 +718,11 @@ async function startServer() {
 
     return res.json(
       projects
-        .filter((project: { canvasState: unknown }) => !isPortalRecord(project.canvasState))
-        .map(projectToClientShape),
+        .filter(
+          (project: { canvasState: unknown }) =>
+            !isPortalRecord(project.canvasState)
+        )
+        .map(projectToClientShape)
     );
   });
 
@@ -697,7 +756,8 @@ async function startServer() {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { name, canvasData, canvasWidth, canvasHeight, thumbnailUrl } = req.body;
+    const { name, canvasData, canvasWidth, canvasHeight, thumbnailUrl } =
+      req.body;
     if (!name || typeof name !== "string") {
       return res.status(400).json({ error: "Name is required" });
     }
@@ -743,7 +803,8 @@ async function startServer() {
 
     const prev = normalizeCanvasState(existing.canvasState);
     const { canvasData, thumbnailUrl, name } = req.body;
-    const nextCanvasData = typeof canvasData === "string" ? canvasData : prev.canvasData;
+    const nextCanvasData =
+      typeof canvasData === "string" ? canvasData : prev.canvasData;
 
     if (!nextCanvasData) {
       return res.status(400).json({ error: "canvasData is required" });
@@ -757,7 +818,8 @@ async function startServer() {
           canvasData: nextCanvasData,
           canvasWidth: prev.canvasWidth ?? 1080,
           canvasHeight: prev.canvasHeight ?? 1080,
-          thumbnailUrl: typeof thumbnailUrl === "string" ? thumbnailUrl : prev.thumbnailUrl,
+          thumbnailUrl:
+            typeof thumbnailUrl === "string" ? thumbnailUrl : prev.thumbnailUrl,
         }),
       },
     });
@@ -790,7 +852,7 @@ async function startServer() {
   });
 
   // AI routes
-  app.use("/api/ai", createAiRouter(getOrCreateUser));
+  app.use("/api/ai", createAiRouter());
 
   // Serve static files from dist/public in production
   const staticPath =

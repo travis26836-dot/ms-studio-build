@@ -63,7 +63,10 @@ export const TEMPLATE_CATEGORIES = [
 
 export type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
 
-export const CANVAS_PRESETS: Record<string, { width: number; height: number; label: string }> = {
+export const CANVAS_PRESETS: Record<
+  string,
+  { width: number; height: number; label: string }
+> = {
   "instagram-post": { width: 1080, height: 1080, label: "Instagram Post" },
   "instagram-story": { width: 1080, height: 1920, label: "Instagram Story" },
   "facebook-post": { width: 1200, height: 630, label: "Facebook Post" },
@@ -74,14 +77,25 @@ export const CANVAS_PRESETS: Record<string, { width: number; height: number; lab
   "flyer-a4": { width: 2480, height: 3508, label: "Flyer (A4)" },
   "poster-18x24": { width: 5400, height: 7200, label: "Poster (18x24)" },
   "business-card": { width: 1050, height: 600, label: "Business Card" },
-  "presentation-16-9": { width: 1920, height: 1080, label: "Presentation (16:9)" },
+  "presentation-16-9": {
+    width: 1920,
+    height: 1080,
+    label: "Presentation (16:9)",
+  },
   "document-letter": { width: 2550, height: 3300, label: "Document (Letter)" },
-  "custom": { width: 1080, height: 1080, label: "Custom Size" },
+  custom: { width: 1080, height: 1080, label: "Custom Size" },
 };
 
 export type CanvasPreset = keyof typeof CANVAS_PRESETS;
 
-export const ASSET_TYPES = ["photo", "icon", "shape", "element", "background", "pattern"] as const;
+export const ASSET_TYPES = [
+  "photo",
+  "icon",
+  "shape",
+  "element",
+  "background",
+  "pattern",
+] as const;
 export type AssetType = (typeof ASSET_TYPES)[number];
 
 export const EXPORT_FORMATS = ["png", "jpg", "pdf"] as const;

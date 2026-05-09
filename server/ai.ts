@@ -2,8 +2,6 @@ import { Router, type Request, type Response } from "express";
 import { streamText, generateText } from "ai";
 import { createGroq } from "@ai-sdk/groq";
 
-type GetOrCreateUser = (req: Request) => Promise<{ id: string } | null>;
-
 // Cache the Groq client at module scope (created once when GROQ_API_KEY is available)
 const groqClient = process.env.GROQ_API_KEY
   ? createGroq({ apiKey: process.env.GROQ_API_KEY })
@@ -14,7 +12,7 @@ const CHAT_MODEL = process.env.GROQ_CHAT_MODEL ?? "llama-3.3-70b-versatile";
 // Together AI image generation constants
 const TOGETHER_API_URL = "https://api.together.xyz/v1/images/generations";
 const IMAGE_MODEL =
-  process.env.TOGETHER_IMAGE_MODEL ?? "black-forest-labs/FLUX.1-schnell-Free";
+  process.env.TOGETHER_IMAGE_MODEL ?? "black-forest-labs/FLUX.1-schnell";
 
 function getTogetherImageApiKey(): string | undefined {
   return process.env.TOGETHER_IMAGE_API_KEY ?? process.env.TOGETHER_AI_API_KEY;
@@ -35,12 +33,12 @@ function normalizeImageDimension(size: number): number {
 async function generateImageViaTogetherAI(
   prompt: string,
   width: number,
-  height: number,
+  height: number
 ): Promise<{ url: string }> {
   const apiKey = getTogetherImageApiKey();
   if (!apiKey) {
     throw new Error(
-      "TOGETHER_IMAGE_API_KEY or TOGETHER_AI_API_KEY is not configured",
+      "TOGETHER_IMAGE_API_KEY or TOGETHER_AI_API_KEY is not configured"
     );
   }
 
@@ -88,21 +86,16 @@ async function generateImageViaTogetherAI(
   throw new Error("Unexpected response format from Together AI");
 }
 
-export function createAiRouter(getOrCreateUser: GetOrCreateUser): Router {
+export function createAiRouter(): Router {
   const router = Router();
 
   // POST /api/ai/chat – stream text response via Groq
   router.post("/chat", async (req: Request, res: Response) => {
-    const user = await getOrCreateUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     if (!groqClient) {
       res.setHeader("Content-Type", "text/plain; charset=utf-8");
       res.end(
         "AI features require a GROQ_API_KEY environment variable. " +
-          "Sign up for a free account at console.groq.com and add GROQ_API_KEY to your environment.",
+          "Sign up for a free account at console.groq.com and add GROQ_API_KEY to your environment."
       );
       return;
     }
@@ -128,7 +121,7 @@ export function createAiRouter(getOrCreateUser: GetOrCreateUser): Router {
     }
 
     const messages = [
-      ...history.map((m) => ({
+      ...history.map(m => ({
         role: m.role as "user" | "assistant",
         content: m.content,
       })),
@@ -146,11 +139,6 @@ export function createAiRouter(getOrCreateUser: GetOrCreateUser): Router {
 
   // POST /api/ai/suggest-layout – return JSON layout suggestion
   router.post("/suggest-layout", async (req: Request, res: Response) => {
-    const user = await getOrCreateUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     if (!groqClient) {
       return res
         .status(503)
@@ -228,11 +216,6 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
    */
   function handleImageGeneration(label: "image" | "background") {
     return async (req: Request, res: Response) => {
-      const user = await getOrCreateUser(req);
-      if (!user) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
       if (!getTogetherImageApiKey()) {
         return res.status(503).json({
           error:
@@ -241,7 +224,11 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
         });
       }
 
-      const { prompt, width = 1024, height = 1024 } = req.body as {
+      const {
+        prompt,
+        width = 1024,
+        height = 1024,
+      } = req.body as {
         prompt?: string;
         width?: number;
         height?: number;
@@ -252,10 +239,15 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
       }
 
       try {
-        const result = await generateImageViaTogetherAI(prompt.trim(), width, height);
+        const result = await generateImageViaTogetherAI(
+          prompt.trim(),
+          width,
+          height
+        );
         return res.json(result);
       } catch (err) {
-        const message = err instanceof Error ? err.message : `Failed to generate ${label}`;
+        const message =
+          err instanceof Error ? err.message : `Failed to generate ${label}`;
         console.error(`${label} generation error:`, err);
         return res.status(500).json({ error: message });
       }

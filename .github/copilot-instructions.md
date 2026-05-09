@@ -3,10 +3,12 @@
 > **Getting Started?** Start with [`.github/instructions/project-configuration.instructions.md`](./.github/instructions/project-configuration.instructions.md) for setup. This file covers code style and architecture — use it as a reference while coding.
 
 > **Feature Setup?** After initial setup, refer to:
+>
 > - [railway-database-setup.instructions.md](./.github/instructions/railway-database-setup.instructions.md) — for database & auth
 > - [stripe-setup.instructions.md](./.github/instructions/stripe-setup.instructions.md) — for subscriptions
 
 ## Code Style
+
 - Use TypeScript and React function components in the main app under `client/`.
 - Follow existing import aliases from `tsconfig.json`: `@/*` for `client/src/*` and `@shared/*` for `shared/*`.
 - Reuse existing UI and utility patterns unless the required functionality cannot be achieved cleanly without a new abstraction:
@@ -16,6 +18,7 @@
 - Keep changes scoped and avoid broad refactors in `imported-source/` unless explicitly requested.
 
 ## Architecture
+
 - This repository is a monorepo-style workspace with separate applications:
   - Main product app: `client/` (Vite + React 19)
   - Production web server: `server/index.ts` (Express static hosting + SPA fallback)
@@ -26,6 +29,7 @@
 - Root Vite config (`vite.config.ts`) uses `client/` as the Vite root and outputs to `dist/public`.
 
 ## Build And Test
+
 - Use `pnpm` at repo root.
 - Main app commands (repo root):
   - `pnpm dev` - run Vite dev server
@@ -36,6 +40,7 @@
 - Secondary app commands (`customer-portal/`): `pnpm dev`, `pnpm build`, `pnpm start`.
 
 ## Conventions
+
 - When these guidelines compete, apply them in this order: 1. keep changes scoped to the requested task, 2. prefer existing patterns in `client/`, `server/`, and `shared/`, 3. align design work with `ideas.md` and `todo.md`, 4. avoid changes in `imported-source/` unless the task explicitly targets it.
 - Prefer editing code in `client/`, `server/`, and `shared/`; treat `imported-source/` as historical/reference unless a task explicitly targets it.
 - Preserve existing router and canvas patterns:
@@ -46,5 +51,6 @@
 - Be careful when changing routing dependencies: repository includes a local patch at `patches/wouter@3.7.1.patch` configured in root `package.json`.
 
 ## References
+
 - Product design direction: `ideas.md`
 - Active implementation checklist: `todo.md`

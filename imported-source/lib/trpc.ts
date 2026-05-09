@@ -57,7 +57,7 @@ const TEMPLATES_KEY = "manus-studio.templates.v1";
 function useLocalQuery<T>(
   fetcher: () => Promise<T> | T,
   deps: unknown[],
-  options?: QueryOptions,
+  options?: QueryOptions
 ) {
   const enabled = options?.enabled ?? true;
   const [data, setData] = useState<T | undefined>(undefined);
@@ -91,18 +91,21 @@ function useLocalQuery<T>(
 }
 
 function useLocalMutation<TInput, TOutput>(
-  mutator: (input: TInput) => Promise<TOutput> | TOutput,
+  mutator: (input: TInput) => Promise<TOutput> | TOutput
 ) {
   const [isPending, setIsPending] = useState(false);
 
-  const mutateAsync = useCallback(async (input: TInput) => {
-    setIsPending(true);
-    try {
-      return await Promise.resolve(mutator(input));
-    } finally {
-      setIsPending(false);
-    }
-  }, [mutator]);
+  const mutateAsync = useCallback(
+    async (input: TInput) => {
+      setIsPending(true);
+      try {
+        return await Promise.resolve(mutator(input));
+      } finally {
+        setIsPending(false);
+      }
+    },
+    [mutator]
+  );
 
   return {
     mutateAsync,
@@ -248,7 +251,8 @@ function seedTemplates(): TemplateRecord[] {
       canvasHeight: 1080,
       canvasData: createTemplateCanvas({
         heading: "Launch Day",
-        subheading: "Turn your next drop into a social campaign that looks polished fast.",
+        subheading:
+          "Turn your next drop into a social campaign that looks polished fast.",
         background: "#fff7ed",
         accent: "#f97316",
         width: 1080,
@@ -265,7 +269,8 @@ function seedTemplates(): TemplateRecord[] {
       canvasHeight: 1350,
       canvasData: createTemplateCanvas({
         heading: "You're Invited",
-        subheading: "A clean invitation layout with room for date, venue, and RSVP details.",
+        subheading:
+          "A clean invitation layout with room for date, venue, and RSVP details.",
         background: "#fdf2f8",
         accent: "#ec4899",
         width: 1080,
@@ -276,13 +281,15 @@ function seedTemplates(): TemplateRecord[] {
     {
       id: 3,
       name: "Certificate Classic",
-      description: "Formal certificate composition with room for names and signatures.",
+      description:
+        "Formal certificate composition with room for names and signatures.",
       category: "certificate",
       canvasWidth: 1600,
       canvasHeight: 1200,
       canvasData: createTemplateCanvas({
         heading: "Certificate of Achievement",
-        subheading: "Built for recognitions, graduations, completions, and awards.",
+        subheading:
+          "Built for recognitions, graduations, completions, and awards.",
         background: "#eff6ff",
         accent: "#2563eb",
         width: 1600,
@@ -299,7 +306,8 @@ function seedTemplates(): TemplateRecord[] {
       canvasHeight: 1920,
       canvasData: createTemplateCanvas({
         heading: "Chef's Special",
-        subheading: "Highlight a hero dish, the ingredients, and your best price point.",
+        subheading:
+          "Highlight a hero dish, the ingredients, and your best price point.",
         background: "#fefce8",
         accent: "#eab308",
         width: 1080,
@@ -316,7 +324,8 @@ function seedTemplates(): TemplateRecord[] {
       canvasHeight: 3300,
       canvasData: createTemplateCanvas({
         heading: "Grow Faster",
-        subheading: "Use this as a flexible print layout for services, promotions, and events.",
+        subheading:
+          "Use this as a flexible print layout for services, promotions, and events.",
         background: "#ecfeff",
         accent: "#06b6d4",
         width: 2550,
@@ -333,7 +342,8 @@ function seedTemplates(): TemplateRecord[] {
       canvasHeight: 1080,
       canvasData: createTemplateCanvas({
         heading: "Vision 2026",
-        subheading: "A slide cover with bold contrast and breathing room for a short message.",
+        subheading:
+          "A slide cover with bold contrast and breathing room for a short message.",
         background: "#f5f3ff",
         accent: "#8b5cf6",
         width: 1920,
@@ -350,7 +360,8 @@ function seedTemplates(): TemplateRecord[] {
       canvasHeight: 2400,
       canvasData: createTemplateCanvas({
         heading: "Weekend Sale",
-        subheading: "A promotional poster template tuned for offers, launches, and campaigns.",
+        subheading:
+          "A promotional poster template tuned for offers, launches, and campaigns.",
         background: "#ecfdf5",
         accent: "#22c55e",
         width: 1800,
@@ -367,7 +378,8 @@ function seedTemplates(): TemplateRecord[] {
       canvasHeight: 3300,
       canvasData: createTemplateCanvas({
         heading: "Quarterly Report",
-        subheading: "Start a polished business document with clear type hierarchy and balance.",
+        subheading:
+          "Start a polished business document with clear type hierarchy and balance.",
         background: "#f8fafc",
         accent: "#0f172a",
         width: 2550,
@@ -397,12 +409,12 @@ function writeProjectsStore(projects: ProjectRecord[]) {
 
 function listProjects() {
   return [...getProjectsStore()].sort((a, b) =>
-    b.updatedAt.localeCompare(a.updatedAt),
+    b.updatedAt.localeCompare(a.updatedAt)
   );
 }
 
 function getProject(id: number) {
-  return getProjectsStore().find((project) => project.id === id);
+  return getProjectsStore().find(project => project.id === id);
 }
 
 function createProject(input: {
@@ -436,7 +448,7 @@ function saveProject(input: {
   canvasData: string;
   thumbnailUrl?: string;
 }) {
-  const projects = getProjectsStore().map((project) =>
+  const projects = getProjectsStore().map(project =>
     project.id === input.id
       ? {
           ...project,
@@ -444,7 +456,7 @@ function saveProject(input: {
           thumbnailUrl: input.thumbnailUrl ?? project.thumbnailUrl,
           updatedAt: new Date().toISOString(),
         }
-      : project,
+      : project
   );
 
   writeProjectsStore(projects);
@@ -452,7 +464,9 @@ function saveProject(input: {
 }
 
 function deleteProject(input: { id: number }) {
-  const remaining = getProjectsStore().filter((project) => project.id !== input.id);
+  const remaining = getProjectsStore().filter(
+    project => project.id !== input.id
+  );
   writeProjectsStore(remaining);
   return { success: true };
 }
@@ -463,42 +477,47 @@ function listTemplates(input?: { category?: string }) {
     return templates;
   }
 
-  return templates.filter((template) => template.category === input.category);
+  return templates.filter(template => template.category === input.category);
 }
 
 function getTemplate(input: { id: number }) {
-  return getTemplatesStore().find((template) => template.id === input.id);
+  return getTemplatesStore().find(template => template.id === input.id);
 }
 
 function getPhotos(query?: string): PhotoRecord[] {
   const allPhotos: PhotoRecord[] = [
     {
       url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200",
-      thumb: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400",
+      thumb:
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400",
       alt: "Mountain landscape",
       tags: ["nature", "mountains", "travel"],
     },
     {
       url: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200",
-      thumb: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400",
+      thumb:
+        "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400",
       alt: "Modern office",
       tags: ["business", "office", "startup"],
     },
     {
       url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200",
-      thumb: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400",
+      thumb:
+        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400",
       alt: "Coding laptop",
       tags: ["technology", "coding", "laptop"],
     },
     {
       url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200",
-      thumb: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400",
+      thumb:
+        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400",
       alt: "Food plating",
       tags: ["food", "restaurant", "menu"],
     },
     {
       url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=1200",
-      thumb: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
+      thumb:
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
       alt: "Portrait woman",
       tags: ["people", "portrait", "professional"],
     },
@@ -510,7 +529,8 @@ function getPhotos(query?: string): PhotoRecord[] {
     },
     {
       url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200",
-      thumb: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400",
+      thumb:
+        "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400",
       alt: "Forest path",
       tags: ["nature", "forest", "green"],
     },
@@ -528,9 +548,9 @@ function getPhotos(query?: string): PhotoRecord[] {
 
   const lowered = query.toLowerCase();
   return allPhotos.filter(
-    (photo) =>
+    photo =>
       photo.alt.toLowerCase().includes(lowered) ||
-      photo.tags.some((tag) => tag.includes(lowered)),
+      photo.tags.some(tag => tag.includes(lowered))
   );
 }
 
@@ -594,7 +614,8 @@ function createLayoutSuggestion(input: {
         : "Make It Memorable";
 
   return {
-    description: "A starter layout with headline, support block, and callout area.",
+    description:
+      "A starter layout with headline, support block, and callout area.",
     elements: [
       {
         type: "shape",
@@ -688,28 +709,29 @@ export const trpc = {
         return useLocalQuery(
           () => (input ? getProject(input.id) : undefined),
           [key],
-          options,
+          options
         );
       },
     },
     create: {
       useMutation: () =>
-        useLocalMutation((input: {
-          name: string;
-          canvasWidth: number;
-          canvasHeight: number;
-          canvasData: string;
-          category?: string;
-          thumbnailUrl?: string;
-        }) => createProject(input)),
+        useLocalMutation(
+          (input: {
+            name: string;
+            canvasWidth: number;
+            canvasHeight: number;
+            canvasData: string;
+            category?: string;
+            thumbnailUrl?: string;
+          }) => createProject(input)
+        ),
     },
     save: {
       useMutation: () =>
-        useLocalMutation((input: {
-          id: number;
-          canvasData: string;
-          thumbnailUrl?: string;
-        }) => saveProject(input)),
+        useLocalMutation(
+          (input: { id: number; canvasData: string; thumbnailUrl?: string }) =>
+            saveProject(input)
+        ),
     },
     delete: {
       useMutation: () =>
@@ -729,7 +751,7 @@ export const trpc = {
         return useLocalQuery(
           () => (input ? getTemplate(input) : undefined),
           [key],
-          options,
+          options
         );
       },
     },
@@ -745,12 +767,14 @@ export const trpc = {
   ai: {
     chat: {
       useMutation: () =>
-        useLocalMutation((input: {
-          message: string;
-          history?: Array<{ role: "user" | "assistant"; content: string }>;
-        }) => ({
-          response: buildChatResponse(input.message),
-        })),
+        useLocalMutation(
+          (input: {
+            message: string;
+            history?: Array<{ role: "user" | "assistant"; content: string }>;
+          }) => ({
+            response: buildChatResponse(input.message),
+          })
+        ),
     },
     generateImage: {
       useMutation: () =>
@@ -760,21 +784,21 @@ export const trpc = {
     },
     generateBackground: {
       useMutation: () =>
-        useLocalMutation((input: {
-          prompt: string;
-          width: number;
-          height: number;
-        }) => ({
-          url: createAiBackground(input.prompt, input.width, input.height),
-        })),
+        useLocalMutation(
+          (input: { prompt: string; width: number; height: number }) => ({
+            url: createAiBackground(input.prompt, input.width, input.height),
+          })
+        ),
     },
     suggestLayout: {
       useMutation: () =>
-        useLocalMutation((input: {
-          purpose: string;
-          canvasWidth: number;
-          canvasHeight: number;
-        }) => createLayoutSuggestion(input)),
+        useLocalMutation(
+          (input: {
+            purpose: string;
+            canvasWidth: number;
+            canvasHeight: number;
+          }) => createLayoutSuggestion(input)
+        ),
     },
   },
 };

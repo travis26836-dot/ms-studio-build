@@ -3,7 +3,7 @@ type ChatMessage = { role: "user" | "assistant"; content: string };
 export class ApiRequestError extends Error {
   constructor(
     message: string,
-    public status: number,
+    public status: number
   ) {
     super(message);
     this.name = "ApiRequestError";
@@ -35,7 +35,7 @@ export async function chatStream(
   message: string,
   history: ChatMessage[],
   onToken: (token: string) => void,
-  canvasContext?: string,
+  canvasContext?: string
 ): Promise<void> {
   const response = await fetch("/api/ai/chat", {
     method: "POST",
@@ -74,7 +74,7 @@ export async function chatStream(
 export async function suggestLayout(
   purpose: string,
   canvasWidth: number,
-  canvasHeight: number,
+  canvasHeight: number
 ): Promise<LayoutSuggestion> {
   const response = await fetch("/api/ai/suggest-layout", {
     method: "POST",
@@ -88,7 +88,7 @@ export async function suggestLayout(
       .catch(() => ({ error: response.statusText }));
     throw new Error(
       (err as { error?: string }).error ||
-        `Layout suggestion failed: ${response.status}`,
+        `Layout suggestion failed: ${response.status}`
     );
   }
 
@@ -102,7 +102,7 @@ export async function suggestLayout(
 export async function generateImage(
   prompt: string,
   width = 1024,
-  height = 1024,
+  height = 1024
 ): Promise<{ url: string }> {
   const response = await fetch("/api/ai/generate-image", {
     method: "POST",
@@ -116,7 +116,7 @@ export async function generateImage(
       .catch(() => ({ error: response.statusText }));
     throw new Error(
       (err as { error?: string }).error ||
-        `Image generation failed (${response.status})`,
+        `Image generation failed (${response.status})`
     );
   }
 
@@ -130,7 +130,7 @@ export async function generateImage(
 export async function generateBackground(
   prompt: string,
   width: number,
-  height: number,
+  height: number
 ): Promise<{ url: string }> {
   const response = await fetch("/api/ai/generate-background", {
     method: "POST",
@@ -144,7 +144,7 @@ export async function generateBackground(
       .catch(() => ({ error: response.statusText }));
     throw new Error(
       (err as { error?: string }).error ||
-        `Background generation failed (${response.status})`,
+        `Background generation failed (${response.status})`
     );
   }
 
@@ -169,7 +169,7 @@ function createSvgDataUrl(svg: string): string {
 function createAiImagePlaceholder(
   prompt: string,
   width: number,
-  height: number,
+  height: number
 ): string {
   const label = escapeXml(prompt.trim().slice(0, 48) || "AI Graphic");
   const backgroundA = "#0f172a";
@@ -197,7 +197,7 @@ function createAiImagePlaceholder(
 function createAiBackgroundPlaceholder(
   prompt: string,
   width: number,
-  height: number,
+  height: number
 ): string {
   const label = escapeXml(prompt.trim().slice(0, 60) || "AI Background");
   return createSvgDataUrl(`

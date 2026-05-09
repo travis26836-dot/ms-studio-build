@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Integration Test Suite
- * 
+ *
  * Tests the core setup without requiring actual database connection.
  * Validates:
  * - TypeScript compilation
@@ -9,7 +9,7 @@
  * - Server startup
  * - API route definitions
  * - Environment variables
- * 
+ *
  * Run: node test-integration.mjs (after pnpm build)
  */
 
@@ -47,9 +47,7 @@ class TestSuite {
       }
     }
 
-    console.log(
-      `\n📊 Results: ${this.passed} passed, ${this.failed} failed\n`
-    );
+    console.log(`\n📊 Results: ${this.passed} passed, ${this.failed} failed\n`);
 
     return this.failed === 0;
   }
@@ -82,7 +80,12 @@ suite.test("Prisma schema exists and has required models", () => {
   }
 
   const schema = fs.readFileSync(schemaPath, "utf-8");
-  const requiredModels = ["model User", "model Subscription", "model Customer", "model Project"];
+  const requiredModels = [
+    "model User",
+    "model Subscription",
+    "model Customer",
+    "model Project",
+  ];
 
   for (const model of requiredModels) {
     if (!schema.includes(model)) {
@@ -114,7 +117,11 @@ suite.test("server/index.ts exists and has API routes", () => {
   }
 
   const server = fs.readFileSync(serverPath, "utf-8");
-  const requiredRoutes = ["/api/customer", "/api/subscription/status", "/api/projects"];
+  const requiredRoutes = [
+    "/api/customer",
+    "/api/subscription/status",
+    "/api/projects",
+  ];
 
   for (const route of requiredRoutes) {
     if (!server.includes(route)) {
@@ -217,7 +224,10 @@ suite.test("Critical dependencies are in package.json", () => {
 
 // Test 11: Documentation Files Exist
 suite.test("Setup documentation exists", () => {
-  const docPath = path.join(__dirname, ".github/instructions/railway-database-setup.instructions.md");
+  const docPath = path.join(
+    __dirname,
+    ".github/instructions/railway-database-setup.instructions.md"
+  );
 
   if (!fs.existsSync(docPath)) {
     throw new Error("railway-database-setup.instructions.md not found");
@@ -241,9 +251,7 @@ suite.test("Local testing guides created", () => {
 const allPassed = await suite.run();
 
 if (allPassed) {
-  console.log(
-    "🚀 All tests passed! Your setup is ready for local testing.\n"
-  );
+  console.log("🚀 All tests passed! Your setup is ready for local testing.\n");
   console.log("Next steps:");
   console.log("  1. pnpm dev          # Start development server");
   console.log("  2. pnpm build        # Build for production");

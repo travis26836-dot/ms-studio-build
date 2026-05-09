@@ -9,20 +9,18 @@ export default function EditorPage() {
   const w = parseInt(params.get("w") || "1080", 10);
   const h = parseInt(params.get("h") || "1080", 10);
   const projectId = params.get("project") || undefined;
-  const templateId = params.get("template") ? parseInt(params.get("template")!, 10) : undefined;
+  const templateId = params.get("template")
+    ? parseInt(params.get("template")!, 10)
+    : undefined;
   const urlName = params.get("name") || undefined;
 
   // If template ID is provided, fetch the template data
-  const { data: template, isLoading: templateLoading } = trpc.templates.get.useQuery(
-    { id: templateId! },
-    { enabled: !!templateId }
-  );
+  const { data: template, isLoading: templateLoading } =
+    trpc.templates.get.useQuery({ id: templateId! }, { enabled: !!templateId });
 
   // If project ID is provided, fetch the project data
-  const { data: project, isLoading: projectLoading } = trpc.projects.get.useQuery(
-    { id: projectId! },
-    { enabled: !!projectId }
-  );
+  const { data: project, isLoading: projectLoading } =
+    trpc.projects.get.useQuery({ id: projectId! }, { enabled: !!projectId });
 
   if ((templateId && templateLoading) || (projectId && projectLoading)) {
     return (
@@ -38,13 +36,15 @@ export default function EditorPage() {
   // Determine template data to pass
   let templateData: string | undefined;
   if (template?.canvasData) {
-    templateData = typeof template.canvasData === "string"
-      ? template.canvasData
-      : JSON.stringify(template.canvasData);
+    templateData =
+      typeof template.canvasData === "string"
+        ? template.canvasData
+        : JSON.stringify(template.canvasData);
   } else if (project?.canvasData) {
-    templateData = typeof project.canvasData === "string"
-      ? project.canvasData
-      : JSON.stringify(project.canvasData);
+    templateData =
+      typeof project.canvasData === "string"
+        ? project.canvasData
+        : JSON.stringify(project.canvasData);
   }
 
   return (

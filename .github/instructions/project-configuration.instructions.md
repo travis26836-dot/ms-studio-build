@@ -27,6 +27,7 @@ pnpm start (or node dist/)  → Express server (port 3000, production mode)
 ```
 
 **Key points:**
+
 - `pnpm dev` runs only Vite; Express is for production only
 - Both `pnpm dev` and `pnpm start` use port 3000 — run them separately
 - In `customer-portal/`, use its own `pnpm dev` command (separate from main app)
@@ -34,10 +35,10 @@ pnpm start (or node dist/)  → Express server (port 3000, production mode)
 
 ## Path Aliases
 
-| Alias | Resolves To | Use For | 
-|-------|-------------|---------|
-| `@/*` | `client/src/*` | All main app imports |
-| `@shared/*` | `shared/*` | Shared types and constants |
+| Alias       | Resolves To    | Use For                    |
+| ----------- | -------------- | -------------------------- |
+| `@/*`       | `client/src/*` | All main app imports       |
+| `@shared/*` | `shared/*`     | Shared types and constants |
 
 Defined in both `vite.config.ts` (Vite build) and `tsconfig.json` (type checking).
 
@@ -47,21 +48,21 @@ Create `.env` at **repo root** (not inside `client/`). Vite reads from the root 
 
 ### Always Required
 
-| Variable | Used By | Value | Example |
-|----------|---------|-------|---------|
-| `DATABASE_URL` | Prisma / `server/db.ts` | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/studio` |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Client auth / `client/src/App.tsx` | Clerk public key | `pk_test_...` |
-| `CLERK_SECRET_KEY` | Server auth / `server/auth.ts` | Clerk secret key | `sk_test_...` |
+| Variable                     | Used By                            | Value                        | Example                                        |
+| ---------------------------- | ---------------------------------- | ---------------------------- | ---------------------------------------------- |
+| `DATABASE_URL`               | Prisma / `server/db.ts`            | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/studio` |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Client auth / `client/src/App.tsx` | Clerk public key             | `pk_test_...`                                  |
+| `CLERK_SECRET_KEY`           | Server auth / `server/auth.ts`     | Clerk secret key             | `sk_test_...`                                  |
 
 ### Feature-Gated (app degrades without these)
 
-| Variable | Feature | Value | Notes |
-|----------|---------|-------|-------|
-| `GROQ_API_KEY` | AI chat + layout suggestions | API key from groq.com | Returns 503 if missing |
-| `TOGETHER_AI_API_KEY` | AI image & background generation | API key from together.ai | Returns 503 if missing; free tier available |
-| `STRIPE_SECRET_KEY` | Subscription billing | `sk_test_...` (dev) or `sk_live_...` (prod) | See [stripe-setup.instructions.md](./stripe-setup.instructions.md) |
-| `STRIPE_PRICE_PRO` | Pro tier subscription | Price ID from Stripe Dashboard | Example: `price_...` |
-| `STRIPE_PRICE_TEAM` | Team tier subscription | Price ID from Stripe Dashboard | Example: `price_...` |
+| Variable              | Feature                          | Value                                       | Notes                                                              |
+| --------------------- | -------------------------------- | ------------------------------------------- | ------------------------------------------------------------------ |
+| `GROQ_API_KEY`        | AI chat + layout suggestions     | API key from groq.com                       | Returns 503 if missing                                             |
+| `TOGETHER_AI_API_KEY` | AI image & background generation | API key from together.ai                    | Returns 503 if missing; free tier available                        |
+| `STRIPE_SECRET_KEY`   | Subscription billing             | `sk_test_...` (dev) or `sk_live_...` (prod) | See [stripe-setup.instructions.md](./stripe-setup.instructions.md) |
+| `STRIPE_PRICE_PRO`    | Pro tier subscription            | Price ID from Stripe Dashboard              | Example: `price_...`                                               |
+| `STRIPE_PRICE_TEAM`   | Team tier subscription           | Price ID from Stripe Dashboard              | Example: `price_...`                                               |
 
 **Important:** `VITE_` prefix is required for any variable accessed in **client-side code** only.
 
@@ -82,6 +83,7 @@ If dev server fails, check: `.env` file exists, `DATABASE_URL` is valid (if usin
 **Config file:** `prisma.config.ts` (loads `DATABASE_URL` from `.env`)
 
 Common commands:
+
 ```bash
 pnpm prisma migrate dev    # create and apply migrations locally
 pnpm prisma generate       # regenerate Prisma Client after schema changes
@@ -97,12 +99,14 @@ For full Prisma setup walkthrough, see [railway-database-setup.instructions.md](
 **Express server location:** `server/index.ts`
 
 ### Built-in Routes
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/` | GET | Serves SPA (client build from `dist/public/`) |
-| `/api/*` | - | All API routes defined in `server/index.ts` |
+
+| Route    | Method | Description                                   |
+| -------- | ------ | --------------------------------------------- |
+| `/`      | GET    | Serves SPA (client build from `dist/public/`) |
+| `/api/*` | -      | All API routes defined in `server/index.ts`   |
 
 ### Feature Routes (see specific guides)
+
 - **AI endpoints** (chat, layout, image generation): See [server/ai.ts](../../server/ai.ts) + `GROQ_API_KEY` and `TOGETHER_AI_API_KEY` env vars
 - **Stripe webhook**: See [stripe-setup.instructions.md](./stripe-setup.instructions.md)
 - **Customer portal API**: See [railway-database-setup.instructions.md](./railway-database-setup.instructions.md)

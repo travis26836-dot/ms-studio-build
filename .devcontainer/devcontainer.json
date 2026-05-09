@@ -1,8 +1,8 @@
 {
-	"image": "mcr.microsoft.com/devcontainers/universal:2",
-	"features": {
-		"ghcr.io/wcgomes/devcontainer-features/agency-agents:0": {
-			"autoupdate": true
-		}
-	}
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/wcgomes/devcontainer-features/agency-agents:0": {
+      "autoupdate": true
+    }
+  }
 }

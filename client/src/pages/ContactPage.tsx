@@ -3,7 +3,13 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft, Send, Loader2 } from "lucide-react";
 
@@ -28,18 +34,27 @@ export default function ContactPage() {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), message: message.trim() }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          message: message.trim(),
+        }),
       });
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error((body as { error?: string }).error ?? "Submission failed");
+        throw new Error(
+          (body as { error?: string }).error ?? "Submission failed"
+        );
       }
 
       setSubmitted(true);
       toast.success("Message sent! We'll get back to you soon.");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.";
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -76,8 +91,10 @@ export default function ContactPage() {
             <CardHeader>
               <CardTitle className="text-xl">Message Received</CardTitle>
               <CardDescription>
-                Thank you for reaching out. We'll review your message and respond to{" "}
-                <span className="font-medium text-foreground">{email}</span> as soon as possible.
+                Thank you for reaching out. We'll review your message and
+                respond to{" "}
+                <span className="font-medium text-foreground">{email}</span> as
+                soon as possible.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -96,8 +113,8 @@ export default function ContactPage() {
                 Contact Us
               </h1>
               <p className="text-muted-foreground leading-7">
-                Have a question, run into an issue, or want to share feedback? Fill out the form
-                below and we'll get back to you shortly.
+                Have a question, run into an issue, or want to share feedback?
+                Fill out the form below and we'll get back to you shortly.
               </p>
             </div>
 
@@ -111,7 +128,7 @@ export default function ContactPage() {
                       type="text"
                       placeholder="Jane Smith"
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      onChange={e => setName(e.target.value)}
                       disabled={submitting}
                       maxLength={200}
                       required
@@ -125,20 +142,22 @@ export default function ContactPage() {
                       type="email"
                       placeholder="jane@example.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={e => setEmail(e.target.value)}
                       disabled={submitting}
                       required
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="contact-message">Describe Your Issue or Message</Label>
+                    <Label htmlFor="contact-message">
+                      Describe Your Issue or Message
+                    </Label>
                     <textarea
                       id="contact-message"
                       rows={6}
                       placeholder="Please describe your issue or question in as much detail as possible…"
                       value={message}
-                      onChange={(e) => setMessage(e.target.value)}
+                      onChange={e => setMessage(e.target.value)}
                       disabled={submitting}
                       required
                       maxLength={5000}
@@ -146,7 +165,11 @@ export default function ContactPage() {
                     />
                   </div>
 
-                  <Button type="submit" disabled={submitting} className="gap-2 w-full sm:w-auto">
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="gap-2 w-full sm:w-auto"
+                  >
                     {submitting ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />

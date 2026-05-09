@@ -37,7 +37,7 @@ export function Dialog({ children, open, onOpenChange }: DialogProps) {
         onOpenChange?.(nextOpen);
       },
     }),
-    [currentOpen, onOpenChange, open],
+    [currentOpen, onOpenChange, open]
   );
 
   return (
@@ -88,13 +88,13 @@ export function DialogContent({
       <div
         className={cn(
           "relative z-10 w-full rounded-xl border border-border bg-popover p-6 text-popover-foreground shadow-2xl",
-          className,
+          className
         )}
       >
         {children}
       </div>
     </div>,
-    document.body,
+    document.body
   );
 }
 

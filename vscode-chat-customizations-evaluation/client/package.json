@@ -1,0 +1,101 @@
+{
+  "name": "chat-customizations-evaluations-client",
+  "displayName": "Chat Customizations Evaluations",
+  "description": "Language Server Protocol implementation for analyzing, validating, and improving AI prompts",
+  "version": "0.1.0",
+  "publisher": "chat-customizations-evaluations",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Linters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "ai",
+    "prompt",
+    "llm",
+    "chatgpt",
+    "claude",
+    "prompt engineering"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "prompt",
+        "aliases": [
+          "AI Prompt",
+          "prompt"
+        ],
+        "extensions": [
+          ".prompt.md",
+          ".agent.md",
+          ".prompt"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "prompt",
+        "scopeName": "text.prompt",
+        "path": "./syntaxes/prompt.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Chat Customizations Evaluations",
+      "properties": {
+        "chatCustomizationsEvaluations.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable the Chat Customizations Evaluations extension"
+        },
+        "chatCustomizationsEvaluations.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the language server"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "chatCustomizationsEvaluations.analyzePrompt",
+        "title": "Analyze Prompt",
+        "category": "Chat Customizations Evaluations",
+        "icon": "$(beaker)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "chatCustomizationsEvaluations.analyzePrompt",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@types/node": "^18.x",
+    "typescript": "^5.0.0"
+  }
+}

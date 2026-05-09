@@ -1,0 +1,204 @@
+{
+  "name": "vscode-chat-customizations-evaluations",
+  "version": "1.0.1",
+  "publisher": "ms-vscode",
+  "displayName": "Chat Customizations Evaluations",
+  "description": "Extension for analyzing, validating, and improving AI prompts",
+  "main": "./client/out/extension.js",
+  "icon": "icon.png",
+  "categories": [
+    "Linters",
+    "Programming Languages"
+  ],
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "bundle": "npm run bundle:server && npm run bundle:client",
+    "bundle:server": "tsc -p ./ && esbuild ./out/server.js --bundle --outfile=./out/server.bundled.js --platform=node --format=cjs && mv ./out/server.bundled.js ./out/server.js",
+    "bundle:client": "cd client && tsc -p ./ && esbuild ./out/extension.js --bundle --outfile=./out/extension.bundled.js --platform=node --format=cjs --external:vscode && mv ./out/extension.bundled.js ./out/extension.js",
+    "build": "npm run compile && cd client && npm run compile",
+    "build:all": "npm run compile && cd client && npm install && npm run compile",
+    "test": "vitest run",
+    "lint": "eslint src && cd client && npx eslint src",
+    "clean": "rm -rf out && cd client && rm -rf out",
+    "package": "npm run bundle && vsce package --no-dependencies",
+    "preinstall": "cd client && npm install"
+  },
+  "keywords": [
+    "language-server",
+    "ai",
+    "prompt",
+    "llm",
+    "prompt-engineering"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/vscode-chat-customizations-evaluation"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "enabledApiProposals": [
+    "chatSessionCustomizationProvider",
+    "contribEditorContentMenu"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Chat Customizations Evaluations",
+      "properties": {
+        "chatCustomizationsEvaluations.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable the Chat Customizations Evaluations extension"
+        },
+        "chatCustomizationsEvaluations.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the language server"
+        },
+        "chatCustomizationsEvaluations.customDiagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Short name for this custom diagnostic"
+              },
+              "description": {
+                "type": "string",
+                "description": "Diagnostic instructions for the LLM analyzer"
+              }
+            },
+            "required": [
+              "name",
+              "description"
+            ],
+            "additionalProperties": false
+          },
+          "default": [],
+          "markdownDescription": "Array of custom diagnostics to apply during analysis. Each object has `name` and `description` fields. Example: add `[{\"name\": \"Output Schema\", \"description\": \"Flag if the prompt does not define a JSON output schema.\"}]`"
+        },
+        "chatCustomizationsEvaluations.waza.command": {
+          "type": "string",
+          "default": "waza",
+          "description": "Command used to invoke waza (for example: waza, /usr/local/bin/waza)"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "chatCustomizationsEvaluations.analyzePrompt",
+        "title": "Analyze",
+        "category": "Chat Customizations Evaluations"
+      },
+      {
+        "command": "chatCustomizationsEvaluations.fixDiagnostics",
+        "title": "Fix Diagnostics",
+        "category": "Chat Customizations Evaluations"
+      },
+      {
+        "command": "chatCustomizationsEvaluations.analyzePromptFromCustomization",
+        "title": "Analyze",
+        "category": "Chat Customizations Evaluations",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "chatCustomizationsEvaluations.wazaCreateEval",
+        "title": "Create Waza Eval Scaffold",
+        "category": "Chat Customizations Evaluations",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "chatCustomizationsEvaluations.wazaRunEval",
+        "title": "Run Waza Evaluation",
+        "category": "Chat Customizations Evaluations",
+        "icon": "$(play)"
+      },
+      {
+        "command": "chatCustomizationsEvaluations.wazaDownloadBinary",
+        "title": "Download Waza Binary",
+        "category": "Chat Customizations Evaluations",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "chatCustomizationsEvaluations.openWazaUserGuide",
+        "title": "Open Waza User Guide",
+        "category": "Chat Customizations Evaluations",
+        "icon": "$(book)"
+      }
+    ],
+    "menus": {
+      "editor/content": [
+        {
+          "command": "chatCustomizationsEvaluations.analyzePrompt",
+          "group": "inline",
+          "when": "!chatCustomizationsEvaluations.hasDiagnostics && (editorLangId == prompt || editorLangId == chatagent || editorLangId == skill || editorLangId == instructions)"
+        },
+        {
+          "command": "chatCustomizationsEvaluations.fixDiagnostics",
+          "group": "inline",
+          "when": "chatCustomizationsEvaluations.hasDiagnostics && (editorLangId == prompt || editorLangId == chatagent || editorLangId == skill || editorLangId == instructions)"
+        }
+      ],
+      "chat/customizations/item": [
+        {
+          "command": "chatCustomizationsEvaluations.analyzePromptFromCustomization",
+          "group": "inline",
+          "when": "aiCustomizationManagementItemType == prompt || aiCustomizationManagementItemType == instruction || aiCustomizationManagementItemType == skill || aiCustomizationManagementItemType == agent"
+        },
+        {
+          "command": "chatCustomizationsEvaluations.wazaCreateEval",
+          "group": "inline",
+          "when": "aiCustomizationManagementItemType == prompt || aiCustomizationManagementItemType == instruction || aiCustomizationManagementItemType == skill || aiCustomizationManagementItemType == agent"
+        },
+        {
+          "command": "chatCustomizationsEvaluations.wazaRunEval",
+          "group": "inline",
+          "when": "aiCustomizationManagementItemType == prompt || aiCustomizationManagementItemType == instruction || aiCustomizationManagementItemType == skill || aiCustomizationManagementItemType == agent"
+        },
+        {
+          "command": "chatCustomizationsEvaluations.wazaDownloadBinary",
+          "group": "inline",
+          "when": "aiCustomizationManagementItemType == prompt || aiCustomizationManagementItemType == instruction || aiCustomizationManagementItemType == skill || aiCustomizationManagementItemType == agent"
+        },
+        {
+          "command": "chatCustomizationsEvaluations.openWazaUserGuide",
+          "group": "inline",
+          "when": "aiCustomizationManagementItemType == prompt || aiCustomizationManagementItemType == instruction || aiCustomizationManagementItemType == skill || aiCustomizationManagementItemType == agent"
+        }
+      ]
+    },
+    "chatSkills": [
+      {
+        "path": "./skills/fix-customization-evaluation-diagnostics/SKILL.md"
+      }
+    ]
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "yaml": "^2.8.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^25.1.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.39.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.55.0",
+    "vitest": "^4.0.18"
+  }
+}

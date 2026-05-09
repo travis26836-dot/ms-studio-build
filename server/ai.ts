@@ -9,7 +9,7 @@ const groqClient = process.env.GROQ_API_KEY
   ? createGroq({ apiKey: process.env.GROQ_API_KEY })
   : null;
 
-const CHAT_MODEL = "llama-3.3-70b-versatile";
+const CHAT_MODEL = process.env.GROQ_CHAT_MODEL ?? "llama-3.3-70b-versatile";
 
 // Together AI image generation constants
 const TOGETHER_API_URL = "https://api.together.xyz/v1/images/generations";

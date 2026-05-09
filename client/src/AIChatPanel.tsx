@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, Send, User, Sparkles, X } from "lucide-react";
-import { chatStream } from "@/lib/aiClient";
+import { ApiRequestError, chatStream } from "@/lib/aiClient";
 import { Streamdown } from "streamdown";
 
 interface Message {
@@ -64,11 +64,15 @@ export default function AIChatPanel({ onClose }: AIChatPanelProps) {
         // Replace empty placeholder with error message
         const hasContent = last.content.length > 0;
         if (hasContent) return prev;
+
+        const isUnauthorized = err instanceof ApiRequestError && err.status === 401;
         return [
           ...prev.slice(0, -1),
           {
             role: "assistant" as const,
-            content: "I'm having trouble connecting right now. Please try again in a moment.",
+            content: isUnauthorized
+              ? "You need to sign in to use AI features. Please log in with Clerk and try again."
+              : "I'm having trouble connecting right now. Please try again in a moment.",
           },
         ];
       });

@@ -1,5 +1,15 @@
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+    this.name = "ApiRequestError";
+  }
+}
+
 type LayoutElement = {
   type: "text" | "shape" | "image";
   left: number;
@@ -34,8 +44,9 @@ export async function chatStream(
   });
 
   if (!response.ok) {
-    // Use a safe generic message to avoid leaking server implementation details
-    throw new Error(`Chat request failed (${response.status})`);
+    const detail = await response.text().catch(() => "");
+    const fallback = `Chat request failed (${response.status})`;
+    throw new ApiRequestError(detail || fallback, response.status);
   }
 
   const reader = response.body?.getReader();

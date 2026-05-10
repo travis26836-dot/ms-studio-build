@@ -3,5 +3,13 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  server: { host: "0.0.0.0", port: 4000, strictPort: false },
+  server: { host: "0.0.0.0", port: 3000, strictPort: false },
+  preview: {
+    host: "0.0.0.0",
+    port: 3000,
+    allowedHosts: [
+      "localhost",
+      "customer-portal-production-d678.up.railway.app",
+    ],
+  },
 });

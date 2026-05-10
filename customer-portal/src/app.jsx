@@ -1,10 +1,97 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const PORTAL_IDENTITY_KEY = "ms.portal.identity.v1";
-const DEFAULT_MAIN_APP_URL = "http://localhost:3002";
+const MAIN_APP_URL_QUERY_PARAM = "mainAppUrl";
+const MAIN_APP_URL_STORAGE_KEY = "ms.portal.mainAppUrl.v1";
+const DEFAULT_MAIN_APP_URL = "/";
+
+function isValidAbsoluteUrl(raw) {
+  try {
+    const parsed = new URL(raw);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function getMainAppUrlFromQuery() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const value = new URLSearchParams(window.location.search).get(
+    MAIN_APP_URL_QUERY_PARAM
+  );
+  if (!value || !isValidAbsoluteUrl(value)) {
+    return null;
+  }
+
+  return value;
+}
+
+function getMainAppUrlFromReferrer() {
+  if (typeof document === "undefined" || !document.referrer) {
+    return null;
+  }
+
+  if (!isValidAbsoluteUrl(document.referrer)) {
+    return null;
+  }
+
+  return new URL(document.referrer).origin;
+}
+
+function getMainAppUrlFromStorage() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const value = window.localStorage.getItem(MAIN_APP_URL_STORAGE_KEY);
+    if (!value || !isValidAbsoluteUrl(value)) {
+      return null;
+    }
+
+    return value;
+  } catch {
+    return null;
+  }
+}
+
+function rememberMainAppUrl(value) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!value || !isValidAbsoluteUrl(value)) {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(MAIN_APP_URL_STORAGE_KEY, value);
+  } catch {
+    // Keep navigation working even if persistence is blocked.
+  }
+}
+
+function getRuntimeMainAppUrl() {
+  if (typeof window === "undefined") {
+    return DEFAULT_MAIN_APP_URL;
+  }
+
+  return window.location.origin;
+}
 
 function getMainAppUrl() {
-  return import.meta.env.VITE_MAIN_APP_URL || DEFAULT_MAIN_APP_URL;
+  const resolved =
+    import.meta.env.VITE_MAIN_APP_URL ||
+    getMainAppUrlFromQuery() ||
+    getMainAppUrlFromReferrer() ||
+    getMainAppUrlFromStorage() ||
+    getRuntimeMainAppUrl();
+
+  rememberMainAppUrl(resolved);
+  return resolved;
 }
 
 function getMainAppLoginUrl() {

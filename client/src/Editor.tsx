@@ -457,7 +457,12 @@ export default function Editor({
           variant="ghost"
           size="sm"
           className="text-toolbar-foreground gap-1.5"
-          onClick={() => window.open(getPortalUrl(), "_blank")}
+          onClick={() =>
+            window.open(
+              getPortalUrl({ returnTo: window.location.origin }),
+              "_blank"
+            )
+          }
         >
           <ExternalLink className="w-4 h-4" />
           <span className="text-xs">Portal</span>

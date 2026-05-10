@@ -287,6 +287,8 @@ function Dashboard({
   const [newProjectName, setNewProjectName] = useState("");
 
   function navigateToPortal() {
+    const mainAppUrl = window.location.origin;
+
     if (user) {
       try {
         localStorage.setItem(
@@ -295,7 +297,7 @@ function Dashboard({
         );
       } catch {}
     }
-    window.location.assign(getPortalUrl());
+    window.location.assign(getPortalUrl({ returnTo: mainAppUrl }));
   }
 
   const q = searchQuery.trim().toLowerCase();
@@ -407,7 +409,7 @@ function Dashboard({
               style={{
                 fontSize: "18px",
                 fontWeight: 700,
-                fontFamily: '"Cinzel Decorative", serif',
+                fontFamily: "Impact, sans-serif",
               }}
             >
               ManuScript Studio
@@ -435,19 +437,24 @@ function Dashboard({
             </div>
           </div>
 
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            className="h-10 gap-2 rounded-full border border-transparent px-2 hover:border-border"
+            className="flex items-center gap-2 rounded-xl border border-border/70 bg-secondary/70 px-3 py-2 text-left transition-colors hover:border-border"
             onClick={() => navigateToPortal()}
+            aria-haspopup="menu"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
-              {user?.name?.[0] || "U"}
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
+              {user?.name?.[0]?.toUpperCase() || "U"}
             </div>
-            <span className="hidden text-xs font-medium text-foreground lg:inline">
-              Customer Portal
+            <span className="hidden lg:block">
+              <span className="block text-sm font-bold leading-tight text-foreground" style={{ fontFamily: 'Impact, sans-serif' }}>
+                {user?.name || "Account"}
+              </span>
+              <span className="block text-[11px] leading-tight text-muted-foreground" style={{ fontFamily: 'Impact, sans-serif' }}>
+                {user?.email || ""}
+              </span>
             </span>
-          </Button>
+          </button>
         </div>
       </header>
 
@@ -909,19 +916,9 @@ function LandingPage() {
               developer integrations. Create polished visuals in minutes.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
-              <Button size="lg" asChild>
+              <Button size="lg" className="w-[220px]" asChild>
                 <a href={getLoginUrl()} className="gap-2">
                   Start Designing <ArrowRight className="h-4 w-4" />
-                </a>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="gap-2 bg-transparent"
-                asChild
-              >
-                <a href="/api-docs">
-                  <Code2 className="h-4 w-4" /> View API Docs
                 </a>
               </Button>
             </div>

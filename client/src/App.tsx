@@ -1,6 +1,14 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
+import {
+  ClerkProvider,
+  RedirectToSignIn,
+  SignIn,
+  SignUp,
+  useAuth,
+  useClerk,
+} from "@clerk/react";
 import { ClerkProvider, RedirectToSignIn, SignIn, SignUp, useAuth } from "@clerk/react";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -12,6 +20,7 @@ import ContactPage from "./pages/ContactPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
 import RefundPolicyPage from "./pages/RefundPolicyPage";
+import { useEffect } from "react";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
 
@@ -24,6 +33,14 @@ function ProtectedRoute({
   if (!isLoaded) return null;
   if (!isSignedIn) return <RedirectToSignIn />;
   return <Component />;
+}
+
+function LogoutPage() {
+  const { signOut } = useClerk();
+  useEffect(() => {
+    signOut({ redirectUrl: "/sign-in" });
+  }, []);
+  return null;
 }
 
 function Router() {
@@ -66,6 +83,7 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/terms-of-service" component={TermsOfServicePage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />
+      <Route path="/logout" component={LogoutPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

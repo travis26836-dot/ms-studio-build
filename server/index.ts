@@ -380,6 +380,29 @@ async function startServer() {
     return res.json(customer);
   });
 
+  app.get("/api/customer/:id/designs", async (req, res) => {
+    const prisma = await getPrisma();
+    const customer = await getPortalCustomer(prisma, req.params.id);
+
+    if (!customer) {
+      return res.status(404).json({ error: "Not found" });
+    }
+
+    const projects = await prisma.project.findMany({
+      where: { userId: customer.userId },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    return res.json(
+      projects
+        .filter(
+          (project: { canvasState: unknown }) =>
+            !isPortalRecord(project.canvasState)
+        )
+        .map(projectToClientShape)
+    );
+  });
+
   app.get("/api/customer/:id/content", async (req, res) => {
     const prisma = await getPrisma();
     const customer = await getPortalCustomer(prisma, req.params.id);

@@ -38,7 +38,7 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, getPortalUrl } from "@/const";
 import { useLocation } from "wouter";
 import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -277,7 +277,6 @@ function Dashboard({
     trpc.templates.list.useQuery(undefined);
   const deleteMutation = trpc.projects.delete.useMutation();
   const [activeTab, setActiveTab] = useState("all");
-  const [aiSearchEnabled, setAiSearchEnabled] = useState(false);
   const [showAllPresets, setShowAllPresets] = useState(false);
   const [showAllTemplates, setShowAllTemplates] = useState(false);
   const [pendingPreset, setPendingPreset] = useState<{
@@ -287,24 +286,52 @@ function Dashboard({
   } | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
 
+  function navigateToPortal() {
+    if (user) {
+      try {
+        localStorage.setItem(
+          "ms.portal.identity.v1",
+          JSON.stringify({ name: user.name, email: user.email })
+        );
+      } catch {}
+    }
+    window.location.assign(getPortalUrl());
+  }
+
+  const q = searchQuery.trim().toLowerCase();
+
   const filteredTemplates = useMemo(() => {
     const templates = dbTemplates || [];
-    return templates.filter((template: any) =>
-      matchesTemplateCategory(template, activeTab)
-    );
-  }, [dbTemplates, activeTab]);
+    return templates.filter((template: any) => {
+      const matchesCategory = matchesTemplateCategory(template, activeTab);
+      if (!q) return matchesCategory;
+      return (
+        matchesCategory &&
+        ((template.name || "").toLowerCase().includes(q) ||
+          (template.category || "").toLowerCase().includes(q))
+      );
+    });
+  }, [dbTemplates, activeTab, q]);
 
-  const visiblePresets = useMemo(
-    () => (showAllPresets ? DESIGN_PRESETS : DESIGN_PRESETS.slice(0, 10)),
-    [showAllPresets]
-  );
+  const visiblePresets = useMemo(() => {
+    const base = showAllPresets ? DESIGN_PRESETS : DESIGN_PRESETS.slice(0, 10);
+    if (!q) return base;
+    return DESIGN_PRESETS.filter(p => p.label.toLowerCase().includes(q));
+  }, [showAllPresets, q]);
 
   const visibleCuratedTemplates = useMemo(() => {
-    const matches = CURATED_TEMPLATE_IDEAS.filter(
-      template => activeTab === "all" || template.categories.includes(activeTab)
-    );
+    const matches = CURATED_TEMPLATE_IDEAS.filter(template => {
+      const matchesCategory =
+        activeTab === "all" || template.categories.includes(activeTab);
+      if (!q) return matchesCategory;
+      return (
+        matchesCategory &&
+        (template.title.toLowerCase().includes(q) ||
+          template.subtitle.toLowerCase().includes(q))
+      );
+    });
     return showAllTemplates ? matches : matches.slice(0, 2);
-  }, [activeTab, showAllTemplates]);
+  }, [activeTab, showAllTemplates, q]);
 
   const visibleDbTemplates = useMemo(
     () =>
@@ -313,6 +340,13 @@ function Dashboard({
         : filteredTemplates.slice(0, 6),
     [filteredTemplates, showAllTemplates]
   );
+
+  const filteredProjects = useMemo(() => {
+    if (!q || !myProjects) return myProjects;
+    return (myProjects as any[]).filter((p: any) =>
+      (p.name || "").toLowerCase().includes(q)
+    );
+  }, [myProjects, q]);
 
   const handleDeleteProject = async (id: string) => {
     try {
@@ -384,38 +418,34 @@ function Dashboard({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder={
-                  aiSearchEnabled
-                    ? "What are you trying to make with AI?"
-                    : "What are you trying to make?"
-                }
+                placeholder="What are you trying to make?"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="h-10 border-border bg-secondary pl-9"
+                onKeyDown={e => {
+                  if (e.key === "Enter" && searchQuery.trim()) {
+                    openCreateDialog({
+                      width: 1080,
+                      height: 1080,
+                      label: searchQuery.trim(),
+                    });
+                  }
+                }}
+                className="h-10 border-border bg-secondary pl-9 pr-4"
               />
             </div>
-            <Button
-              type="button"
-              variant={aiSearchEnabled ? "default" : "outline"}
-              className="h-10 gap-2 bg-transparent"
-              onClick={() => setAiSearchEnabled(current => !current)}
-            >
-              <Sparkles className="h-4 w-4" />{" "}
-              {aiSearchEnabled ? "AI On" : "AI"}
-            </Button>
           </div>
 
           <Button
             type="button"
             variant="ghost"
             className="h-10 gap-2 rounded-full border border-transparent px-2 hover:border-border"
-            onClick={() => setLocation("/")}
+            onClick={() => navigateToPortal()}
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
               {user?.name?.[0] || "U"}
             </div>
             <span className="hidden text-xs font-medium text-foreground lg:inline">
-              Customer Dashboard
+              Customer Portal
             </span>
           </Button>
         </div>
@@ -433,72 +463,82 @@ function Dashboard({
             </p>
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-            {visiblePresets.map(preset => (
-              <button
-                key={preset.key}
-                onClick={() =>
-                  openCreateDialog({
-                    width: preset.width,
-                    height: preset.height,
-                    label: preset.label,
-                  })
-                }
-                className="group flex flex-col items-center gap-3 rounded-2xl border border-border bg-card/60 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
-              >
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-border bg-secondary transition-all group-hover:border-primary/50">
-                  <Plus className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-primary" />
-                </div>
-                <div>
-                  <span className="block text-xs font-medium text-foreground">
-                    {preset.label}
-                  </span>
-                  <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                    {preset.width}×{preset.height}
-                  </span>
-                </div>
-              </button>
-            ))}
+            {visiblePresets.length === 0 && q ? (
+              <div className="col-span-full py-6 text-sm text-muted-foreground">
+                No sizes match "{searchQuery}"
+              </div>
+            ) : (
+              visiblePresets.map(preset => (
+                <button
+                  key={preset.key}
+                  onClick={() =>
+                    openCreateDialog({
+                      width: preset.width,
+                      height: preset.height,
+                      label: preset.label,
+                    })
+                  }
+                  className="group flex flex-col items-center gap-3 rounded-2xl border border-border bg-card/60 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
+                >
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-border bg-secondary transition-all group-hover:border-primary/50">
+                    <Plus className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-primary" />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-medium text-foreground">
+                      {preset.label}
+                    </span>
+                    <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                      {preset.width}×{preset.height}
+                    </span>
+                  </div>
+                </button>
+              ))
+            )}
 
-            <button
-              onClick={() =>
-                openCreateDialog({
-                  width: 1080,
-                  height: 1080,
-                  label: "Custom Design",
-                })
-              }
-              className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card/40 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
-            >
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-dashed border-border transition-all group-hover:border-primary/50">
-                <Plus className="h-6 w-6 text-muted-foreground group-hover:text-primary" />
-              </div>
-              <div>
-                <span className="block text-xs font-medium text-foreground">
-                  Custom Size
-                </span>
-                <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                  Open editor
-                </span>
-              </div>
-            </button>
+            {!q && (
+              <>
+                <button
+                  onClick={() =>
+                    openCreateDialog({
+                      width: 1080,
+                      height: 1080,
+                      label: "Custom Design",
+                    })
+                  }
+                  className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card/40 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
+                >
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-dashed border-border transition-all group-hover:border-primary/50">
+                    <Plus className="h-6 w-6 text-muted-foreground group-hover:text-primary" />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-medium text-foreground">
+                      Custom Size
+                    </span>
+                    <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                      Open editor
+                    </span>
+                  </div>
+                </button>
 
-            <button
-              type="button"
-              onClick={() => setShowAllPresets(current => !current)}
-              className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card/60 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
-            >
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <LayoutTemplate className="h-6 w-6" />
-              </div>
-              <div>
-                <span className="block text-xs font-medium text-foreground">
-                  {showAllPresets ? "Show Fewer" : "View More"}
-                </span>
-                <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                  More preset sizes
-                </span>
-              </div>
-            </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAllPresets(current => !current)}
+                  className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card/60 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
+                >
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <LayoutTemplate className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-medium text-foreground">
+                      {showAllPresets ? "Show Fewer" : "View More"}
+                    </span>
+                    <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                      More preset sizes
+                    </span>
+                  </div>
+                </button>
+              </>
+            )}
           </div>
         </section>
 
@@ -703,9 +743,9 @@ function Dashboard({
                 variant="outline"
                 size="sm"
                 className="bg-transparent"
-                onClick={() => setLocation("/")}
+                onClick={() => navigateToPortal()}
               >
-                Customer Dashboard
+                Customer Portal
               </Button>
             </div>
           </div>
@@ -714,9 +754,9 @@ function Dashboard({
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-          ) : myProjects && myProjects.length > 0 ? (
+          ) : filteredProjects && filteredProjects.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {myProjects.map((project: any) => (
+              {filteredProjects.map((project: any) => (
                 <div key={project.id} className="group relative">
                   <button
                     onClick={() =>
@@ -761,16 +801,18 @@ function Dashboard({
             <div className="rounded-2xl border border-dashed border-border py-16 text-center">
               <Folder className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground">
-                No designs yet in your customer workspace
+                {q
+                  ? `No designs match "${searchQuery}"`
+                  : "No designs yet in your customer workspace"}
               </p>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   className="gap-1.5 bg-transparent"
-                  onClick={() => setLocation("/")}
+                  onClick={() => navigateToPortal()}
                 >
-                  Customer Dashboard
+                  Customer Portal
                 </Button>
                 <Button
                   onClick={() => setLocation("/editor")}

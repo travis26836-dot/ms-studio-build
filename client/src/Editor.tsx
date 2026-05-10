@@ -83,6 +83,7 @@ import {
   Paintbrush,
   RotateCcw,
   Eye,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -90,6 +91,7 @@ import { trpc } from "@/lib/trpc";
 import { CANVAS_PRESETS } from "@shared/designTypes";
 import ExportDialog from "@/components/ExportDialog";
 import AIChatPanel from "@/components/AIChatPanel";
+import { getPortalUrl } from "@/const";
 
 type SidebarPanel =
   | "templates"
@@ -449,6 +451,16 @@ export default function Editor({
         >
           <Save className="w-4 h-4" />
           <span className="text-xs">Save</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-toolbar-foreground gap-1.5"
+          onClick={() => window.open(getPortalUrl(), "_blank")}
+        >
+          <ExternalLink className="w-4 h-4" />
+          <span className="text-xs">Portal</span>
         </Button>
 
         <ExportDialog

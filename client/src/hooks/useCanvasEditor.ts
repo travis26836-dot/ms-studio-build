@@ -255,21 +255,16 @@ export function useCanvasEditor(
         return;
       }
 
-      isHistoryActionRef.current = true;
-      const normalizedSnapshot = JSON.stringify(
-        normalizeCanvasJsonPayload(JSON.parse(snapshot))
-      );
-      await new Promise<void>(resolve => {
-        canvas.loadFromJSON(normalizedSnapshot, () => {
-          canvas.renderAll();
-          resolve();
-        });
+    isHistoryActionRef.current = true;
+    await new Promise<void>((resolve) => {
+      canvas.loadFromJSON(snapshot, () => {
+        canvas.renderAll();
+        resolve();
       });
-      isHistoryActionRef.current = false;
-      updateSelectionState();
-    },
-    [updateSelectionState]
-  );
+    });
+    isHistoryActionRef.current = false;
+    updateSelectionState();
+  }, [updateSelectionState]);
 
   const initCanvas = useCallback(() => {
     if (fabricRef.current) {
@@ -797,10 +792,9 @@ export function useCanvasEditor(
         return "";
       }
 
-      if (format === "json") {
-        canvas.getObjects().forEach(obj => normalizeCanvasObject(obj as unknown));
-        return JSON.stringify(canvas.toJSON());
-      }
+    if (format === "json") {
+      return JSON.stringify(canvas.toJSON());
+    }
 
       return canvas.toDataURL({
         format: format === "jpg" ? "jpeg" : "png",
@@ -819,20 +813,17 @@ export function useCanvasEditor(
         return;
       }
 
-      isHistoryActionRef.current = true;
-      const normalizedPayload = normalizeCanvasJsonPayload(JSON.parse(json));
-      await new Promise<void>(resolve => {
-        canvas.loadFromJSON(normalizedPayload, () => {
-          canvas.renderAll();
-          resolve();
-        });
+    isHistoryActionRef.current = true;
+    await new Promise<void>((resolve) => {
+      canvas.loadFromJSON(JSON.parse(json), () => {
+        canvas.renderAll();
+        resolve();
       });
-      isHistoryActionRef.current = false;
-      updateSelectionState();
-      saveHistory();
-    },
-    [saveHistory, updateSelectionState]
-  );
+    });
+    isHistoryActionRef.current = false;
+    updateSelectionState();
+    saveHistory();
+  }, [saveHistory, updateSelectionState]);
 
   const getObjects = useCallback(() => {
     const canvas = fabricRef.current;

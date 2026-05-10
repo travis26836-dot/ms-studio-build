@@ -1,13 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import {
-  ClerkProvider,
-  RedirectToSignIn,
-  SignIn,
-  SignUp,
-  useAuth,
-} from "@clerk/react";
+import { ClerkProvider, RedirectToSignIn, SignIn, SignUp, useAuth } from "@clerk/react";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -86,6 +80,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            <SpeedInsights />
           </TooltipProvider>
         </ThemeProvider>
       </ClerkProvider>

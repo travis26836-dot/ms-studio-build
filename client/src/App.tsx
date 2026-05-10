@@ -9,7 +9,7 @@ import {
   useAuth,
   useClerk,
 } from "@clerk/react";
-import { ClerkProvider, RedirectToSignIn, SignIn, SignUp, useAuth } from "@clerk/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";

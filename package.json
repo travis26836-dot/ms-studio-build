@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "sh -c 'pnpm dev:api & vite --host'",
-    "dev:api": "pnpm build:server && PORT=3001 NODE_ENV=development node --env-file=.env dist/index.js",
+    "dev:full": "bash scripts/dev-full.sh",
+    "dev:api": "pnpm build:server && PORT=3010 NODE_ENV=development node --env-file=.env dist/index.js",
     "build": "vite build && pnpm build:server",
     "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",

@@ -2,6 +2,41 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "kill:dev-ports",
+			"type": "shell",
+			"command": "sh",
+			"args": ["-lc", "fuser -k 3003/tcp 3004/tcp 3010/tcp || true"],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "dev:api-only",
+			"type": "shell",
+			"command": "sh",
+			"args": [
+				"-lc",
+				"pnpm build:server && PORT=3010 NODE_ENV=development node --env-file=.env dist/index.js"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "dev:main-only",
+			"type": "shell",
+			"command": "sh",
+			"args": ["-lc", "pnpm exec vite --host --port 3003 --strictPort"],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "dev:full",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["dev:full"],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
 			"type": "process",
 			"command": "markdownlint",
 			"problemMatcher": [

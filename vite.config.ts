@@ -152,6 +152,7 @@ function vitePluginManusDebugCollector(): Plugin {
 
 export default defineConfig(({ command }) => {
   const isBuild = command === "build";
+  const apiPort = process.env.API_PORT || "3010";
 
   const plugins = [
     react(),
@@ -185,7 +186,7 @@ export default defineConfig(({ command }) => {
       host: true,
       proxy: {
         "/api": {
-          target: "http://localhost:3001",
+          target: `http://localhost:${apiPort}`,
           changeOrigin: true,
         },
       },

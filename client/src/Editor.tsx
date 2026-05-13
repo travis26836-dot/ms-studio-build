@@ -127,6 +127,125 @@ const FONT_OPTIONS = [
   "Anton",
 ];
 
+const AUTOSAVE_DRAFT_VERSION = 1;
+const AUTOSAVE_DRAFT_PREFIX = "ms-studio.editorDraft.";
+const AUTOSAVE_INTERVAL_MS = 2000;
+
+type AutosaveDraft = {
+  version: number;
+  projectId?: string;
+  sourceFingerprint: string;
+  canvasWidth: number;
+  canvasHeight: number;
+  projectName: string;
+  canvasData: string;
+  updatedAt: number;
+};
+
+function fingerprintText(value: string) {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 33) ^ value.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function getInitialCanvasFingerprint(templateData?: string) {
+  return templateData ? fingerprintText(templateData) : "blank";
+}
+
+function getAutosaveDraftKey(
+  projectId: string | undefined,
+  canvasWidth: number,
+  canvasHeight: number,
+  sourceFingerprint: string
+) {
+  const scope = projectId ? `project:${projectId}` : "new";
+  return `${AUTOSAVE_DRAFT_PREFIX}${scope}:${canvasWidth}x${canvasHeight}:${sourceFingerprint}`;
+}
+
+function readAutosaveDraft(key: string): AutosaveDraft | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) {
+      return null;
+    }
+    const draft = JSON.parse(raw) as AutosaveDraft;
+    if (
+      draft.version !== AUTOSAVE_DRAFT_VERSION ||
+      typeof draft.canvasData !== "string" ||
+      typeof draft.projectName !== "string"
+    ) {
+      return null;
+    }
+    return draft;
+  } catch (error) {
+    console.warn("Failed to read editor autosave draft", error);
+    return null;
+  }
+}
+
+function findLatestAutosaveDraftForProject(
+  projectId: string,
+  canvasWidth: number,
+  canvasHeight: number
+): AutosaveDraft | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const prefix = `${AUTOSAVE_DRAFT_PREFIX}project:${projectId}:${canvasWidth}x${canvasHeight}:`;
+  let latestDraft: AutosaveDraft | null = null;
+
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+    if (!key || !key.startsWith(prefix)) {
+      continue;
+    }
+
+    const draft = readAutosaveDraft(key);
+    if (
+      draft &&
+      draft.projectId === projectId &&
+      draft.canvasWidth === canvasWidth &&
+      draft.canvasHeight === canvasHeight &&
+      (!latestDraft || draft.updatedAt > latestDraft.updatedAt)
+    ) {
+      latestDraft = draft;
+    }
+  }
+
+  return latestDraft;
+}
+
+function writeAutosaveDraft(key: string, draft: AutosaveDraft) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(draft));
+  } catch (error) {
+    console.warn("Failed to write editor autosave draft", error);
+  }
+}
+
+function clearAutosaveDraft(key: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(key);
+  } catch (error) {
+    console.warn("Failed to clear editor autosave draft", error);
+  }
+}
+
 interface EditorProps {
   projectId?: string;
   templateData?: string;
@@ -154,12 +273,44 @@ export default function Editor({
   const [projectName, setProjectName] = useState(
     initialProjectName || "Untitled Design"
   );
+  const sourceFingerprint = useMemo(
+    () => getInitialCanvasFingerprint(templateData),
+    [templateData]
+  );
+  const autosaveDraftKey = useMemo(
+    () =>
+      getAutosaveDraftKey(
+        currentProjectId,
+        canvasWidth,
+        canvasHeight,
+        sourceFingerprint
+      ),
+    [currentProjectId, canvasWidth, canvasHeight, sourceFingerprint]
+  );
+  const lastAutosavedCanvasRef = useRef<string | null>(null);
+  const lastAutosavedNameRef = useRef(projectName);
+  const lastRemoteSavedCanvasRef = useRef<string | null>(null);
+  const lastRemoteSavedNameRef = useRef(projectName);
+  const remoteAutosaveInFlightRef = useRef(false);
+  const hasCompletedInitialLoadRef = useRef(false);
+  const [isCanvasReady, setIsCanvasReady] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useAuth();
+  const persistDraftOnUnmountRef = useRef<() => void>(() => {});
+  const { isAuthenticated } = useAuth();
 
   const saveMutation = trpc.projects.save.useMutation();
   const createMutation = trpc.projects.create.useMutation();
+
+  const buildThumbnailUrl = useCallback(() => {
+    try {
+      const thumbnailUrl = editor.exportCanvas("png");
+      return thumbnailUrl || undefined;
+    } catch (error) {
+      console.warn("Failed to generate project thumbnail", error);
+      return undefined;
+    }
+  }, [editor]);
 
   // Stable refs so keyboard / init effects don't re-run on every render
   const editorRef = useRef(editor);
@@ -169,22 +320,70 @@ export default function Editor({
 
   // Initialize canvas — run once on mount only
   useEffect(() => {
-    if (canvasRef.current) {
+    let cancelled = false;
+
+    const initializeCanvas = async () => {
+      if (!canvasRef.current) {
+        return;
+      }
+
       const canvas = editorRef.current.initCanvas();
-      if (canvas) {
-        const container = canvasContainerRef.current;
-        if (container) {
-          const padding = 80;
-          const scaleX = (container.clientWidth - padding) / canvasWidth;
-          const scaleY = (container.clientHeight - padding) / canvasHeight;
-          const zoom = Math.min(scaleX, scaleY, 1);
-          editorRef.current.setZoom(zoom);
-        }
+      if (!canvas) {
+        return;
+      }
+
+      const container = canvasContainerRef.current;
+      if (container) {
+        const padding = 80;
+        const scaleX = (container.clientWidth - padding) / canvasWidth;
+        const scaleY = (container.clientHeight - padding) / canvasHeight;
+        const zoom = Math.min(scaleX, scaleY, 1);
+        editorRef.current.setZoom(zoom);
+      }
+
+      try {
         if (templateData) {
-          editorRef.current.loadFromJSON(templateData);
+          await editorRef.current.loadFromJSON(templateData);
+        }
+
+        const exactDraft = readAutosaveDraft(autosaveDraftKey);
+        const draft =
+          exactDraft ??
+          (!templateData && projectId
+            ? findLatestAutosaveDraftForProject(
+                projectId,
+                canvasWidth,
+                canvasHeight
+              )
+            : null);
+
+        if (
+          !cancelled &&
+          draft &&
+          draft.projectId === projectId &&
+          draft.canvasWidth === canvasWidth &&
+          draft.canvasHeight === canvasHeight &&
+          (exactDraft ? draft.sourceFingerprint === sourceFingerprint : true)
+        ) {
+          await editorRef.current.loadFromJSON(draft.canvasData);
+          setProjectName(draft.projectName || "Untitled Design");
+          lastAutosavedCanvasRef.current = draft.canvasData;
+          lastAutosavedNameRef.current = draft.projectName;
+        }
+      } catch (error) {
+        console.warn("Failed to load editor canvas data", error);
+      } finally {
+        if (!cancelled) {
+          hasCompletedInitialLoadRef.current = true;
+          setIsCanvasReady(true);
         }
       }
-    }
+    };
+
+    void initializeCanvas();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -224,6 +423,30 @@ export default function Editor({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  const persistLocalDraft = useCallback(
+    (canvasData: string, name: string) => {
+      writeAutosaveDraft(autosaveDraftKey, {
+        version: AUTOSAVE_DRAFT_VERSION,
+        projectId: currentProjectId,
+        sourceFingerprint,
+        canvasWidth,
+        canvasHeight,
+        projectName: name,
+        canvasData,
+        updatedAt: Date.now(),
+      });
+      lastAutosavedCanvasRef.current = canvasData;
+      lastAutosavedNameRef.current = name;
+    },
+    [
+      autosaveDraftKey,
+      canvasHeight,
+      canvasWidth,
+      currentProjectId,
+      sourceFingerprint,
+    ]
+  );
+
   const handleSave = useCallback(async () => {
     try {
       const json = editor.exportCanvas("json");
@@ -233,13 +456,20 @@ export default function Editor({
       }
 
       const name = projectName.trim() || "Untitled Design";
+      const thumbnailUrl = buildThumbnailUrl();
 
       if (currentProjectId) {
         await saveMutation.mutateAsync({
           id: currentProjectId,
           canvasData: json,
           name,
+          thumbnailUrl,
         });
+        clearAutosaveDraft(autosaveDraftKey);
+        lastAutosavedCanvasRef.current = json;
+        lastAutosavedNameRef.current = name;
+        lastRemoteSavedCanvasRef.current = json;
+        lastRemoteSavedNameRef.current = name;
         toast.success("Project saved!");
       } else {
         const result = await createMutation.mutateAsync({
@@ -247,8 +477,14 @@ export default function Editor({
           canvasWidth,
           canvasHeight,
           canvasData: json,
+          thumbnailUrl,
         });
         setCurrentProjectId(result.id);
+        clearAutosaveDraft(autosaveDraftKey);
+        lastAutosavedCanvasRef.current = json;
+        lastAutosavedNameRef.current = name;
+        lastRemoteSavedCanvasRef.current = json;
+        lastRemoteSavedNameRef.current = name;
         toast.success("Project created and saved!");
       }
     } catch (error) {
@@ -259,6 +495,12 @@ export default function Editor({
           : typeof error === "string" && error
             ? error
             : "Failed to save. Please try again.";
+      const json = editor.exportCanvas("json");
+      if (json) {
+        persistLocalDraft(json, projectName.trim() || "Untitled Design");
+        toast.error(`${message} Saved locally in this browser.`);
+        return;
+      }
       toast.error(message);
     }
   }, [
@@ -268,11 +510,145 @@ export default function Editor({
     canvasHeight,
     saveMutation,
     createMutation,
+    autosaveDraftKey,
+    projectName,
+    persistLocalDraft,
+    buildThumbnailUrl,
   ]);
 
   // Stable ref so the keyboard shortcut effect can call the latest handleSave
   const handleSaveRef = useRef(handleSave);
   handleSaveRef.current = handleSave;
+
+  useEffect(() => {
+    if (!isCanvasReady || !hasCompletedInitialLoadRef.current) {
+      return;
+    }
+
+    const persistDraft = () => {
+      const canvasData = editorRef.current.exportCanvas("json");
+      if (!canvasData) {
+        return;
+      }
+
+      const name = projectName.trim() || "Untitled Design";
+      if (
+        lastAutosavedCanvasRef.current === canvasData &&
+        lastAutosavedNameRef.current === name
+      ) {
+        return;
+      }
+
+      persistLocalDraft(canvasData, name);
+    };
+
+    persistDraftOnUnmountRef.current = persistDraft;
+
+    const intervalId = window.setInterval(
+      persistDraft,
+      AUTOSAVE_INTERVAL_MS
+    );
+    window.addEventListener("pagehide", persistDraft);
+    window.addEventListener("beforeunload", persistDraft);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("pagehide", persistDraft);
+      window.removeEventListener("beforeunload", persistDraft);
+    };
+  }, [
+    autosaveDraftKey,
+    canvasHeight,
+    canvasWidth,
+    currentProjectId,
+    isCanvasReady,
+    projectName,
+    sourceFingerprint,
+  ]);
+
+  useEffect(() => {
+    if (!isCanvasReady || !hasCompletedInitialLoadRef.current || !isAuthenticated) {
+      return;
+    }
+
+    const persistRemoteDraft = async () => {
+      if (remoteAutosaveInFlightRef.current) {
+        return;
+      }
+
+      const canvasData = editorRef.current.exportCanvas("json");
+      if (!canvasData) {
+        return;
+      }
+
+      const name = projectName.trim() || "Untitled Design";
+      const thumbnailUrl = buildThumbnailUrl();
+      if (
+        lastRemoteSavedCanvasRef.current === canvasData &&
+        lastRemoteSavedNameRef.current === name
+      ) {
+        return;
+      }
+
+      remoteAutosaveInFlightRef.current = true;
+
+      try {
+        const existingId = currentProjectIdRef.current;
+
+        if (existingId) {
+          await saveMutation.mutateAsync({
+            id: existingId,
+            canvasData,
+            name,
+            thumbnailUrl,
+          });
+        } else {
+          const created = await createMutation.mutateAsync({
+            name,
+            canvasWidth,
+            canvasHeight,
+            canvasData,
+            thumbnailUrl,
+          });
+          setCurrentProjectId(created.id);
+        }
+
+        clearAutosaveDraft(autosaveDraftKey);
+        lastAutosavedCanvasRef.current = canvasData;
+        lastAutosavedNameRef.current = name;
+        lastRemoteSavedCanvasRef.current = canvasData;
+        lastRemoteSavedNameRef.current = name;
+      } catch (error) {
+        console.warn("Remote autosave failed; keeping local draft", error);
+      } finally {
+        remoteAutosaveInFlightRef.current = false;
+      }
+    };
+
+    const intervalId = window.setInterval(() => {
+      void persistRemoteDraft();
+    }, AUTOSAVE_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [
+    autosaveDraftKey,
+    canvasHeight,
+    canvasWidth,
+    createMutation,
+    isAuthenticated,
+    isCanvasReady,
+    projectName,
+    saveMutation,
+    buildThumbnailUrl,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      persistDraftOnUnmountRef.current();
+    };
+  }, []);
 
   useEffect(() => {
     if (isEditingName) {

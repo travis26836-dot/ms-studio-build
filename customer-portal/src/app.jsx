@@ -4,6 +4,17 @@ const PORTAL_IDENTITY_KEY = "ms.portal.identity.v1";
 const MAIN_APP_URL_QUERY_PARAM = "mainAppUrl";
 const MAIN_APP_URL_STORAGE_KEY = "ms.portal.mainAppUrl.v1";
 const DEFAULT_MAIN_APP_URL = "/";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? "http://127.0.0.1:3010" : "");
+
+function resolveApiUrl(path) {
+  if (/^https?:\/\//.test(path)) {
+    return path;
+  }
+
+  return `${API_BASE_URL}${path}`;
+}
 
 function isValidAbsoluteUrl(raw) {
   try {
@@ -155,8 +166,76 @@ function getPortalIdentity() {
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [customer, setCustomer] = useState(null);
+  const [designs, setDesigns] = useState([]);
+  const [isLoadingDesigns, setIsLoadingDesigns] = useState(true);
+  const [designsError, setDesignsError] = useState("");
   const menuRef = useRef(null);
   const identity = useMemo(() => getPortalIdentity(), []);
+  const mainAppUrl = useMemo(() => getMainAppUrl(), []);
+
+  const fetchWorkspace = async () => {
+    setIsLoadingDesigns(true);
+    setDesignsError("");
+
+    try {
+      const customerResponse = await fetch(resolveApiUrl("/api/customer/resolve"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: identity.email,
+          name: identity.name,
+        }),
+      });
+
+      if (!customerResponse.ok) {
+        throw new Error("Unable to resolve portal customer");
+      }
+
+      const resolvedCustomer = await customerResponse.json();
+      setCustomer(resolvedCustomer);
+
+      const designsResponse = await fetch(
+        resolveApiUrl(`/api/customer/${resolvedCustomer.id}/designs`)
+      );
+
+      if (!designsResponse.ok) {
+        throw new Error("Unable to load designs");
+      }
+
+      const records = await designsResponse.json();
+      const nextDesigns = Array.isArray(records) ? records : [];
+
+      setDesigns(nextDesigns);
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to load portal workspace";
+      setDesignsError(message);
+      setDesigns([]);
+    } finally {
+      setIsLoadingDesigns(false);
+    }
+  };
+
+  const getEditorUrl = design => {
+    const params = new URLSearchParams({
+      project: design.id,
+      w: String(design.canvasWidth || 1080),
+      h: String(design.canvasHeight || 1080),
+    });
+
+    return `${mainAppUrl}/editor?${params.toString()}`;
+  };
+
+  useEffect(() => {
+    void fetchWorkspace();
+    // identity values are stable for the current session and loaded from memoized source.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const onPointerDown = event => {
@@ -193,7 +272,7 @@ export default function App() {
     <div className="portal-shell">
       <header className="site-header">
         <div className="site-header-inner">
-          <a href={getMainAppUrl()} className="site-logo" aria-label="Open ManuScript Studio home">
+          <a href={mainAppUrl} className="site-logo" aria-label="Open ManuScript Studio home">
             <div className="site-logo-icon">
               <img src="/icon-192.png" alt="ManuScript Studio logo" />
             </div>
@@ -255,6 +334,83 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      <main className="portal-main">
+        <section className="portal-heading">
+          <div>
+            <p className="portal-kicker">Customer Workspace</p>
+            <h1>Saved designs</h1>
+            <p>
+              Open any saved design directly in the main editor.
+            </p>
+          </div>
+          <div className="portal-heading-actions">
+            <button type="button" className="portal-button" onClick={() => void fetchWorkspace()}>
+              Refresh
+            </button>
+            <a href={mainAppUrl} className="portal-button portal-button-primary">
+              Open Main App
+            </a>
+          </div>
+        </section>
+
+        {customer ? (
+          <p className="portal-customer-meta">
+            Connected customer: {customer.name || identity.name} ({customer.email || identity.email})
+          </p>
+        ) : null}
+
+        {designsError ? (
+          <div className="portal-status-card portal-status-error">{designsError}</div>
+        ) : null}
+
+        <section className="portal-workspace-grid">
+          <aside className="portal-design-list">
+            <div className="portal-list-header">
+              <h2>Recent designs</h2>
+              <span>{designs.length}</span>
+            </div>
+
+            {isLoadingDesigns ? (
+              <div className="portal-status-card">Loading your designs...</div>
+            ) : designs.length === 0 ? (
+              <div className="portal-status-card">No saved designs yet.</div>
+            ) : (
+              <div className="portal-design-cards">
+                {designs.map(design => (
+                  <a
+                    key={design.id}
+                    href={getEditorUrl(design)}
+                    className="portal-design-card"
+                  >
+                    <div className="portal-design-card-preview">
+                      {design.thumbnailUrl ? (
+                        <img
+                          src={design.thumbnailUrl}
+                          alt={design.name || "Untitled Design"}
+                        />
+                      ) : (
+                        <div className="portal-design-card-placeholder">
+                          {design.canvasWidth}x{design.canvasHeight}
+                        </div>
+                      )}
+                    </div>
+                    <div className="portal-design-card-meta">
+                      <strong>{design.name || "Untitled Design"}</strong>
+                      <span>
+                        {design.canvasWidth}x{design.canvasHeight}
+                      </span>
+                      <span>
+                        Updated {new Date(design.updatedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
+          </aside>
+        </section>
+      </main>
     </div>
   );
 }

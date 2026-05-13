@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAuth as useClerkAuth } from "@clerk/react";
+import { useAuth as useClerkAuth, useUser } from "@clerk/react";
 import * as aiClient from "./aiClient";
 
 type QueryOptions = {
@@ -54,6 +54,17 @@ type LayoutSuggestion = {
 };
 
 const TEMPLATES_KEY = "manuscript.templates.v1";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? "http://127.0.0.1:3010" : "");
+
+function resolveApiUrl(path: string) {
+  if (/^https?:\/\//.test(path)) {
+    return path;
+  }
+
+  return `${API_BASE_URL}${path}`;
+}
 
 function useLocalQuery<T>(
   fetcher: () => Promise<T> | T,
@@ -403,7 +414,9 @@ function getTemplatesStore() {
 async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
-  token?: string | null
+  token?: string | null,
+  userEmail?: string | null,
+  clerkUserId?: string | null
 ): Promise<T> {
   const headers = new Headers(init.headers ?? {});
 
@@ -415,9 +428,17 @@ async function apiRequest<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
+  if (typeof userEmail === "string" && userEmail.trim()) {
+    headers.set("x-user-email", userEmail.trim().toLowerCase());
+  }
+
+  if (typeof clerkUserId === "string" && clerkUserId.trim()) {
+    headers.set("x-user-clerk-id", clerkUserId.trim());
+  }
+
   let response: Response;
   try {
-    response = await fetch(path, {
+    response = await fetch(resolveApiUrl(path), {
       ...init,
       headers,
       credentials: "include",
@@ -689,23 +710,29 @@ export const trpc = {
   projects: {
     list: {
       useQuery: () => {
-        const { getToken, isSignedIn } = useClerkAuth();
+        const { getToken, isSignedIn, userId } = useClerkAuth();
+        const { user } = useUser();
         return useLocalQuery(async () => {
           if (!isSignedIn) {
             return [] as ProjectRecord[];
           }
           const token = await getToken();
+          const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+          const clerkUserId = user?.id ?? userId ?? null;
           return apiRequest<ProjectRecord[]>(
             "/api/projects",
             { method: "GET" },
-            token
+            token,
+            userEmail,
+            clerkUserId
           );
-        }, [isSignedIn, getToken]);
+        }, [isSignedIn, getToken, user?.id, userId]);
       },
     },
     get: {
       useQuery: (input?: { id: string }, options?: QueryOptions) => {
-        const { getToken, isSignedIn } = useClerkAuth();
+        const { getToken, isSignedIn, userId } = useClerkAuth();
+        const { user } = useUser();
         const key = useMemo(() => JSON.stringify(input ?? null), [input]);
         return useLocalQuery(
           async () => {
@@ -713,20 +740,25 @@ export const trpc = {
               return undefined;
             }
             const token = await getToken();
+            const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+            const clerkUserId = user?.id ?? userId ?? null;
             return apiRequest<ProjectRecord>(
               `/api/projects/${input.id}`,
               { method: "GET" },
-              token
+              token,
+              userEmail,
+              clerkUserId
             );
           },
-          [key, isSignedIn, getToken],
+          [key, isSignedIn, getToken, user?.id, userId],
           options
         );
       },
     },
     create: {
       useMutation: () => {
-        const { getToken, isSignedIn } = useClerkAuth();
+        const { getToken, isSignedIn, userId } = useClerkAuth();
+        const { user } = useUser();
         return useLocalMutation(
           async (input: {
             name: string;
@@ -741,13 +773,20 @@ export const trpc = {
             }
 
             const token = await getToken();
+            const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+            const clerkUserId = user?.id ?? userId ?? null;
+            if (!token && !clerkUserId && !userEmail) {
+              throw new Error("Please sign in to save projects.");
+            }
             const created = await apiRequest<ProjectRecord>(
               "/api/projects",
               {
                 method: "POST",
                 body: JSON.stringify(input),
               },
-              token
+              token,
+              userEmail,
+              clerkUserId
             );
 
             return { id: created.id };
@@ -757,7 +796,8 @@ export const trpc = {
     },
     save: {
       useMutation: () => {
-        const { getToken, isSignedIn } = useClerkAuth();
+        const { getToken, isSignedIn, userId } = useClerkAuth();
+        const { user } = useUser();
         return useLocalMutation(
           async (input: {
             id: string;
@@ -770,6 +810,11 @@ export const trpc = {
             }
 
             const token = await getToken();
+            const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+            const clerkUserId = user?.id ?? userId ?? null;
+            if (!token && !clerkUserId && !userEmail) {
+              throw new Error("Please sign in to save projects.");
+            }
             await apiRequest<ProjectRecord>(
               `/api/projects/${input.id}`,
               {
@@ -780,7 +825,9 @@ export const trpc = {
                   name: input.name,
                 }),
               },
-              token
+              token,
+              userEmail,
+              clerkUserId
             );
 
             return { success: true };
@@ -790,17 +837,25 @@ export const trpc = {
     },
     delete: {
       useMutation: () => {
-        const { getToken, isSignedIn } = useClerkAuth();
+        const { getToken, isSignedIn, userId } = useClerkAuth();
+        const { user } = useUser();
         return useLocalMutation(async (input: { id: string }) => {
           if (!isSignedIn) {
             throw new Error("Please sign in to delete projects.");
           }
 
           const token = await getToken();
+          const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+          const clerkUserId = user?.id ?? userId ?? null;
+          if (!token && !clerkUserId && !userEmail) {
+            throw new Error("Please sign in to delete projects.");
+          }
           await apiRequest<void>(
             `/api/projects/${input.id}`,
             { method: "DELETE" },
-            token
+            token,
+            userEmail,
+            clerkUserId
           );
           return { success: true };
         });

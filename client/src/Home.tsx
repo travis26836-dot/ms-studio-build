@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { AccountMenu } from "@/components/AccountMenu";
 import {
   Plus,
   Search,
@@ -289,15 +290,12 @@ function Dashboard({
   function navigateToPortal() {
     const mainAppUrl = window.location.origin;
 
-    if (user) {
-      try {
-        localStorage.setItem(
-          "ms.portal.identity.v1",
-          JSON.stringify({ name: user.name, email: user.email })
-        );
-      } catch {}
-    }
-    window.location.assign(getPortalUrl({ returnTo: mainAppUrl }));
+    const portalUrl = getPortalUrl({
+      returnTo: mainAppUrl,
+      user: user ? { name: user.name, email: user.email } : undefined,
+    });
+    
+    window.location.assign(portalUrl);
   }
 
   const q = searchQuery.trim().toLowerCase();
@@ -394,32 +392,25 @@ function Dashboard({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b border-border bg-card/95 px-6 backdrop-blur">
-        <div className="mx-auto flex h-20 max-w-7xl items-center gap-4">
-          <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-md ring-2 ring-red-700/60 bg-black overflow-hidden">
-              <img
-                src="/icon-192.png"
-                alt="ManuScript Studio logo"
-                className="h-full w-full object-contain"
-              />
-            </div>
-            <h1
-              className="hidden uppercase tracking-[0.12em] text-foreground sm:inline-flex"
-              style={{
-                fontSize: "18px",
-                fontWeight: 700,
-                fontFamily: "Impact, sans-serif",
-              }}
-            >
-              ManuScript Studio
-            </h1>
+      <header className="site-header">
+        <div className="site-header-inner">
+          <div className="site-header-left">
+            <a href="#" className="site-logo" aria-label="ManuScript Studio">
+              <div className="site-logo-icon">
+                <img
+                  src="/icon-192.png"
+                  alt="ManuScript Studio logo"
+                />
+              </div>
+              <span className="site-logo-wordmark">ManuScript Studio</span>
+            </a>
           </div>
 
-          <div className="mx-auto flex w-full max-w-2xl items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
+          <div className="site-header-search">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
                 placeholder="What are you trying to make?"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
@@ -432,29 +423,12 @@ function Dashboard({
                     });
                   }
                 }}
-                className="h-10 border-border bg-secondary pl-9 pr-4"
+                className="w-full h-10 rounded-lg bg-secondary/70 border border-border pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-red-600/50 focus:bg-secondary transition-all"
               />
             </div>
           </div>
 
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-xl border border-border/70 bg-secondary/70 px-3 py-2 text-left transition-colors hover:border-border"
-            onClick={() => navigateToPortal()}
-            aria-haspopup="menu"
-          >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
-              {user?.name?.[0]?.toUpperCase() || "U"}
-            </div>
-            <span className="hidden lg:block">
-              <span className="block text-sm font-bold leading-tight text-foreground" style={{ fontFamily: 'Impact, sans-serif' }}>
-                {user?.name || "Account"}
-              </span>
-              <span className="block text-[11px] leading-tight text-muted-foreground" style={{ fontFamily: 'Impact, sans-serif' }}>
-                {user?.email || ""}
-              </span>
-            </span>
-          </button>
+          <AccountMenu />
         </div>
       </header>
 

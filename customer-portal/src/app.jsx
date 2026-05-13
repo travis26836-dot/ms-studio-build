@@ -74,14 +74,6 @@ function rememberMainAppUrl(value) {
   }
 }
 
-function getRuntimeMainAppUrl() {
-  if (typeof window === "undefined") {
-    return DEFAULT_MAIN_APP_URL;
-  }
-
-  return window.location.origin;
-}
-
 function getMainAppUrl() {
   const resolved =
     import.meta.env.VITE_MAIN_APP_URL ||
@@ -94,10 +86,27 @@ function getMainAppUrl() {
   return resolved;
 }
 
+function getRuntimeMainAppUrl() {
+  if (typeof window === "undefined") {
+    return DEFAULT_MAIN_APP_URL;
+  }
+
+  // At runtime, derive main app from portal's location
+  // Main app typically runs on a port one lower than portal: if portal is 3003, main is 3002, etc.
+  const portalPort = window.location.port;
+  if (!portalPort) {
+    return window.location.origin;
+  }
+
+  const portalPortNum = parseInt(portalPort, 10);
+  const mainAppPortNum = portalPortNum - 1; // Main app runs on previous port
+
+  return `${window.location.protocol}//${window.location.hostname}:${mainAppPortNum}`;
+}
+
 function getMainAppLoginUrl() {
-  return (
-    import.meta.env.VITE_MAIN_APP_LOGIN_URL || `${getMainAppUrl()}/logout`
-  );
+  const mainAppUrl = getMainAppUrl();
+  return import.meta.env.VITE_MAIN_APP_LOGIN_URL || `${mainAppUrl}/logout`;
 }
 
 function getPortalIdentity() {
@@ -110,6 +119,20 @@ function getPortalIdentity() {
     return fallback;
   }
 
+  // First, try to get from URL parameters (passed from main app)
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const userName = params.get("userName");
+    const userEmail = params.get("userEmail");
+
+    if (userName && userEmail) {
+      return { name: userName, email: userEmail };
+    }
+  } catch {
+    // Continue to localStorage fallback
+  }
+
+  // Fall back to localStorage (for when portal is accessed directly)
   try {
     const raw = window.localStorage.getItem(PORTAL_IDENTITY_KEY);
     if (!raw) return fallback;
@@ -196,17 +219,24 @@ export default function App() {
 
             {menuOpen ? (
               <div className="account-menu-dropdown" role="menu" aria-label="Customer account navigation">
+                <div className="account-menu-header">
+                  <span className="account-menu-header-label">Portal</span>
+                </div>
+
+                <a href="#" role="menuitem" className="account-menu-link" onClick={event => event.preventDefault()}>
+                  Account
+                </a>
                 <a href="#" role="menuitem" className="account-menu-link" onClick={event => event.preventDefault()}>
                   Settings
                 </a>
                 <a href="#" role="menuitem" className="account-menu-link" onClick={event => event.preventDefault()}>
-                  Theme
-                </a>
-                <a href="#" role="menuitem" className="account-menu-link" onClick={event => event.preventDefault()}>
-                  Plans and Pricing
+                  Plans & Pricing
                 </a>
                 <a href="#" role="menuitem" className="account-menu-link" onClick={event => event.preventDefault()}>
                   Purchase History
+                </a>
+                <a href="#" role="menuitem" className="account-menu-link" onClick={event => event.preventDefault()}>
+                  Invoices
                 </a>
 
                 <hr className="account-menu-divider" />
@@ -216,6 +246,7 @@ export default function App() {
                   role="menuitem"
                   className="account-menu-logout"
                   onClick={handleLogout}
+                  aria-label="Logout from customer portal"
                 >
                   Logout
                 </button>

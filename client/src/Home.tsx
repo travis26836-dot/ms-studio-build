@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { getLoginUrl, getPortalUrl } from "@/const";
 import { useLocation } from "wouter";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -875,6 +875,29 @@ function Dashboard({
 }
 
 function LandingPage() {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    let ticking = false;
+
+    const updateScroll = () => {
+      setScrollY(window.scrollY || 0);
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(updateScroll);
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const heroDrift = Math.min(scrollY, 1400);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 flex h-16 items-center border-b border-border bg-card/80 px-6 backdrop-blur-sm">
@@ -900,22 +923,49 @@ function LandingPage() {
       </header>
 
       <main>
-        <section className="px-6 py-24">
+        <section className="relative overflow-hidden px-6 py-24 md:py-28">
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <div
+              className="absolute -left-24 top-14 h-64 w-64 rounded-full bg-primary/20 blur-3xl"
+              style={{ transform: `translate3d(0, ${heroDrift * 0.22}px, 0)` }}
+            />
+            <div
+              className="absolute right-0 top-36 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl"
+              style={{ transform: `translate3d(0, ${heroDrift * -0.16}px, 0)` }}
+            />
+            <div
+              className="absolute left-1/3 top-0 h-48 w-48 rounded-full bg-red-500/10 blur-3xl"
+              style={{ transform: `translate3d(0, ${heroDrift * 0.1}px, 0)` }}
+            />
+          </div>
+
           <div className="mx-auto max-w-4xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
+            <div
+              className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary"
+              style={{ transform: `translate3d(0, ${heroDrift * -0.08}px, 0)` }}
+            >
               <Sparkles className="h-4 w-4" /> AI-Powered Design Platform
             </div>
-            <h1 className="mb-6 text-5xl font-bold leading-tight text-foreground md:text-6xl">
+            <h1
+              className="mb-6 text-5xl font-bold leading-tight text-foreground md:text-6xl"
+              style={{ transform: `translate3d(0, ${heroDrift * -0.14}px, 0)` }}
+            >
               Design anything.
               <br />
               <span className="text-primary">Publish everywhere.</span>
             </h1>
-            <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
+            <p
+              className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground"
+              style={{ transform: `translate3d(0, ${heroDrift * -0.06}px, 0)` }}
+            >
               A professional design platform with drag-and-drop editing,
               AI-powered tools, royalty-free assets, product mockup support, and
               developer integrations. Create polished visuals in minutes.
             </p>
-            <div className="flex flex-wrap justify-center gap-3">
+            <div
+              className="flex flex-wrap justify-center gap-3"
+              style={{ transform: `translate3d(0, ${heroDrift * -0.04}px, 0)` }}
+            >
               <Button size="lg" className="w-[220px]" asChild>
                 <a href={getLoginUrl()} className="gap-2">
                   Start Designing <ArrowRight className="h-4 w-4" />
@@ -925,7 +975,11 @@ function LandingPage() {
           </div>
         </section>
 
-        <section className="bg-card/50 px-6 py-20">
+        <section className="relative overflow-hidden bg-card/50 px-6 py-20">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-40 bg-[radial-gradient(circle_at_top,_var(--color-primary-500),_transparent_65%)] opacity-20"
+            style={{ transform: `translate3d(0, ${heroDrift * 0.08}px, 0)` }}
+          />
           <div className="mx-auto max-w-6xl">
             <h2 className="mb-12 text-center text-3xl font-bold text-foreground">
               Everything you need to create
@@ -981,6 +1035,9 @@ function LandingPage() {
                 <Card
                   key={index}
                   className="border-border bg-card transition-colors hover:border-primary/50"
+                  style={{
+                    transform: `translate3d(0, ${((index % 3) - 1) * heroDrift * 0.025}px, 0)`,
+                  }}
                 >
                   <CardContent className="p-6">
                     <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
@@ -1021,8 +1078,14 @@ function LandingPage() {
                   title: "Export & share",
                   desc: "Deliver polished assets for social, product listings, print, or presentations.",
                 },
-              ].map(item => (
-                <div key={item.step} className="text-center">
+              ].map((item, index) => (
+                <div
+                  key={item.step}
+                  className="text-center"
+                  style={{
+                    transform: `translate3d(0, ${(index - 1) * heroDrift * 0.02}px, 0)`,
+                  }}
+                >
                   <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
                     <span className="text-lg font-bold text-primary">
                       {item.step}

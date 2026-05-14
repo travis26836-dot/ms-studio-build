@@ -31,7 +31,10 @@ export function getLoginUrl() {
   return "/sign-in";
 }
 
-export function getPortalUrl(options?: { returnTo?: string; user?: { name: string; email: string } }) {
+export function getPortalUrl(options?: {
+  returnTo?: string;
+  user?: { name: string; email: string; clerkId?: string };
+}) {
   const baseUrl = resolvePortalUrl();
 
   if (!options?.returnTo && !options?.user) {
@@ -46,6 +49,9 @@ export function getPortalUrl(options?: { returnTo?: string; user?: { name: strin
     if (options.user) {
       url.searchParams.set("userName", options.user.name);
       url.searchParams.set("userEmail", options.user.email);
+      if (options.user.clerkId) {
+        url.searchParams.set("userClerkId", options.user.clerkId);
+      }
     }
     return url.toString();
   } catch {

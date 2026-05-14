@@ -6,6 +6,7 @@ const MAIN_APP_URL_STORAGE_KEY = "ms.portal.mainAppUrl.v1";
 const DEFAULT_MAIN_APP_URL = "/";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV ? "http://127.0.0.1:3010" : "");
 
 function resolveApiUrl(path) {
@@ -124,6 +125,7 @@ function getPortalIdentity() {
   const fallback = {
     name: "Client User",
     email: "client@portal.local",
+    clerkId: "",
   };
 
   if (typeof window === "undefined") {
@@ -135,9 +137,14 @@ function getPortalIdentity() {
     const params = new URLSearchParams(window.location.search);
     const userName = params.get("userName");
     const userEmail = params.get("userEmail");
+    const userClerkId = params.get("userClerkId");
 
     if (userName && userEmail) {
-      return { name: userName, email: userEmail };
+      return {
+        name: userName,
+        email: userEmail,
+        clerkId: userClerkId || "",
+      };
     }
   } catch {
     // Continue to localStorage fallback
@@ -157,8 +164,12 @@ function getPortalIdentity() {
       typeof parsed?.email === "string" && parsed.email.trim()
         ? parsed.email.trim()
         : fallback.email;
+    const clerkId =
+      typeof parsed?.clerkId === "string" && parsed.clerkId.trim()
+        ? parsed.clerkId.trim()
+        : fallback.clerkId;
 
-    return { name, email };
+    return { name, email, clerkId };
   } catch {
     return fallback;
   }
@@ -187,6 +198,7 @@ export default function App() {
         body: JSON.stringify({
           email: identity.email,
           name: identity.name,
+          clerkId: identity.clerkId || undefined,
         }),
       });
 

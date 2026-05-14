@@ -292,7 +292,9 @@ function Dashboard({
 
     const portalUrl = getPortalUrl({
       returnTo: mainAppUrl,
-      user: user ? { name: user.name, email: user.email } : undefined,
+      user: user
+        ? { name: user.name, email: user.email, clerkId: user.id }
+        : undefined,
     });
     
     window.location.assign(portalUrl);

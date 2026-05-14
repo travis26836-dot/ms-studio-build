@@ -37,7 +37,9 @@ export function AccountMenu() {
 
   const portalUrl = getPortalUrl({
     returnTo: window.location.origin,
-    user: user ? { name: user.name, email: user.email } : undefined,
+    user: user
+      ? { name: user.name, email: user.email, clerkId: user.id }
+      : undefined,
   });
 
   return (

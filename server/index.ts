@@ -6,6 +6,10 @@ import { clerkMiddleware } from "@clerk/express";
 import { getPrisma } from "./db.js";
 import { createAiRouter } from "./ai.js";
 
+process.on("unhandledRejection", reason => {
+  console.error("Unhandled promise rejection", reason);
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -259,7 +263,7 @@ function normalizeEmail(raw: string) {
 
 async function resolvePortalCustomer(
   prisma: Awaited<ReturnType<typeof getPrisma>>,
-  input: { customerId?: string; email?: string; name?: string }
+  input: { customerId?: string; email?: string; name?: string; clerkId?: string }
 ) {
   if (typeof input.customerId === "string" && input.customerId.trim()) {
     const existing = await prisma.customer.findUnique({
@@ -272,6 +276,56 @@ async function resolvePortalCustomer(
   }
 
   const hasEmail = typeof input.email === "string" && input.email.trim();
+  const hasClerkId = typeof input.clerkId === "string" && input.clerkId.trim();
+
+  if (hasClerkId) {
+    const clerkId = input.clerkId!.trim();
+    const preferredName =
+      typeof input.name === "string" && input.name.trim()
+        ? input.name.trim()
+        : "";
+    const normalizedEmail = hasEmail ? normalizeEmail(input.email as string) : null;
+
+    const existingUser = await prisma.user.findUnique({
+      where: { clerkId },
+      include: { customer: true },
+    });
+
+    if (existingUser?.customer) {
+      const shouldUpdateUserEmail =
+        !!normalizedEmail && existingUser.email !== normalizedEmail;
+      const shouldUpdateCustomer =
+        (!!normalizedEmail && existingUser.customer.email !== normalizedEmail) ||
+        (!!preferredName && existingUser.customer.name !== preferredName);
+
+      if (shouldUpdateUserEmail || shouldUpdateCustomer) {
+        const updatedUser = await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            ...(shouldUpdateUserEmail ? { email: normalizedEmail! } : {}),
+            ...(shouldUpdateCustomer
+              ? {
+                  customer: {
+                    update: {
+                      ...(normalizedEmail
+                        ? { email: normalizedEmail }
+                        : {}),
+                      ...(preferredName ? { name: preferredName } : {}),
+                    },
+                  },
+                }
+              : {}),
+          },
+          include: { customer: true },
+        });
+
+        return updatedUser.customer;
+      }
+
+      return existingUser.customer;
+    }
+  }
+
   if (!hasEmail) {
     return null;
   }
@@ -317,7 +371,14 @@ async function resolvePortalCustomer(
 }
 
 async function getOrCreateUser(req: express.Request) {
-  const prisma = await getPrisma();
+  let prisma: Awaited<ReturnType<typeof getPrisma>>;
+
+  try {
+    prisma = await getPrisma();
+  } catch (error) {
+    console.error("Failed to initialize Prisma client in getOrCreateUser", error);
+    return null;
+  }
   const clerkIdFromAuth = (req as express.Request & { auth?: { userId?: string } })
     .auth?.userId;
   const fallbackClerkIdHeader = req.header("x-user-clerk-id");
@@ -333,43 +394,92 @@ async function getOrCreateUser(req: express.Request) {
       ? normalizeEmail(headerEmailValue)
       : null;
 
-  if (headerEmail) {
-    const existingByEmail = await prisma.user.findUnique({
-      where: { email: headerEmail },
-      include: { customer: true },
-    });
+  try {
+    if (clerkId) {
+      const existingByClerkId = await prisma.user.findUnique({
+        where: { clerkId },
+        include: { customer: true },
+      });
 
-    if (existingByEmail) {
-      return existingByEmail;
+      if (existingByClerkId) {
+        if (headerEmail && existingByClerkId.email !== headerEmail) {
+          return prisma.user.update({
+            where: { id: existingByClerkId.id },
+            data: {
+              email: headerEmail,
+              customer: existingByClerkId.customer
+                ? {
+                    update: {
+                      email: headerEmail,
+                    },
+                  }
+                : undefined,
+            },
+            include: { customer: true },
+          });
+        }
+
+        return existingByClerkId;
+      }
     }
-  }
 
-  if (clerkId) {
-    const existingByClerkId = await prisma.user.findUnique({
-      where: { clerkId },
-      include: { customer: true },
-    });
+    if (headerEmail) {
+      const existingByEmail = await prisma.user.findUnique({
+        where: { email: headerEmail },
+        include: { customer: true },
+      });
 
-    if (existingByClerkId) {
-      return existingByClerkId;
+      if (existingByEmail) {
+        if (clerkId && existingByEmail.clerkId !== clerkId) {
+          return prisma.user.update({
+            where: { id: existingByEmail.id },
+            data: { clerkId },
+            include: { customer: true },
+          });
+        }
+
+        return existingByEmail;
+      }
     }
-  }
 
-  if (!clerkId) {
-    if (!headerEmail) {
-      return null;
+    if (!clerkId) {
+      if (!headerEmail) {
+        return null;
+      }
+
+      return prisma.user.upsert({
+        where: { email: headerEmail },
+        update: {},
+        create: {
+          email: headerEmail,
+          clerkId: fallbackClerkId
+            ? `fallback:${fallbackClerkId}`
+            : `fallback:${headerEmail}`,
+          customer: {
+            create: {
+              name: "",
+              email: headerEmail,
+              plan: "free",
+            },
+          },
+        },
+        include: {
+          customer: true,
+        },
+      });
     }
 
     return prisma.user.upsert({
-      where: { email: headerEmail },
+      where: { clerkId },
       update: {},
       create: {
-        email: headerEmail,
-        clerkId: fallbackClerkId ? `fallback:${fallbackClerkId}` : `fallback:${headerEmail}`,
+        clerkId,
+        // Placeholder until Clerk webhook profile sync is added.
+        email: headerEmail ?? `${clerkId}@placeholder.local`,
         customer: {
           create: {
             name: "",
-            email: headerEmail,
+            email: headerEmail ?? `${clerkId}@placeholder.local`,
             plan: "free",
           },
         },
@@ -378,40 +488,64 @@ async function getOrCreateUser(req: express.Request) {
         customer: true,
       },
     });
+  } catch (error) {
+    console.error("Database unavailable while resolving current user", error);
+    return null;
+  }
+}
+
+function toOrigin(raw: string | undefined): string | null {
+  if (!raw || !raw.trim()) {
+    return null;
   }
 
-  return prisma.user.upsert({
-    where: { clerkId },
-    update: {},
-    create: {
-      clerkId,
-      // Placeholder until Clerk webhook profile sync is added.
-      email: headerEmail ?? `${clerkId}@placeholder.local`,
-      customer: {
-        create: {
-          name: "",
-          email: headerEmail ?? `${clerkId}@placeholder.local`,
-          plan: "free",
-        },
-      },
-    },
-    include: {
-      customer: true,
-    },
-  });
+  const value = raw.trim();
+
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getAllowedCorsOrigins(): Set<string> {
+  const values = [
+    process.env.APP_URL,
+    process.env.VITE_MAIN_APP_URL,
+    process.env.VITE_PORTAL_URL,
+    process.env.CUSTOMER_PORTAL_URL,
+    process.env.VITE_CUSTOMER_PORTAL_URL,
+    ...(process.env.CORS_ORIGINS ?? "").split(","),
+    "http://localhost:3000",
+    "http://localhost:3003",
+    "http://localhost:3004",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3003",
+    "http://127.0.0.1:3004",
+  ];
+
+  const origins = new Set<string>();
+  for (const value of values) {
+    const normalized = toOrigin(value);
+    if (normalized) {
+      origins.add(normalized);
+    }
+  }
+
+  return origins;
 }
 
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  const allowedOrigins = getAllowedCorsOrigins();
 
   app.use((req, res, next) => {
     const origin = req.headers.origin;
-    const isDevOrigin =
-      typeof origin === "string" &&
-      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    const isAllowedOrigin =
+      typeof origin === "string" && allowedOrigins.has(origin);
 
-    if (isDevOrigin) {
+    if (isAllowedOrigin && typeof origin === "string") {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Vary", "Origin");
       res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -428,6 +562,11 @@ async function startServer() {
         res.status(204).end();
         return;
       }
+    }
+
+    if (req.method === "OPTIONS" && typeof origin === "string") {
+      res.status(403).json({ error: "Origin not allowed" });
+      return;
     }
 
     next();
@@ -452,12 +591,13 @@ async function startServer() {
   // Customer portal API
   app.post("/api/customer/resolve", async (req, res) => {
     const prisma = await getPrisma();
-    const { customerId, email, name } = req.body ?? {};
+    const { customerId, email, name, clerkId } = req.body ?? {};
 
     const customer = await resolvePortalCustomer(prisma, {
       customerId: typeof customerId === "string" ? customerId : undefined,
       email: typeof email === "string" ? email : undefined,
       name: typeof name === "string" ? name : undefined,
+      clerkId: typeof clerkId === "string" ? clerkId : undefined,
     });
 
     if (!customer) {

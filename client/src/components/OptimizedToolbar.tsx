@@ -58,7 +58,7 @@ export const CompactToolbarButton: React.FC<ToolbarButtonProps> = ({
           <Icon className="w-4 h-4" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" sideOffset={8} className="text-xs">
+      <TooltipContent side="bottom" className="text-xs">
         {tooltip}
       </TooltipContent>
     </Tooltip>

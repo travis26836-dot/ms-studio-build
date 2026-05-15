@@ -22,7 +22,7 @@ import {
 import { toast } from "sonner";
 
 interface DownloadMenuProps {
-  onExport: (format: "png" | "jpg" | "pdf", quality: number) => string;
+  onExport: (format: "png" | "jpg", quality: number) => string;
   canvasWidth: number;
   canvasHeight: number;
   isSubscribed?: boolean; // tier-one plan subscription status

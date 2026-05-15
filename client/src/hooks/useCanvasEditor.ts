@@ -12,6 +12,11 @@ type EditorState = {
   zoom: number;
 };
 
+type FabricStyleSerializerUtil = typeof fabric.util & {
+  __msStylePatchApplied?: boolean;
+  stylesToArray?: (styles: unknown, text: string) => unknown;
+};
+
 export type ShapeType =
   | "rect"
   | "rounded-rect"
@@ -157,9 +162,7 @@ function normalizeCanvasJsonPayload(payload: unknown) {
 }
 
 function patchFabricStyleSerialization() {
-  const util = fabric.util as typeof fabric.util & {
-    __msStylePatchApplied?: boolean;
-  };
+  const util = fabric.util as FabricStyleSerializerUtil;
 
   if (util.__msStylePatchApplied) {
     return;
@@ -170,7 +173,7 @@ function patchFabricStyleSerialization() {
     return;
   }
 
-  util.stylesToArray = ((styles: unknown, text: string) => {
+  util.stylesToArray = (styles: unknown, text: string) => {
     const normalizedStyles = normalizeFabricTextStyles(styles);
     try {
       return originalStylesToArray(normalizedStyles, text || "");
@@ -178,7 +181,7 @@ function patchFabricStyleSerialization() {
       console.warn("Recovered from invalid Fabric text styles", error);
       return [];
     }
-  }) as typeof util.stylesToArray;
+  };
 
   util.__msStylePatchApplied = true;
 }
@@ -255,16 +258,23 @@ export function useCanvasEditor(
         return;
       }
 
-    isHistoryActionRef.current = true;
-    await new Promise<void>((resolve) => {
-      canvas.loadFromJSON(snapshot, () => {
-        canvas.renderAll();
-        resolve();
-      });
-    });
-    isHistoryActionRef.current = false;
-    updateSelectionState();
-  }, [updateSelectionState]);
+      const payload = normalizeCanvasJsonPayload(JSON.parse(snapshot));
+
+      isHistoryActionRef.current = true;
+      try {
+        await new Promise<void>((resolve) => {
+          canvas.loadFromJSON(payload, () => {
+            canvas.renderAll();
+            resolve();
+          });
+        });
+      } finally {
+        isHistoryActionRef.current = false;
+      }
+      updateSelectionState();
+    },
+    [updateSelectionState]
+  );
 
   const initCanvas = useCallback(() => {
     if (fabricRef.current) {
@@ -813,17 +823,24 @@ export function useCanvasEditor(
         return;
       }
 
-    isHistoryActionRef.current = true;
-    await new Promise<void>((resolve) => {
-      canvas.loadFromJSON(JSON.parse(json), () => {
-        canvas.renderAll();
-        resolve();
-      });
-    });
-    isHistoryActionRef.current = false;
-    updateSelectionState();
-    saveHistory();
-  }, [saveHistory, updateSelectionState]);
+      const payload = normalizeCanvasJsonPayload(JSON.parse(json));
+
+      isHistoryActionRef.current = true;
+      try {
+        await new Promise<void>((resolve) => {
+          canvas.loadFromJSON(payload, () => {
+            canvas.renderAll();
+            resolve();
+          });
+        });
+      } finally {
+        isHistoryActionRef.current = false;
+      }
+      updateSelectionState();
+      saveHistory();
+    },
+    [saveHistory, updateSelectionState]
+  );
 
   const getObjects = useCallback(() => {
     const canvas = fabricRef.current;

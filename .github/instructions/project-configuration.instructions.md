@@ -12,7 +12,7 @@ applyTo: "server/**,prisma/**,vite.config.ts,tsconfig.json,package.json,.env*"
 ```bash
 pnpm install              # install dependencies
 cp .env.example .env      # create local .env from template
-pnpm dev                  # run Vite dev server (port 3000)
+pnpm dev:full             # run all dev servers together (recommended)
 pnpm build                # build for production
 pnpm start                # run production server (dist/index.js)
 ```
@@ -20,7 +20,12 @@ pnpm start                # run production server (dist/index.js)
 ## Build Pipeline
 
 ```
-pnpm dev                    → Vite dev server only (client-side, port 3000)
+pnpm dev                    → Vite dev server only (client-side, port 3003)
+pnpm dev:full               → All three dev servers via scripts/dev-full.sh:
+                              - API server      (port 3010, NODE_ENV=development)
+                              - Main app Vite   (port 3003)
+                              - Customer portal (port 3004)
+pnpm dev:api                → Express API server only (port 3010, NODE_ENV=development)
 pnpm build                  → Vite builds client/ → dist/public/
                             → esbuild bundles server/index.ts → dist/index.js
 pnpm start (or node dist/)  → Express server (port 3000, production mode)
@@ -28,9 +33,10 @@ pnpm start (or node dist/)  → Express server (port 3000, production mode)
 
 **Key points:**
 
-- `pnpm dev` runs only Vite; Express is for production only
-- Both `pnpm dev` and `pnpm start` use port 3000 — run them separately
-- In `customer-portal/`, use its own `pnpm dev` command (separate from main app)
+- `pnpm dev:full` is the recommended local workflow — starts all servers together and cleans up on exit
+- `pnpm dev` runs only Vite (no API); use when you don't need the Express server
+- Default ports: main app `:3003`, customer portal `:3004`, API `:3010` (overridable via `MAIN_PORT`, `PORTAL_PORT`, `API_PORT` env vars)
+- In `customer-portal/`, use its own `pnpm dev` command if running in isolation
 - `dist/index.js` requires `dist/public/` present (SPA assets)
 
 ## Path Aliases

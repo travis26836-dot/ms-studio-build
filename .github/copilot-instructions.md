@@ -32,7 +32,9 @@
 
 - Use `pnpm` at repo root.
 - Main app commands (repo root):
-  - `pnpm dev` - run Vite dev server
+  - `pnpm dev:full` - run all dev servers (API + main app + customer portal) — recommended for local dev
+  - `pnpm dev` - run Vite dev server only (no API)
+  - `pnpm dev:api` - run Express API server only (port 3010, NODE_ENV=development)
   - `pnpm build` - build client and bundle `server/index.ts` to `dist/`
   - `pnpm start` - run production server from `dist/index.js`
   - `pnpm check` - run TypeScript checks (`tsc --noEmit`)

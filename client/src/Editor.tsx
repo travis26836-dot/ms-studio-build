@@ -47,7 +47,6 @@ import {
   AlignStartVertical,
   AlignCenterVertical,
   AlignEndVertical,
-  Download,
   Save,
   Palette,
   Layers,
@@ -89,8 +88,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { CANVAS_PRESETS } from "@shared/designTypes";
-import ExportDialog from "@/components/ExportDialog";
 import AIChatPanel from "@/components/AIChatPanel";
+import DownloadMenu from "@/components/DownloadMenu";
 import { getPortalUrl } from "@/const";
 
 type SidebarPanel =
@@ -809,51 +808,31 @@ export default function Editor({
           )}
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className={`text-toolbar-foreground gap-1.5 ${showChat ? "bg-primary/20 text-primary" : ""}`}
+        <ToolbarButton
+          icon={MessageSquare}
+          tooltip="AI Chat"
           onClick={() => setShowChat(!showChat)}
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span className="text-xs">AI Chat</span>
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-toolbar-foreground gap-1.5"
-          onClick={handleSave}
-        >
-          <Save className="w-4 h-4" />
-          <span className="text-xs">Save</span>
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-toolbar-foreground gap-1.5"
+          active={showChat}
+        />
+        <ToolbarButton icon={Save} tooltip="Save" onClick={handleSave} />
+        <ToolbarButton
+          icon={ExternalLink}
+          tooltip="Open Customer Portal"
           onClick={() =>
             window.open(
               getPortalUrl({ returnTo: window.location.origin }),
               "_blank"
             )
           }
-        >
-          <ExternalLink className="w-4 h-4" />
-          <span className="text-xs">Portal</span>
-        </Button>
+        />
 
-        <ExportDialog
+        <DownloadMenu
           onExport={(format, quality) => editor.exportCanvas(format, quality)}
           canvasWidth={canvasWidth}
           canvasHeight={canvasHeight}
-        >
-          <Button variant="default" size="sm" className="gap-1.5">
-            <Download className="w-4 h-4" />
-            <span className="text-xs">Export</span>
-          </Button>
-        </ExportDialog>
+          isSubscribed={false}
+          projectName={projectName}
+        />
       </div>
 
       <div className="flex flex-1 overflow-hidden">

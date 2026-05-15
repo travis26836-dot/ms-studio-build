@@ -57,13 +57,29 @@ const TEMPLATES_KEY = "manuscript.templates.v1";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.DEV ? "http://127.0.0.1:3010" : "");
+const DEV_API_FAILOVER_URL =
+  import.meta.env.VITE_API_FAILOVER_URL ||
+  (import.meta.env.DEV
+    ? "https://ms-studio-build-production.up.railway.app"
+    : "");
+
+let activeApiBaseUrl = API_BASE_URL;
 
 function resolveApiUrl(path: string) {
   if (/^https?:\/\//.test(path)) {
     return path;
   }
 
-  return `${API_BASE_URL}${path}`;
+  return `${activeApiBaseUrl}${path}`;
+}
+
+function shouldTryDevFailover(path: string) {
+  return (
+    import.meta.env.DEV &&
+    !!DEV_API_FAILOVER_URL &&
+    !/^https?:\/\//.test(path) &&
+    activeApiBaseUrl !== DEV_API_FAILOVER_URL
+  );
 }
 
 function useLocalQuery<T>(
@@ -444,14 +460,40 @@ async function apiRequest<T>(
       credentials: "include",
     });
   } catch (error) {
-    const message =
-      error instanceof Error && error.message
-        ? error.message
-        : "Network request failed";
-    throw new Error(`Network error: ${message}`);
+    if (shouldTryDevFailover(path)) {
+      activeApiBaseUrl = DEV_API_FAILOVER_URL;
+      response = await fetch(resolveApiUrl(path), {
+        ...init,
+        headers,
+        credentials: "include",
+      });
+    } else {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Network request failed";
+      throw new Error(`Network error: ${message}`);
+    }
   }
 
   if (!response.ok) {
+    if (response.status === 401 && shouldTryDevFailover(path)) {
+      activeApiBaseUrl = DEV_API_FAILOVER_URL;
+      const retry = await fetch(resolveApiUrl(path), {
+        ...init,
+        headers,
+        credentials: "include",
+      });
+
+      if (retry.ok) {
+        if (retry.status === 204) {
+          return undefined as T;
+        }
+
+        return retry.json() as Promise<T>;
+      }
+    }
+
     let message = `Request failed (${response.status})`;
     try {
       const err = await response.json();

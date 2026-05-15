@@ -33,6 +33,21 @@ type PortalProjectStateRecord = {
   slug?: string;
 };
 
+type RequestIdentity = {
+  id: string;
+  email?: string;
+};
+
+type MemoryProject = {
+  id: string;
+  name: string;
+  canvasState: ReturnType<typeof buildCanvasState>;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const memoryProjectsByUser = new Map<string, Map<string, MemoryProject>>();
+
 const PORTAL_CONTENT_KIND = "customer-portal-content";
 const PORTAL_PROJECT_KIND = "customer-portal-project";
 
@@ -259,6 +274,73 @@ async function getPortalCustomer(
 
 function normalizeEmail(raw: string) {
   return raw.trim().toLowerCase();
+}
+
+function getRequestIdentity(req: express.Request): RequestIdentity | null {
+  const clerkIdFromAuth = (req as express.Request & { auth?: { userId?: string } })
+    .auth?.userId;
+  const clerkHeader = req.header("x-user-clerk-id");
+  const emailHeader = req.header("x-user-email");
+
+  const clerkId =
+    typeof clerkIdFromAuth === "string" && clerkIdFromAuth.trim()
+      ? clerkIdFromAuth.trim()
+      : typeof clerkHeader === "string" && clerkHeader.trim()
+        ? clerkHeader.trim()
+        : null;
+
+  const email =
+    typeof emailHeader === "string" && emailHeader.trim()
+      ? normalizeEmail(emailHeader)
+      : undefined;
+
+  if (!clerkId && !email) {
+    return null;
+  }
+
+  return {
+    id: clerkId ?? `email:${email}`,
+    email,
+  };
+}
+
+function getGuestIdentity(req: express.Request): RequestIdentity {
+  const ip = req.ip || "unknown";
+  const userAgent = req.header("user-agent") || "unknown";
+  const basis = `${ip}:${userAgent.slice(0, 120)}`;
+
+  return {
+    id: `guest:${Buffer.from(basis).toString("base64url")}`,
+  };
+}
+
+function getMemoryProjects(identity: RequestIdentity) {
+  const existing = memoryProjectsByUser.get(identity.id);
+  if (existing) {
+    return existing;
+  }
+
+  const created = new Map<string, MemoryProject>();
+  memoryProjectsByUser.set(identity.id, created);
+  return created;
+}
+
+function memoryProjectToClientShape(project: MemoryProject) {
+  return {
+    id: project.id,
+    name: project.name,
+    canvasData: project.canvasState.canvasData,
+    canvasWidth: project.canvasState.canvasWidth,
+    canvasHeight: project.canvasState.canvasHeight,
+    thumbnailUrl: project.canvasState.thumbnailUrl,
+    createdAt: project.createdAt.toISOString(),
+    updatedAt: project.updatedAt.toISOString(),
+    canvasState: safeParseJson(project.canvasState.canvasData),
+  };
+}
+
+function createMemoryProjectId() {
+  return `mem_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
 async function resolvePortalCustomer(
@@ -540,6 +622,36 @@ async function startServer() {
   const server = createServer(app);
   const allowedOrigins = getAllowedCorsOrigins();
 
+  // Express 4 does not reliably forward async route errors.
+  // Wrap async handlers so failed promises hit the error middleware.
+  const appAny = app as any;
+  for (const method of ["get", "post", "put", "delete", "patch"] as const) {
+    const original = appAny[method].bind(app);
+    appAny[method] = (path: any, ...handlers: any[]) => {
+      const wrappedHandlers = handlers.map(handler => {
+        if (typeof handler !== "function") {
+          return handler;
+        }
+
+        if (handler.constructor.name !== "AsyncFunction") {
+          return handler;
+        }
+
+        return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+          Promise.resolve(
+            (handler as (
+              req: express.Request,
+              res: express.Response,
+              next: express.NextFunction
+            ) => Promise<unknown>)(req, res, next)
+          ).catch(next);
+        };
+      });
+
+      return original(path, ...(wrappedHandlers as []));
+    };
+  }
+
   app.use((req, res, next) => {
     const origin = req.headers.origin;
     const isAllowedOrigin =
@@ -586,6 +698,37 @@ async function startServer() {
       }
       next();
     });
+  });
+
+  app.get("/api/health", (_req, res) => {
+    return res.json({ status: "ok" });
+  });
+
+  app.post("/api/contact", async (req, res) => {
+    const { name, email, message } = req.body ?? {};
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ error: "Name is required" });
+    }
+
+    if (!email || typeof email !== "string" || !email.trim()) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    const prisma = await getPrisma();
+    await prisma.contactSubmission.create({
+      data: {
+        name: name.trim().slice(0, 200),
+        email: normalizeEmail(email).slice(0, 320),
+        message: message.trim().slice(0, 5000),
+      },
+    });
+
+    return res.status(201).json({ ok: true });
   });
 
   // Customer portal API
@@ -951,13 +1094,13 @@ async function startServer() {
   });
 
   app.get("/api/subscription/status", async (req, res) => {
-    const prisma = await getPrisma();
     const user = await getOrCreateUser(req);
 
     if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.json({ plan: "free", subscription: null });
     }
 
+    const prisma = await getPrisma();
     const sub = await prisma.subscription.findUnique({
       where: { userId: user.id },
     });
@@ -965,12 +1108,19 @@ async function startServer() {
   });
 
   app.get("/api/projects", async (req, res) => {
-    const prisma = await getPrisma();
+    const identity = getRequestIdentity(req) ?? getGuestIdentity(req);
     const user = await getOrCreateUser(req);
 
     if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      const memoryProjects = getMemoryProjects(identity);
+      const projects = Array.from(memoryProjects.values()).sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+      );
+
+      return res.json(projects.map(memoryProjectToClientShape));
     }
+
+    const prisma = await getPrisma();
 
     const projects = await prisma.project.findMany({
       where: { userId: user.id },
@@ -988,12 +1138,21 @@ async function startServer() {
   });
 
   app.get("/api/projects/:id", async (req, res) => {
-    const prisma = await getPrisma();
+    const identity = getRequestIdentity(req) ?? getGuestIdentity(req);
     const user = await getOrCreateUser(req);
 
     if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      const memoryProjects = getMemoryProjects(identity);
+      const project = memoryProjects.get(req.params.id);
+
+      if (!project) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      return res.json(memoryProjectToClientShape(project));
     }
+
+    const prisma = await getPrisma();
 
     const project = await prisma.project.findFirst({
       where: {
@@ -1010,12 +1169,8 @@ async function startServer() {
   });
 
   app.post("/api/projects", async (req, res) => {
-    const prisma = await getPrisma();
+    const identity = getRequestIdentity(req) ?? getGuestIdentity(req);
     const user = await getOrCreateUser(req);
-
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
 
     const { name, canvasData, canvasWidth, canvasHeight, thumbnailUrl } =
       req.body;
@@ -1026,6 +1181,27 @@ async function startServer() {
     if (!canvasData || typeof canvasData !== "string") {
       return res.status(400).json({ error: "canvasData is required" });
     }
+
+    if (!user) {
+      const now = new Date();
+      const project: MemoryProject = {
+        id: createMemoryProjectId(),
+        name,
+        canvasState: buildCanvasState({
+          canvasData,
+          canvasWidth: typeof canvasWidth === "number" ? canvasWidth : 1080,
+          canvasHeight: typeof canvasHeight === "number" ? canvasHeight : 1080,
+          thumbnailUrl,
+        }),
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      getMemoryProjects(identity).set(project.id, project);
+      return res.status(201).json(memoryProjectToClientShape(project));
+    }
+
+    const prisma = await getPrisma();
 
     const project = await prisma.project.create({
       data: {
@@ -1044,12 +1220,47 @@ async function startServer() {
   });
 
   app.put("/api/projects/:id", async (req, res) => {
-    const prisma = await getPrisma();
+    const identity = getRequestIdentity(req) ?? getGuestIdentity(req);
     const user = await getOrCreateUser(req);
 
     if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      const memoryProjects = getMemoryProjects(identity);
+      const existing = memoryProjects.get(req.params.id);
+
+      if (!existing) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      const { canvasData, thumbnailUrl, name } = req.body;
+      const nextCanvasData =
+        typeof canvasData === "string"
+          ? canvasData
+          : existing.canvasState.canvasData;
+
+      if (!nextCanvasData) {
+        return res.status(400).json({ error: "canvasData is required" });
+      }
+
+      const updated: MemoryProject = {
+        ...existing,
+        name: typeof name === "string" && name.trim() ? name : existing.name,
+        canvasState: buildCanvasState({
+          canvasData: nextCanvasData,
+          canvasWidth: existing.canvasState.canvasWidth,
+          canvasHeight: existing.canvasState.canvasHeight,
+          thumbnailUrl:
+            typeof thumbnailUrl === "string"
+              ? thumbnailUrl
+              : existing.canvasState.thumbnailUrl,
+        }),
+        updatedAt: new Date(),
+      };
+
+      memoryProjects.set(existing.id, updated);
+      return res.json(memoryProjectToClientShape(updated));
     }
+
+    const prisma = await getPrisma();
 
     const existing = await prisma.project.findFirst({
       where: {
@@ -1089,12 +1300,20 @@ async function startServer() {
   });
 
   app.delete("/api/projects/:id", async (req, res) => {
-    const prisma = await getPrisma();
+    const identity = getRequestIdentity(req) ?? getGuestIdentity(req);
     const user = await getOrCreateUser(req);
 
     if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      const memoryProjects = getMemoryProjects(identity);
+      if (!memoryProjects.has(req.params.id)) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      memoryProjects.delete(req.params.id);
+      return res.status(204).end();
     }
+
+    const prisma = await getPrisma();
 
     const existing = await prisma.project.findFirst({
       where: {
@@ -1114,6 +1333,38 @@ async function startServer() {
 
   // AI routes
   app.use("/api/ai", createAiRouter());
+
+  app.use("/api", (_req, res) => {
+    return res.status(404).json({ error: "Not found" });
+  });
+
+  app.use(
+    (
+      error: unknown,
+      req: express.Request,
+      res: express.Response,
+      _next: express.NextFunction
+    ) => {
+      console.error("API route error", error);
+
+      if (res.headersSent) {
+        return;
+      }
+
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Internal server error";
+      const isApiRoute = req.path.startsWith("/api/");
+
+      if (isApiRoute) {
+        res.status(500).json({ error: message });
+        return;
+      }
+
+      res.status(500).send("Internal Server Error");
+    }
+  );
 
   // Serve static files from dist/public in production
   const staticPath =

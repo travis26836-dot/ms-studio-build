@@ -183,13 +183,18 @@
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: oklch(0.78 0.17 75);
+    color: var(--amber);
     background: rgba(245, 200, 80, 0.06);
     transition: all 0.15s ease;
   }
   .action-chip:hover {
     background: rgba(245, 200, 80, 0.12);
-    box-shadow: 0 0 12px rgba(245, 200, 80, 0.2);
+    box-shadow: 0 0 12px var(--chip-glow);
+  }
+
+  /* Display font utility */
+  .font-display {
+    font-family: var(--font-display);
   }
 
   /* System init loader animation */

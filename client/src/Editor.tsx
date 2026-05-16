@@ -667,7 +667,7 @@ export default function Editor({
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       {/* Top Toolbar */}
-      <div className="h-12 border-b border-border bg-toolbar flex items-center px-3 gap-1 shrink-0">
+      <div className="h-12 flex items-center gap-1 px-3 shrink-0 bg-[oklch(0.12_0.006_260)]" style={{ borderTop: '1px solid var(--amber)', borderBottom: '1px solid var(--toolbar-border)' }}>
         <Button
           variant="ghost"
           size="sm"
@@ -800,7 +800,8 @@ export default function Editor({
           ) : (
             <button
               onClick={() => setIsEditingName(true)}
-              className="text-sm text-toolbar-foreground hover:bg-accent rounded px-2 py-1 truncate max-w-xs transition-colors"
+              className="text-sm font-medium tracking-wide text-[oklch(0.82_0.007_75)] hover:text-[oklch(0.91_0.008_75)] rounded-sm px-3 py-1 hover:bg-[oklch(0.19_0.006_260)] transition-colors truncate max-w-xs"
+              style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}
               title="Click to rename"
             >
               {projectName}
@@ -837,7 +838,7 @@ export default function Editor({
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Icon Sidebar */}
-        <div className="w-16 border-r border-border bg-toolbar flex flex-col items-center py-2 gap-1 shrink-0">
+        <div className="w-[52px] border-r bg-[oklch(0.12_0.006_260)] flex flex-col items-center py-3 gap-0.5 shrink-0" style={{ borderRightColor: 'var(--panel-border)' }}>
           <SidebarIcon
             icon={LayoutTemplate}
             label="Templates"
@@ -890,7 +891,7 @@ export default function Editor({
 
         {/* Expandable Side Panel */}
         {activePanel && (
-          <div className="w-72 border-r border-border bg-card flex flex-col shrink-0">
+          <div className="w-64 border-r bg-[oklch(0.14_0.006_260)] flex flex-col shrink-0 panel-glide" style={{ borderRightColor: 'var(--panel-border)' }}>
             <SidePanel
               panel={activePanel}
               editor={editor}
@@ -986,7 +987,7 @@ function ToolbarButton({
         <Button
           variant="ghost"
           size="icon"
-          className={`w-8 h-8 text-toolbar-foreground hover:bg-accent ${active ? "bg-accent" : ""}`}
+          className={`w-8 h-8 rounded-sm text-toolbar-foreground hover:bg-[oklch(0.19_0.006_260)] hover:text-[oklch(0.91_0.008_75)] ${active ? "bg-[oklch(0.78_0.17_75)]/15 text-[oklch(0.78_0.17_75)]" : ""}`}
           onClick={onClick}
         >
           <Icon className="w-4 h-4" />
@@ -1014,8 +1015,8 @@ function SidebarIcon({
   return (
     <button
       onClick={onClick}
-      className={`w-12 h-12 flex flex-col items-center justify-center rounded-lg text-xs gap-0.5 transition-colors
-        ${active ? "bg-primary/20 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+      className={`w-11 h-11 flex flex-col items-center justify-center rounded-sm text-xs gap-0.5 transition-colors
+        ${active ? "bg-[oklch(0.78_0.17_75)]/15 text-[oklch(0.78_0.17_75)]" : "text-muted-foreground hover:bg-[oklch(0.19_0.006_260)] hover:text-[oklch(0.82_0.007_75)]"}`}
     >
       <Icon className="w-5 h-5" />
       <span className="text-[10px] leading-tight">{label}</span>
@@ -1053,7 +1054,10 @@ function SidePanel({
   return (
     <>
       <div className="p-3 border-b border-border">
-        <h3 className="text-sm font-semibold text-card-foreground mb-2">
+        <h3
+          className="text-xs font-semibold text-card-foreground mb-2 tracking-[0.08em] uppercase"
+          style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}
+        >
           {panelTitles[panel || ""]}
         </h3>
         {panel !== "layers" && panel !== "brand" && (

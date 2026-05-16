@@ -19,20 +19,20 @@ export const PageLoadAnimator: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-    const timer = setTimeout(() => setIsAnimating(false), 700);
+    const timer = setTimeout(() => setIsAnimating(false), 200);
     return () => clearTimeout(timer);
   }, [isAnimating]);
 
   return (
     <div
-      className={`transition-all duration-700 ${
+      className={`transition-all ${
         isAnimating ? "opacity-0" : "opacity-100"
       }`}
       style={{
-        transform: isAnimating ? "translateY(14px)" : "translateY(0)",
+        transform: isAnimating ? "translateY(8px)" : "translateY(0)",
         transitionProperty: "opacity, transform",
-        transitionDuration: "700ms",
-        transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+        transitionDuration: "200ms",
+        transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
       }}
     >
       {children}

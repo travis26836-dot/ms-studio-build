@@ -491,12 +491,13 @@ function Dashboard({
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <section className="mb-12 text-center">
+        <section className="mb-12 text-center relative">
+          <div className="absolute inset-x-0 top-0 h-px bg-[var(--measurement-line)]" />
           <div className="mx-auto mb-6 max-w-3xl">
-            <h2 className="text-2xl font-semibold text-foreground">
+            <h2 className="text-xl font-semibold tracking-[0.05em] text-foreground" style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}>
               Create a design
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-2 text-xs text-muted-foreground">
               Start faster with the most-requested social, print, product, and
               marketing canvas sizes.
             </p>
@@ -517,13 +518,13 @@ function Dashboard({
                       label: preset.label,
                     })
                   }
-                  className="group flex flex-col items-center gap-3 rounded-2xl border border-border bg-card/60 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
+                  className="group flex flex-col items-center gap-3 rounded-sm border border-border bg-card/80 p-4 text-center transition-all duration-150 hover:border-[oklch(0.78_0.17_75)]/50 hover:bg-[oklch(0.78_0.17_75)]/5"
                 >
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-border bg-secondary transition-all group-hover:border-primary/50">
-                    <Plus className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-primary" />
+                  <div className="flex h-20 w-20 items-center justify-center rounded-sm border border-border bg-secondary transition-all group-hover:border-[oklch(0.78_0.17_75)]/40">
+                    <Plus className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-[oklch(0.78_0.17_75)]" />
                   </div>
                   <div>
-                    <span className="block text-xs font-medium text-foreground">
+                    <span className="block text-xs font-medium text-foreground" style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}>
                       {preset.label}
                     </span>
                     <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
@@ -584,7 +585,7 @@ function Dashboard({
 
         <section className="mb-12 text-center">
           <div className="mx-auto mb-6 max-w-3xl">
-            <h2 className="text-2xl font-semibold text-foreground">
+            <h2 className="text-2xl font-semibold text-foreground" style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}>
               Start from a template
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -804,9 +805,9 @@ function Dashboard({
                         `/editor?project=${project.id}&w=${project.canvasWidth}&h=${project.canvasHeight}`
                       )
                     }
-                    className="w-full rounded-2xl border border-transparent p-1 text-left transition-all hover:border-border"
+                    className="w-full rounded-sm border border-transparent p-1 text-left transition-all hover:border-border"
                   >
-                    <div className="mb-2 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl border border-border bg-secondary transition-all group-hover:ring-2 group-hover:ring-primary">
+                    <div className="mb-2 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-sm border border-border bg-secondary transition-all group-hover:ring-2 group-hover:ring-[oklch(0.78_0.17_75)]/40">
                       {project.thumbnailUrl ? (
                         <img
                           src={project.thumbnailUrl}
@@ -973,9 +974,9 @@ function LandingPage() {
   return (
     <PageLoadAnimator>
       <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 flex h-16 items-center border-b border-border bg-card/80 px-6 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 flex h-16 items-center border-b border-[var(--measurement-line)] bg-[oklch(0.11_0.005_260)]/95 px-6 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg ring-2 ring-red-700/60 bg-black overflow-hidden">
+          <div className="h-9 w-9 rounded-lg ring-2 ring-[oklch(0.78_0.17_75)]/50 bg-black overflow-hidden">
             <img
               src="/icon-192.png"
               alt="ManuScript Studio logo"
@@ -983,16 +984,14 @@ function LandingPage() {
             />
           </div>
           <h1
-            className="text-lg font-bold uppercase tracking-[0.08em] text-foreground"
-            style={{ fontFamily: '"Cinzel Decorative", serif' }}
+            className="text-sm font-semibold tracking-[0.18em] uppercase text-foreground"
+            style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}
           >
             ManuScript Studio
           </h1>
         </div>
         <div className="flex-1" />
-        <Button asChild>
-          <a href={getLoginUrl()}>Get Started</a>
-        </Button>
+        <a href={getLoginUrl()} className="action-chip">Get Started</a>
       </header>
 
       <main>
@@ -1021,45 +1020,59 @@ function LandingPage() {
             </ParallaxScroll>
           </div>
 
-          <div className="mx-auto max-w-4xl text-center">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="text-left">
             <FlashInElement delay={60}>
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
+              <div className="mb-6 inline-flex items-center gap-2 action-chip">
                 <Sparkles className="h-4 w-4" /> AI-Powered Design Platform
               </div>
             </FlashInElement>
             <FlashInElement delay={140}>
-              <h1 className="mb-6 text-5xl font-bold leading-tight text-foreground md:text-6xl">
+              <h1
+                className="mb-6 text-5xl font-semibold leading-tight text-foreground md:text-6xl"
+                style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}
+              >
                 Design anything.
                 <br />
-                <span className="text-primary">Publish everywhere.</span>
+                <span className="text-[oklch(0.78_0.17_75)]">Publish everywhere.</span>
               </h1>
             </FlashInElement>
             <FlashInElement delay={220}>
-              <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
+              <p className="mb-8 max-w-2xl text-lg text-muted-foreground">
                 A professional design platform with drag-and-drop editing,
                 AI-powered tools, royalty-free assets, product mockup support, and
                 developer integrations. Create polished visuals in minutes.
               </p>
             </FlashInElement>
             <FlashInElement delay={300}>
-              <div className="flex flex-wrap justify-center gap-3">
-                <Button size="lg" className="w-[220px]" asChild>
-                  <a href={getLoginUrl()} className="gap-2">
-                    Start Designing <ArrowRight className="h-4 w-4" />
-                  </a>
-                </Button>
+              <div className="flex flex-wrap gap-3">
+                <a href={getLoginUrl()} className="action-chip gap-2">
+                  Start Designing <ArrowRight className="h-4 w-4" />
+                </a>
               </div>
             </FlashInElement>
+            </div>
+            <div className="hidden lg:flex items-center justify-center">
+              <div className="content-well w-full max-w-sm aspect-square bg-[oklch(0.14_0.006_260)] flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-sm bg-[oklch(0.78_0.17_75)]/10 border border-[oklch(0.78_0.17_75)]/30 flex items-center justify-center">
+                    <Palette className="h-8 w-8 text-[oklch(0.78_0.17_75)]" />
+                  </div>
+                  <p className="text-xs tracking-[0.18em] uppercase text-[oklch(0.55_0.008_75)]">Studio Canvas</p>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="relative overflow-hidden bg-card/50 px-6 py-20">
+        <section className="relative overflow-hidden bg-[oklch(0.14_0.006_260)] px-6 py-20">
+          <div className="absolute inset-x-0 top-0 h-px bg-[var(--measurement-line)]" />
           <ParallaxScroll intensity={0.08} maxOffset={40}>
             <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-40 bg-[radial-gradient(circle_at_top,_var(--color-primary-500),_transparent_65%)] opacity-20" />
           </ParallaxScroll>
           <div className="mx-auto max-w-6xl">
             <RevealOnScroll className="mb-12">
-              <h2 className="text-center text-3xl font-bold text-foreground">
+              <h2 className="text-center text-3xl font-bold text-foreground" style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}>
                 Everything you need to create
               </h2>
             </RevealOnScroll>

@@ -117,6 +117,19 @@
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
   }
+
+  /* Neo-industrial heading style */
+  h1, h2, h3 {
+    font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Amber focus rings */
+  input:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible {
+    outline: 1.5px solid oklch(0.78 0.17 75);
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
@@ -233,5 +246,5 @@
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.45 0.01 260);
+  background: oklch(0.38 0.06 75);
 }

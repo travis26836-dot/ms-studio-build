@@ -259,7 +259,12 @@ export default function Home() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-0.5 w-32 bg-[oklch(0.22_0.008_260)] overflow-hidden rounded-full">
+            <div className="h-full bg-[oklch(0.78_0.17_75)] animate-[systemInit_1.2s_ease-in-out_infinite]" style={{ width: '60%' }} />
+          </div>
+          <p className="text-[10px] tracking-[0.22em] uppercase text-[oklch(0.55_0.008_75)]" style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}>Initializing</p>
+        </div>
       </div>
     );
   }

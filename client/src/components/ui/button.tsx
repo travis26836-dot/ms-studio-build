@@ -2,10 +2,10 @@ import React from "react";
 import { cn, renderWithOptionalSlot } from "@/lib/utils";
 
 const variantClasses = {
-  default: "bg-primary text-primary-foreground hover:opacity-90",
+  default: "bg-primary text-primary-foreground hover:opacity-85",
   ghost: "bg-transparent text-foreground hover:bg-accent",
   outline:
-    "border border-border bg-transparent text-foreground hover:bg-accent",
+    "border border-border bg-transparent text-foreground hover:bg-accent hover:border-[oklch(0.78_0.17_75)]/40",
   secondary: "bg-secondary text-secondary-foreground hover:bg-accent",
 };
 
@@ -36,7 +36,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const classes = cn(
-      "inline-flex items-center justify-center rounded-lg font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
+      "inline-flex items-center justify-center rounded-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
       variantClasses[variant],
       sizeClasses[size],
       className

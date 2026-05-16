@@ -1522,8 +1522,13 @@ async function startServer() {
 
   app.use(express.static(staticPath));
 
-  // Handle client-side routing - serve index.html for all routes
-  app.get("*", (_req, res) => {
+  // Handle client-side routing - serve index.html for all non-API routes.
+  // Explicitly reject unmatched /api/* paths so they never receive SPA HTML.
+  app.get("*", (req, res) => {
+    if (req.path.startsWith("/api/")) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
     res.sendFile(path.join(staticPath, "index.html"));
   });
 

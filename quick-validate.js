@@ -7,8 +7,11 @@
  * Usage: node quick-validate.js
  */
 
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const results = {
   passed: [],
@@ -43,6 +46,12 @@ check(".env has DATABASE_URL", () => {
   const env = fs.readFileSync(".env", "utf-8");
   if (!env.includes("DATABASE_URL"))
     throw new Error("DATABASE_URL not in .env");
+});
+
+check(".env has VITE_CLERK_PUBLISHABLE_KEY", () => {
+  const env = fs.readFileSync(".env", "utf-8");
+  if (!env.includes("VITE_CLERK_PUBLISHABLE_KEY"))
+    throw new Error("VITE_CLERK_PUBLISHABLE_KEY not in .env");
 });
 
 check(".env has CLERK_SECRET_KEY", () => {
@@ -99,10 +108,10 @@ check("server/index.ts has API routes", () => {
   }
 });
 
-check("server/index.ts has Clerk auth", () => {
+check("server/index.ts has Clerk middleware", () => {
   const server = fs.readFileSync("server/index.ts", "utf-8");
-  if (!server.includes("ClerkExpressWithAuth"))
-    throw new Error("ClerkExpressWithAuth not found");
+  if (!server.includes("clerkMiddleware"))
+    throw new Error("clerkMiddleware not found");
 });
 
 check("server/db.ts exists", () => {
@@ -150,28 +159,13 @@ check("package.json has express", () => {
     throw new Error("express not in dependencies");
 });
 
-check("package.json has @clerk/clerk-sdk-node", () => {
+check("package.json has @clerk/express", () => {
   const pkg = JSON.parse(fs.readFileSync("package.json", "utf-8"));
-  if (!pkg.dependencies?.["@clerk/clerk-sdk-node"])
-    throw new Error("@clerk/clerk-sdk-node not in dependencies");
+  if (!pkg.dependencies?.["@clerk/express"])
+    throw new Error("@clerk/express not in dependencies");
 });
 
-// Check 5: Testing files
-check("LOCAL-TESTING.md exists", () => {
-  if (!fs.existsSync("LOCAL-TESTING.md"))
-    throw new Error("LOCAL-TESTING.md not found");
-});
-
-check("TESTING-README.md exists", () => {
-  if (!fs.existsSync("TESTING-README.md"))
-    throw new Error("TESTING-README.md not found");
-});
-
-check("setup-local.sh exists", () => {
-  if (!fs.existsSync("setup-local.sh"))
-    throw new Error("setup-local.sh not found");
-});
-
+// Check 5: Setup files
 check("setup-local.bat exists", () => {
   if (!fs.existsSync("setup-local.bat"))
     throw new Error("setup-local.bat not found");
@@ -204,11 +198,10 @@ if (results.warnings.length > 0) {
 }
 
 if (results.failed.length === 0) {
-  console.log("\n✨ All critical checks passed!");
-  console.log("\n🚀 You are ready to test locally:");
-  console.log("   bash setup-local.sh    # Automated setup");
-  console.log("   OR");
-  console.log("   pnpm dev               # Start dev server");
+  console.log("\nAll critical checks passed!");
+  console.log("\nReady to develop:");
+  console.log("   pnpm install     # Install dependencies");
+  console.log("   pnpm dev:full    # Start all servers (ports 3003, 3004, 3010)");
   process.exit(0);
 } else {
   console.log("\n❌ Some checks failed. Review errors above.");

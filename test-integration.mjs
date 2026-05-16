@@ -66,9 +66,11 @@ suite.test("Environment variables configured", () => {
   const envContent = fs.readFileSync(envPath, "utf-8");
   const hasDatabase = envContent.includes("DATABASE_URL");
   const hasClerk = envContent.includes("CLERK_SECRET_KEY");
+  const hasViteClerk = envContent.includes("VITE_CLERK_PUBLISHABLE_KEY");
 
   if (!hasDatabase) throw new Error("DATABASE_URL not in .env");
   if (!hasClerk) throw new Error("CLERK_SECRET_KEY not in .env");
+  if (!hasViteClerk) throw new Error("VITE_CLERK_PUBLISHABLE_KEY not in .env");
 });
 
 // Test 2: Prisma Schema Valid
@@ -152,8 +154,8 @@ suite.test("server/index.ts has Clerk middleware configured", () => {
   const serverPath = path.join(__dirname, "server", "index.ts");
   const server = fs.readFileSync(serverPath, "utf-8");
 
-  if (!server.includes("ClerkExpressWithAuth")) {
-    throw new Error("Clerk middleware not configured");
+  if (!server.includes("clerkMiddleware")) {
+    throw new Error("clerkMiddleware not configured");
   }
   if (!server.includes("getOrCreateUser")) {
     throw new Error("getOrCreateUser helper not found");
@@ -211,7 +213,7 @@ suite.test("Critical dependencies are in package.json", () => {
   const required = [
     "@prisma/client",
     "@prisma/adapter-pg",
-    "@clerk/clerk-sdk-node",
+    "@clerk/express",
     "express",
   ];
 
@@ -234,16 +236,17 @@ suite.test("Setup documentation exists", () => {
   }
 });
 
-// Test 12: Local Testing Guide Exists
-suite.test("Local testing guides created", () => {
-  const testingPath = path.join(__dirname, "LOCAL-TESTING.md");
-  const checklistPath = path.join(__dirname, "LOCAL-TESTING-CHECKLIST.md");
+// Test 12: Setup Docs Exist
+suite.test("Project instructions exist", () => {
+  const instructionsPath = path.join(
+    __dirname,
+    ".github/instructions/project-configuration.instructions.md"
+  );
 
-  if (!fs.existsSync(testingPath)) {
-    throw new Error("LOCAL-TESTING.md not found");
-  }
-  if (!fs.existsSync(checklistPath)) {
-    throw new Error("LOCAL-TESTING-CHECKLIST.md not found");
+  if (!fs.existsSync(instructionsPath)) {
+    throw new Error(
+      ".github/instructions/project-configuration.instructions.md not found"
+    );
   }
 });
 

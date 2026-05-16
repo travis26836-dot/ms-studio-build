@@ -116,22 +116,23 @@
         <h2>🚀 Next Steps - Run These Commands</h2>
         <ol>
           <li>
-            <strong>Automated Setup (Recommended)</strong>
-            <div class="code">bash setup-local.sh</div>
+            <strong>Install Dependencies</strong>
+            <div class="code">pnpm install</div>
+          </li>
+          <li>
+            <strong>Start All Dev Servers (Recommended)</strong>
+            <div class="code">pnpm dev:full</div>
             <em>Or on Windows:</em>
             <div class="code">setup-local.bat</div>
           </li>
           <li>
-            <strong>Start Development Server</strong>
-            <div class="code">pnpm dev</div>
-          </li>
-          <li>
             <strong>Open in Browser</strong>
-            <div class="code">http://localhost:5173</div>
+            <div class="code">http://localhost:3003</div>
+            <em>Customer portal: http://localhost:3004</em>
           </li>
           <li>
             <strong>Test API Endpoints</strong>
-            <div class="code">curl http://localhost:5173/api/customer/1</div>
+            <div class="code">curl http://localhost:3010/api/subscription/status</div>
           </li>
         </ol>
       </div>
@@ -150,15 +151,15 @@
         },
         {
           name: "Test suite files",
-          files: ["test-integration.mjs", "test-local.ts", "quick-validate.js"],
+          files: ["test-integration.mjs", "quick-validate.js", "validate-setup.js"],
           pass: true,
         },
         {
-          name: "Documentation files",
+          name: "Setup instructions",
           files: [
-            "READY-FOR-TESTING.md",
-            "LOCAL-TESTING.md",
-            "TESTING-README.md",
+            ".github/instructions/project-configuration.instructions.md",
+            ".github/instructions/railway-database-setup.instructions.md",
+            ".github/instructions/stripe-setup.instructions.md",
           ],
           pass: true,
         },
@@ -172,14 +173,14 @@
         { name: "Package dependencies", files: ["package.json"], pass: true },
         { name: "TypeScript validation", files: ["tsconfig.json"], pass: true },
         {
-          name: "All 4 API routes ready",
+          name: "API routes ready",
           details:
             "GET /api/customer/:id, GET /api/subscription/status, GET /api/projects, POST /api/projects",
           pass: true,
         },
         {
           name: "Clerk authentication",
-          details: "ClerkExpressWithAuth middleware integrated",
+          details: "clerkMiddleware (@clerk/express) integrated",
           pass: true,
         },
         {

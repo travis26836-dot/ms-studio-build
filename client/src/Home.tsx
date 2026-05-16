@@ -89,6 +89,17 @@ const DESIGN_PRESETS = [
   { key: "poster", label: "Poster", width: 2400, height: 3600 },
 ];
 
+const COMMON_CANVAS_SIZES = [
+  { key: "instagram-post", label: "Instagram Post", width: 1080, height: 1080 },
+  { key: "instagram-story", label: "Instagram Story", width: 1080, height: 1920 },
+  { key: "facebook-post", label: "Facebook Post", width: 1200, height: 630 },
+  { key: "x-post", label: "Twitter/X Post", width: 1600, height: 900 },
+  { key: "youtube-thumbnail", label: "YouTube Thumbnail", width: 1280, height: 720 },
+  { key: "presentation", label: "Presentation", width: 1920, height: 1080 },
+  { key: "flyer-letter", label: "Flyer (Letter)", width: 2550, height: 3300 },
+  { key: "flyer-a4", label: "Flyer (A4)", width: 2480, height: 3508 },
+];
+
 const TEMPLATE_CATEGORIES = [
   { value: "all", label: "All" },
   { value: "social-media", label: "Social Media" },
@@ -289,8 +300,11 @@ function Dashboard({
     width: number;
     height: number;
     label: string;
+    isCustomSize?: boolean;
   } | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
+  const [customWidth, setCustomWidth] = useState("1080");
+  const [customHeight, setCustomHeight] = useState("1080");
 
   function navigateToPortal() {
     const mainAppUrl = window.location.origin;
@@ -369,16 +383,53 @@ function Dashboard({
     width: number;
     height: number;
     label: string;
+    isCustomSize?: boolean;
   }) => {
     setNewProjectName(preset.label);
+    setCustomWidth(String(preset.width));
+    setCustomHeight(String(preset.height));
     setPendingPreset(preset);
+  };
+
+  const applyCommonCanvasSize = (size: {
+    label: string;
+    width: number;
+    height: number;
+  }) => {
+    setCustomWidth(String(size.width));
+    setCustomHeight(String(size.height));
+    setNewProjectName(current =>
+      current.trim() === "" || current === "Custom Design" ? size.label : current
+    );
   };
 
   const handleCreateProject = () => {
     if (!pendingPreset) return;
+
+    let width = pendingPreset.width;
+    let height = pendingPreset.height;
+
+    if (pendingPreset.isCustomSize) {
+      const parsedWidth = Number.parseInt(customWidth, 10);
+      const parsedHeight = Number.parseInt(customHeight, 10);
+
+      if (
+        Number.isNaN(parsedWidth) ||
+        Number.isNaN(parsedHeight) ||
+        parsedWidth <= 0 ||
+        parsedHeight <= 0
+      ) {
+        toast.error("Enter a valid canvas size in pixels");
+        return;
+      }
+
+      width = parsedWidth;
+      height = parsedHeight;
+    }
+
     const name = newProjectName.trim() || pendingPreset.label;
     setLocation(
-      `/editor?w=${pendingPreset.width}&h=${pendingPreset.height}&name=${encodeURIComponent(name)}`
+      `/editor?w=${width}&h=${height}&name=${encodeURIComponent(name)}`
     );
     setPendingPreset(null);
     setNewProjectName("");
@@ -491,6 +542,7 @@ function Dashboard({
                       width: 1080,
                       height: 1080,
                       label: "Custom Design",
+                      isCustomSize: true,
                     })
                   }
                   className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card/40 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
@@ -841,6 +893,68 @@ function Dashboard({
               }}
             />
           </div>
+
+          {pendingPreset?.isCustomSize && (
+            <div className="space-y-4 pb-1">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Common sizes (px)</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {COMMON_CANVAS_SIZES.map(size => {
+                    const isSelected =
+                      customWidth === String(size.width) &&
+                      customHeight === String(size.height);
+
+                    return (
+                      <button
+                        key={size.key}
+                        type="button"
+                        onClick={() => applyCommonCanvasSize(size)}
+                        className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                          isSelected
+                            ? "border-primary bg-primary/10"
+                            : "border-border bg-secondary/40 hover:border-primary/50"
+                        }`}
+                      >
+                        <span className="block text-xs font-medium text-foreground">
+                          {size.label}
+                        </span>
+                        <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                          {size.width}x{size.height}px
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">
+                    Width (px)
+                  </label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={customWidth}
+                    onChange={e => setCustomWidth(e.target.value)}
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">
+                    Height (px)
+                  </label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={customHeight}
+                    onChange={e => setCustomHeight(e.target.value)}
+                    className="h-10"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setPendingPreset(null)}>
               Cancel

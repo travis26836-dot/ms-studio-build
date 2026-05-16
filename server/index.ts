@@ -50,6 +50,7 @@ const memoryProjectsByUser = new Map<string, Map<string, MemoryProject>>();
 
 const PORTAL_CONTENT_KIND = "customer-portal-content";
 const PORTAL_PROJECT_KIND = "customer-portal-project";
+const MEMORY_CUSTOMER_PREFIX = "memory:";
 
 function buildCanvasState(input: {
   canvasData: string;
@@ -341,6 +342,55 @@ function memoryProjectToClientShape(project: MemoryProject) {
 
 function createMemoryProjectId() {
   return `mem_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function makeMemoryCustomerId(identityId: string) {
+  return `${MEMORY_CUSTOMER_PREFIX}${encodeURIComponent(identityId)}`;
+}
+
+function parseMemoryCustomerId(raw: string) {
+  if (!raw.startsWith(MEMORY_CUSTOMER_PREFIX)) {
+    return null;
+  }
+
+  const encodedIdentity = raw.slice(MEMORY_CUSTOMER_PREFIX.length);
+  if (!encodedIdentity) {
+    return null;
+  }
+
+  try {
+    return decodeURIComponent(encodedIdentity);
+  } catch {
+    return null;
+  }
+}
+
+function buildMemoryCustomer(input: { email?: string; name?: string; clerkId?: string }) {
+  const normalizedEmail =
+    typeof input.email === "string" && input.email.trim()
+      ? normalizeEmail(input.email)
+      : null;
+  const normalizedClerkId =
+    typeof input.clerkId === "string" && input.clerkId.trim()
+      ? input.clerkId.trim()
+      : null;
+  const normalizedName =
+    typeof input.name === "string" && input.name.trim()
+      ? input.name.trim()
+      : "";
+
+  const identityId = normalizedClerkId ?? (normalizedEmail ? `email:${normalizedEmail}` : null);
+  if (!identityId) {
+    return null;
+  }
+
+  return {
+    id: makeMemoryCustomerId(identityId),
+    userId: identityId,
+    email: normalizedEmail ?? `${identityId}@portal.local`,
+    name: normalizedName || "Portal User",
+    plan: "free",
+  };
 }
 
 async function resolvePortalCustomer(
@@ -733,21 +783,35 @@ async function startServer() {
 
   // Customer portal API
   app.post("/api/customer/resolve", async (req, res) => {
-    const prisma = await getPrisma();
     const { customerId, email, name, clerkId } = req.body ?? {};
 
-    const customer = await resolvePortalCustomer(prisma, {
+    const payload = {
       customerId: typeof customerId === "string" ? customerId : undefined,
       email: typeof email === "string" ? email : undefined,
       name: typeof name === "string" ? name : undefined,
       clerkId: typeof clerkId === "string" ? clerkId : undefined,
-    });
+    };
 
-    if (!customer) {
+    try {
+      const prisma = await getPrisma();
+      const customer = await resolvePortalCustomer(prisma, payload);
+
+      if (customer) {
+        return res.json(customer);
+      }
+    } catch (error) {
+      console.warn(
+        "Falling back to in-memory portal customer resolution",
+        error
+      );
+    }
+
+    const memoryCustomer = buildMemoryCustomer(payload);
+    if (!memoryCustomer) {
       return res.status(400).json({ error: "Email is required" });
     }
 
-    return res.json(customer);
+    return res.json(memoryCustomer);
   });
 
   app.get("/api/customer/:id", async (_req, res) => {
@@ -762,26 +826,43 @@ async function startServer() {
   });
 
   app.get("/api/customer/:id/designs", async (req, res) => {
-    const prisma = await getPrisma();
-    const customer = await getPortalCustomer(prisma, req.params.id);
+    const memoryIdentityId = parseMemoryCustomerId(req.params.id);
 
-    if (!customer) {
-      return res.status(404).json({ error: "Not found" });
+    if (memoryIdentityId) {
+      const memoryProjects = getMemoryProjects({ id: memoryIdentityId });
+      const projects = Array.from(memoryProjects.values())
+        .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+        .filter(project => !isPortalRecord(project.canvasState))
+        .map(memoryProjectToClientShape);
+
+      return res.json(projects);
     }
 
-    const projects = await prisma.project.findMany({
-      where: { userId: customer.userId },
-      orderBy: { updatedAt: "desc" },
-    });
+    try {
+      const prisma = await getPrisma();
+      const customer = await getPortalCustomer(prisma, req.params.id);
 
-    return res.json(
-      projects
-        .filter(
-          (project: { canvasState: unknown }) =>
-            !isPortalRecord(project.canvasState)
-        )
-        .map(projectToClientShape)
-    );
+      if (!customer) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      const projects = await prisma.project.findMany({
+        where: { userId: customer.userId },
+        orderBy: { updatedAt: "desc" },
+      });
+
+      return res.json(
+        projects
+          .filter(
+            (project: { canvasState: unknown }) =>
+              !isPortalRecord(project.canvasState)
+          )
+          .map(projectToClientShape)
+      );
+    } catch (error) {
+      console.error("Failed to load portal designs", error);
+      return res.status(503).json({ error: "Unable to load designs" });
+    }
   });
 
   app.get("/api/customer/:id/content", async (req, res) => {

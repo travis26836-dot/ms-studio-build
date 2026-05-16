@@ -96,6 +96,8 @@
   --bone-200: oklch(0.78 0.01 75);
   --measurement-line: rgba(245, 200, 80, 0.18);
   --chip-glow: rgba(245, 200, 80, 0.25);
+  --panel-border: rgba(245, 200, 80, 0.12);
+  --toolbar-border: rgba(245, 200, 80, 0.15);
 }
 
 @layer base {

@@ -667,7 +667,7 @@ export default function Editor({
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       {/* Top Toolbar */}
-      <div className="h-12 flex items-center gap-1 px-3 border-b bg-[oklch(0.12_0.006_260)] shrink-0" style={{ borderTopColor: 'oklch(0.78 0.17 75)', borderTopWidth: '1px', borderTopStyle: 'solid', borderBottomColor: 'rgba(245,200,80,0.15)' }}>
+      <div className="h-12 flex items-center gap-1 px-3 shrink-0 bg-[oklch(0.12_0.006_260)]" style={{ borderTop: '1px solid var(--amber)', borderBottom: '1px solid var(--toolbar-border)' }}>
         <Button
           variant="ghost"
           size="sm"
@@ -838,7 +838,7 @@ export default function Editor({
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Icon Sidebar */}
-        <div className="w-[52px] border-r bg-[oklch(0.12_0.006_260)] flex flex-col items-center py-3 gap-0.5 shrink-0" style={{ borderRightColor: 'rgba(245,200,80,0.12)' }}>
+        <div className="w-[52px] border-r bg-[oklch(0.12_0.006_260)] flex flex-col items-center py-3 gap-0.5 shrink-0" style={{ borderRightColor: 'var(--panel-border)' }}>
           <SidebarIcon
             icon={LayoutTemplate}
             label="Templates"
@@ -891,7 +891,7 @@ export default function Editor({
 
         {/* Expandable Side Panel */}
         {activePanel && (
-          <div className="w-64 border-r bg-[oklch(0.14_0.006_260)] flex flex-col shrink-0 panel-glide" style={{ borderRightColor: 'rgba(245,200,80,0.12)' }}>
+          <div className="w-64 border-r bg-[oklch(0.14_0.006_260)] flex flex-col shrink-0 panel-glide" style={{ borderRightColor: 'var(--panel-border)' }}>
             <SidePanel
               panel={activePanel}
               editor={editor}

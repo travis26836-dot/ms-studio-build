@@ -5,7 +5,7 @@ const variantClasses = {
   default: "bg-primary text-primary-foreground hover:opacity-85",
   ghost: "bg-transparent text-foreground hover:bg-accent",
   outline:
-    "border border-border bg-transparent text-foreground hover:bg-accent hover:border-[oklch(0.78_0.17_75)]/40",
+    "border border-border bg-transparent text-foreground hover:bg-accent hover:border-ring/40",
   secondary: "bg-secondary text-secondary-foreground hover:bg-accent",
 };
 

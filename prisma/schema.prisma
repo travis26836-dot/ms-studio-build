@@ -17,16 +17,16 @@ model User {
 }
 
 model Subscription {
-  id                 String   @id @default(cuid())
-  userId             String   @unique
-  user               User     @relation(fields: [userId], references: [id])
-  stripeCustomerId   String   @unique
-  stripePriceId      String
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  stripeCustomerId String   @unique
+  stripePriceId    String
   // Tier: "free" | "pro" | "team" — derive from stripePriceId
   // Add STRIPE_PRICE_PRO and STRIPE_PRICE_TEAM to Railway env vars
-  status             String   // "active" | "canceled" | "past_due"
-  currentPeriodEnd   DateTime
-  updatedAt          DateTime @updatedAt
+  status           String // "active" | "canceled" | "past_due"
+  currentPeriodEnd DateTime
+  updatedAt        DateTime @updatedAt
 }
 
 model Project {
@@ -34,18 +34,18 @@ model Project {
   userId      String
   user        User     @relation(fields: [userId], references: [id])
   name        String
-  canvasState Json     // matches CanvasState type in shared/designTypes.ts
+  canvasState Json // matches CanvasState type in shared/designTypes.ts
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
 model Customer {
-  id     String  @id @default(cuid())
-  userId String  @unique
-  user   User    @relation(fields: [userId], references: [id])
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
   name   String
   email  String
-  plan   String  @default("free") // "free" | "pro" | "team"
+  plan   String @default("free") // "free" | "pro" | "team"
 }
 
 model ContactSubmission {
@@ -54,4 +54,162 @@ model ContactSubmission {
   email     String
   message   String
   createdAt DateTime @default(now())
+}
+
+model Product {
+  id               String        @id @default(cuid())
+  name             String
+  slug             String        @unique
+  description      String?
+  shortDescription String?
+  status           ProductStatus @default(DRAFT)
+
+  productType    ProductType
+  basePriceCents Int
+  currency       String      @default("usd")
+  sku            String?     @unique
+
+  stripeProductId String?
+  stripePriceId   String?
+
+  assets     ProductAsset[]
+  files      ProductFile[]
+  listings   MarketplaceListing[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductAsset {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  type      AssetType
+  url       String
+  altText   String?
+  sortOrder Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductFile {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  fileName String
+  fileType String
+  fileUrl  String
+  version  String?
+  active   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MarketplaceListing {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  marketplace Marketplace
+  status      ListingStatus @default(NOT_LISTED)
+
+  listingId   String?
+  listingUrl  String?
+  title       String?
+  description String?
+  priceCents  Int?
+  currency    String  @default("usd")
+
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([productId, marketplace])
+}
+
+model Order {
+  id     String  @id @default(cuid())
+  userId String?
+
+  stripeCustomerId      String?
+  stripeSessionId       String?
+  stripePaymentIntentId String?
+
+  totalCents Int
+  currency   String      @default("usd")
+  status     OrderStatus @default(PENDING)
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  quantity   Int @default(1)
+  priceCents Int
+
+  createdAt DateTime @default(now())
+}
+
+enum ProductStatus {
+  DRAFT
+  READY
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ProductType {
+  DIGITAL_TEMPLATE
+  WALLPAPER_PACK
+  DESIGN_ASSET
+  MOCKUP
+  BUNDLE
+  DECAL
+  OTHER
+}
+
+enum AssetType {
+  MAIN_IMAGE
+  PREVIEW
+  MOCKUP
+  THUMBNAIL
+  DOWNLOAD
+}
+
+enum Marketplace {
+  WEBSITE
+  STRIPE
+  ETSY
+  EBAY
+  FACEBOOK
+  INSTAGRAM
+}
+
+enum ListingStatus {
+  NOT_LISTED
+  DRAFT
+  LIVE
+  NEEDS_UPDATE
+  RETIRED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELED
 }

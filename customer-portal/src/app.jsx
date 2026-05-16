@@ -180,6 +180,7 @@ export default function App() {
   const [customer, setCustomer] = useState(null);
   const [designs, setDesigns] = useState([]);
   const [isLoadingDesigns, setIsLoadingDesigns] = useState(true);
+  const [deletingDesignId, setDeletingDesignId] = useState("");
   const [designsError, setDesignsError] = useState("");
   const menuRef = useRef(null);
   const identity = useMemo(() => getPortalIdentity(), []);
@@ -190,17 +191,20 @@ export default function App() {
     setDesignsError("");
 
     try {
-      const customerResponse = await fetch(resolveApiUrl("/api/customer/resolve"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: identity.email,
-          name: identity.name,
-          clerkId: identity.clerkId || undefined,
-        }),
-      });
+      const customerResponse = await fetch(
+        resolveApiUrl("/api/customer/resolve"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: identity.email,
+            name: identity.name,
+            clerkId: identity.clerkId || undefined,
+          }),
+        }
+      );
 
       if (!customerResponse.ok) {
         throw new Error("Unable to resolve portal customer");
@@ -241,6 +245,47 @@ export default function App() {
     });
 
     return `${mainAppUrl}/editor?${params.toString()}`;
+  };
+
+  const handleDeleteDesign = async design => {
+    if (!customer || !design?.id || deletingDesignId) {
+      return;
+    }
+
+    const designName = design.name || "this design";
+    const confirmed = window.confirm(
+      `Delete "${designName}"? This cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingDesignId(design.id);
+    setDesignsError("");
+
+    try {
+      const response = await fetch(
+        resolveApiUrl(
+          `/api/customer/${encodeURIComponent(customer.id)}/designs/${encodeURIComponent(design.id)}`
+        ),
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) {
+        throw new Error("Unable to delete design");
+      }
+
+      setDesigns(current => current.filter(item => item.id !== design.id));
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to delete design";
+      setDesignsError(message);
+    } finally {
+      setDeletingDesignId("");
+    }
   };
 
   useEffect(() => {
@@ -284,7 +329,11 @@ export default function App() {
     <div className="portal-shell">
       <header className="site-header">
         <div className="site-header-inner">
-          <a href={mainAppUrl} className="site-logo" aria-label="Open ManuScript Studio home">
+          <a
+            href={mainAppUrl}
+            className="site-logo"
+            aria-label="Open ManuScript Studio home"
+          >
             <div className="site-logo-icon">
               <img src="/icon-192.png" alt="ManuScript Studio logo" />
             </div>
@@ -309,24 +358,53 @@ export default function App() {
             </button>
 
             {menuOpen ? (
-              <div className="account-menu-dropdown" role="menu" aria-label="Customer account navigation">
+              <div
+                className="account-menu-dropdown"
+                role="menu"
+                aria-label="Customer account navigation"
+              >
                 <div className="account-menu-header">
                   <span className="account-menu-header-label">Portal</span>
                 </div>
 
-                <a href="#" role="menuitem" className="account-menu-link" onClick={event => event.preventDefault()}>
+                <a
+                  href="#"
+                  role="menuitem"
+                  className="account-menu-link"
+                  onClick={event => event.preventDefault()}
+                >
                   Account
                 </a>
-                <a href="#" role="menuitem" className="account-menu-link" onClick={event => event.preventDefault()}>
+                <a
+                  href="#"
+                  role="menuitem"
+                  className="account-menu-link"
+                  onClick={event => event.preventDefault()}
+                >
                   Settings
                 </a>
-                <a href="#" role="menuitem" className="account-menu-link" onClick={event => event.preventDefault()}>
+                <a
+                  href="#"
+                  role="menuitem"
+                  className="account-menu-link"
+                  onClick={event => event.preventDefault()}
+                >
                   Plans & Pricing
                 </a>
-                <a href="#" role="menuitem" className="account-menu-link" onClick={event => event.preventDefault()}>
+                <a
+                  href="#"
+                  role="menuitem"
+                  className="account-menu-link"
+                  onClick={event => event.preventDefault()}
+                >
                   Purchase History
                 </a>
-                <a href="#" role="menuitem" className="account-menu-link" onClick={event => event.preventDefault()}>
+                <a
+                  href="#"
+                  role="menuitem"
+                  className="account-menu-link"
+                  onClick={event => event.preventDefault()}
+                >
                   Invoices
                 </a>
 
@@ -352,15 +430,20 @@ export default function App() {
           <div>
             <p className="portal-kicker">Customer Workspace</p>
             <h1>Saved designs</h1>
-            <p>
-              Open any saved design directly in the main editor.
-            </p>
+            <p>Open any saved design directly in the main editor.</p>
           </div>
           <div className="portal-heading-actions">
-            <button type="button" className="portal-button" onClick={() => void fetchWorkspace()}>
+            <button
+              type="button"
+              className="portal-button"
+              onClick={() => void fetchWorkspace()}
+            >
               Refresh
             </button>
-            <a href={mainAppUrl} className="portal-button portal-button-primary">
+            <a
+              href={mainAppUrl}
+              className="portal-button portal-button-primary"
+            >
               Open Main App
             </a>
           </div>
@@ -368,12 +451,15 @@ export default function App() {
 
         {customer ? (
           <p className="portal-customer-meta">
-            Connected customer: {customer.name || identity.name} ({customer.email || identity.email})
+            Connected customer: {customer.name || identity.name} (
+            {customer.email || identity.email})
           </p>
         ) : null}
 
         {designsError ? (
-          <div className="portal-status-card portal-status-error">{designsError}</div>
+          <div className="portal-status-card portal-status-error">
+            {designsError}
+          </div>
         ) : null}
 
         <section className="portal-workspace-grid">
@@ -390,33 +476,54 @@ export default function App() {
             ) : (
               <div className="portal-design-cards">
                 {designs.map(design => (
-                  <a
-                    key={design.id}
-                    href={getEditorUrl(design)}
-                    className="portal-design-card"
-                  >
-                    <div className="portal-design-card-preview">
-                      {design.thumbnailUrl ? (
-                        <img
-                          src={design.thumbnailUrl}
-                          alt={design.name || "Untitled Design"}
-                        />
-                      ) : (
-                        <div className="portal-design-card-placeholder">
+                  <article key={design.id} className="portal-design-card">
+                    <a
+                      href={getEditorUrl(design)}
+                      className="portal-design-card-link"
+                    >
+                      <div className="portal-design-card-preview">
+                        {design.thumbnailUrl ? (
+                          <img
+                            src={design.thumbnailUrl}
+                            alt={design.name || "Untitled Design"}
+                          />
+                        ) : (
+                          <div className="portal-design-card-placeholder">
+                            {design.canvasWidth}x{design.canvasHeight}
+                          </div>
+                        )}
+                      </div>
+                      <div className="portal-design-card-meta">
+                        <strong>{design.name || "Untitled Design"}</strong>
+                        <span>
                           {design.canvasWidth}x{design.canvasHeight}
-                        </div>
-                      )}
+                        </span>
+                        <span>
+                          Updated{" "}
+                          {new Date(design.updatedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </a>
+                    <div className="portal-design-card-actions">
+                      <a
+                        href={getEditorUrl(design)}
+                        className="portal-card-open"
+                      >
+                        Open
+                      </a>
+                      <button
+                        type="button"
+                        className="portal-card-delete"
+                        aria-label={`Delete ${design.name || "Untitled Design"}`}
+                        onClick={() => void handleDeleteDesign(design)}
+                        disabled={deletingDesignId === design.id}
+                      >
+                        {deletingDesignId === design.id
+                          ? "Deleting..."
+                          : "Delete"}
+                      </button>
                     </div>
-                    <div className="portal-design-card-meta">
-                      <strong>{design.name || "Untitled Design"}</strong>
-                      <span>
-                        {design.canvasWidth}x{design.canvasHeight}
-                      </span>
-                      <span>
-                        Updated {new Date(design.updatedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </a>
+                  </article>
                 ))}
               </div>
             )}

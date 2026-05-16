@@ -278,8 +278,9 @@ function normalizeEmail(raw: string) {
 }
 
 function getRequestIdentity(req: express.Request): RequestIdentity | null {
-  const clerkIdFromAuth = (req as express.Request & { auth?: { userId?: string } })
-    .auth?.userId;
+  const clerkIdFromAuth = (
+    req as express.Request & { auth?: { userId?: string } }
+  ).auth?.userId;
   const clerkHeader = req.header("x-user-clerk-id");
   const emailHeader = req.header("x-user-email");
 
@@ -365,7 +366,11 @@ function parseMemoryCustomerId(raw: string) {
   }
 }
 
-function buildMemoryCustomer(input: { email?: string; name?: string; clerkId?: string }) {
+function buildMemoryCustomer(input: {
+  email?: string;
+  name?: string;
+  clerkId?: string;
+}) {
   const normalizedEmail =
     typeof input.email === "string" && input.email.trim()
       ? normalizeEmail(input.email)
@@ -379,7 +384,8 @@ function buildMemoryCustomer(input: { email?: string; name?: string; clerkId?: s
       ? input.name.trim()
       : "";
 
-  const identityId = normalizedClerkId ?? (normalizedEmail ? `email:${normalizedEmail}` : null);
+  const identityId =
+    normalizedClerkId ?? (normalizedEmail ? `email:${normalizedEmail}` : null);
   if (!identityId) {
     return null;
   }
@@ -395,7 +401,12 @@ function buildMemoryCustomer(input: { email?: string; name?: string; clerkId?: s
 
 async function resolvePortalCustomer(
   prisma: Awaited<ReturnType<typeof getPrisma>>,
-  input: { customerId?: string; email?: string; name?: string; clerkId?: string }
+  input: {
+    customerId?: string;
+    email?: string;
+    name?: string;
+    clerkId?: string;
+  }
 ) {
   if (typeof input.customerId === "string" && input.customerId.trim()) {
     const existing = await prisma.customer.findUnique({
@@ -416,7 +427,9 @@ async function resolvePortalCustomer(
       typeof input.name === "string" && input.name.trim()
         ? input.name.trim()
         : "";
-    const normalizedEmail = hasEmail ? normalizeEmail(input.email as string) : null;
+    const normalizedEmail = hasEmail
+      ? normalizeEmail(input.email as string)
+      : null;
 
     const existingUser = await prisma.user.findUnique({
       where: { clerkId },
@@ -427,7 +440,8 @@ async function resolvePortalCustomer(
       const shouldUpdateUserEmail =
         !!normalizedEmail && existingUser.email !== normalizedEmail;
       const shouldUpdateCustomer =
-        (!!normalizedEmail && existingUser.customer.email !== normalizedEmail) ||
+        (!!normalizedEmail &&
+          existingUser.customer.email !== normalizedEmail) ||
         (!!preferredName && existingUser.customer.name !== preferredName);
 
       if (shouldUpdateUserEmail || shouldUpdateCustomer) {
@@ -439,9 +453,7 @@ async function resolvePortalCustomer(
               ? {
                   customer: {
                     update: {
-                      ...(normalizedEmail
-                        ? { email: normalizedEmail }
-                        : {}),
+                      ...(normalizedEmail ? { email: normalizedEmail } : {}),
                       ...(preferredName ? { name: preferredName } : {}),
                     },
                   },
@@ -508,11 +520,15 @@ async function getOrCreateUser(req: express.Request) {
   try {
     prisma = await getPrisma();
   } catch (error) {
-    console.error("Failed to initialize Prisma client in getOrCreateUser", error);
+    console.error(
+      "Failed to initialize Prisma client in getOrCreateUser",
+      error
+    );
     return null;
   }
-  const clerkIdFromAuth = (req as express.Request & { auth?: { userId?: string } })
-    .auth?.userId;
+  const clerkIdFromAuth = (
+    req as express.Request & { auth?: { userId?: string } }
+  ).auth?.userId;
   const fallbackClerkIdHeader = req.header("x-user-clerk-id");
   const fallbackClerkId =
     typeof fallbackClerkIdHeader === "string" && fallbackClerkIdHeader.trim()
@@ -687,13 +703,19 @@ async function startServer() {
           return handler;
         }
 
-        return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        return (
+          req: express.Request,
+          res: express.Response,
+          next: express.NextFunction
+        ) => {
           Promise.resolve(
-            (handler as (
-              req: express.Request,
-              res: express.Response,
-              next: express.NextFunction
-            ) => Promise<unknown>)(req, res, next)
+            (
+              handler as (
+                req: express.Request,
+                res: express.Response,
+                next: express.NextFunction
+              ) => Promise<unknown>
+            )(req, res, next)
           ).catch(next);
         };
       });
@@ -862,6 +884,51 @@ async function startServer() {
     } catch (error) {
       console.error("Failed to load portal designs", error);
       return res.status(503).json({ error: "Unable to load designs" });
+    }
+  });
+
+  app.delete("/api/customer/:id/designs/:designId", async (req, res) => {
+    const memoryIdentityId = parseMemoryCustomerId(req.params.id);
+
+    if (memoryIdentityId) {
+      const memoryProjects = getMemoryProjects({ id: memoryIdentityId });
+      const project = memoryProjects.get(req.params.designId);
+
+      if (!project || isPortalRecord(project.canvasState)) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      memoryProjects.delete(project.id);
+      return res.status(204).end();
+    }
+
+    try {
+      const prisma = await getPrisma();
+      const customer = await prisma.customer.findUnique({
+        where: { id: req.params.id },
+      });
+
+      if (!customer) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      const project = await prisma.project.findFirst({
+        where: {
+          id: req.params.designId,
+          userId: customer.userId,
+        },
+        select: { id: true, canvasState: true },
+      });
+
+      if (!project || isPortalRecord(project.canvasState)) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      await prisma.project.delete({ where: { id: project.id } });
+      return res.status(204).end();
+    } catch (error) {
+      console.error("Failed to delete portal design", error);
+      return res.status(503).json({ error: "Unable to delete design" });
     }
   });
 

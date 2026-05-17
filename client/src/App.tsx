@@ -1,12 +1,12 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth as useLocalAuth } from "@/_core/hooks/useAuth";
 import NotFound from "@/pages/NotFound";
 import {
   ClerkProvider,
   RedirectToSignIn,
   SignIn,
   SignUp,
-  useAuth,
   useClerk,
 } from "@clerk/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -23,15 +23,21 @@ import RefundPolicyPage from "./pages/RefundPolicyPage";
 import { useEffect } from "react";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
+const HAS_CLERK = Boolean(PUBLISHABLE_KEY);
 
 function ProtectedRoute({
   component: Component,
 }: {
   component: React.ComponentType;
 }) {
-  const { isSignedIn, isLoaded } = useAuth();
-  if (!isLoaded) return null;
-  if (!isSignedIn) return <RedirectToSignIn />;
+  const { isAuthenticated, loading } = useLocalAuth();
+  if (loading) return null;
+  if (!isAuthenticated) {
+    if (!HAS_CLERK) {
+      return <RedirectToSignIn />;
+    }
+    return <RedirectToSignIn />;
+  }
   return <Component />;
 }
 
@@ -50,28 +56,44 @@ function Router() {
       <Route path="/sign-in">
         {() => (
           <div className="flex min-h-screen items-center justify-center">
-            <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
+            {HAS_CLERK ? (
+              <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
+            ) : (
+              <p className="text-sm text-muted-foreground">Authentication is not configured for local dev.</p>
+            )}
           </div>
         )}
       </Route>
       <Route path="/sign-in/:rest*">
         {() => (
           <div className="flex min-h-screen items-center justify-center">
-            <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
+            {HAS_CLERK ? (
+              <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
+            ) : (
+              <p className="text-sm text-muted-foreground">Authentication is not configured for local dev.</p>
+            )}
           </div>
         )}
       </Route>
       <Route path="/sign-up">
         {() => (
           <div className="flex min-h-screen items-center justify-center">
-            <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" />
+            {HAS_CLERK ? (
+              <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" />
+            ) : (
+              <p className="text-sm text-muted-foreground">Authentication is not configured for local dev.</p>
+            )}
           </div>
         )}
       </Route>
       <Route path="/sign-up/:rest*">
         {() => (
           <div className="flex min-h-screen items-center justify-center">
-            <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" />
+            {HAS_CLERK ? (
+              <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" />
+            ) : (
+              <p className="text-sm text-muted-foreground">Authentication is not configured for local dev.</p>
+            )}
           </div>
         )}
       </Route>
@@ -91,17 +113,23 @@ function Router() {
 }
 
 function App() {
+  const appTree = (
+    <ThemeProvider defaultTheme="dark">
+      <TooltipProvider>
+        <Toaster />
+        <Router />
+        <SpeedInsights />
+      </TooltipProvider>
+    </ThemeProvider>
+  );
+
   return (
     <ErrorBoundary>
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-        <ThemeProvider defaultTheme="dark">
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-            <SpeedInsights />
-          </TooltipProvider>
-        </ThemeProvider>
-      </ClerkProvider>
+      {HAS_CLERK ? (
+        <ClerkProvider publishableKey={PUBLISHABLE_KEY}>{appTree}</ClerkProvider>
+      ) : (
+        appTree
+      )}
     </ErrorBoundary>
   );
 }

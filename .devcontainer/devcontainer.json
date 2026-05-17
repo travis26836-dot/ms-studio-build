@@ -1,8 +1,21 @@
 {
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "features": {
-    "ghcr.io/wcgomes/devcontainer-features/agency-agents:0": {
-      "autoupdate": true
-    }
-  }
+  "name": "ms-studio-build",
+  "dockerComposeFile": [
+    "docker-compose.yml",
+    "docker-compose.dev.yml"
+  ],
+  "service": "app",
+  "runServices": [
+    "db"
+  ],
+  "workspaceFolder": "/workspaces/ms-studio-build-LATEST",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/ms-studio-build-LATEST,type=bind",
+  "shutdownAction": "stopCompose",
+  "overrideCommand": true,
+  "forwardPorts": [
+    3000,
+    3010,
+    5432
+  ],
+  "postCreateCommand": "pnpm install && pnpm prisma:generate"
 }

@@ -58,7 +58,8 @@ type CuratedTemplate = {
   width: number;
   height: number;
   categories: string[];
-  color: string;
+  gradientClass: string;
+  iconBgClass: string;
   icon: typeof LayoutTemplate;
 };
 
@@ -126,7 +127,9 @@ const CURATED_TEMPLATE_IDEAS: CuratedTemplate[] = [
     width: 1600,
     height: 1200,
     categories: ["all", "business", "document", "logo"],
-    color: "#8b5cf6",
+    gradientClass:
+      "bg-[linear-gradient(145deg,rgba(139,92,246,0.09),rgba(139,92,246,0.33))]",
+    iconBgClass: "bg-violet-500",
     icon: Palette,
   },
   {
@@ -137,7 +140,9 @@ const CURATED_TEMPLATE_IDEAS: CuratedTemplate[] = [
     width: 1080,
     height: 1080,
     categories: ["all", "social-media", "promotional", "ads"],
-    color: "#06b6d4",
+    gradientClass:
+      "bg-[linear-gradient(145deg,rgba(6,182,212,0.09),rgba(6,182,212,0.33))]",
+    iconBgClass: "bg-cyan-500",
     icon: Presentation,
   },
   {
@@ -148,7 +153,9 @@ const CURATED_TEMPLATE_IDEAS: CuratedTemplate[] = [
     width: 1000,
     height: 1500,
     categories: ["all", "social-media", "ecommerce"],
-    color: "#ec4899",
+    gradientClass:
+      "bg-[linear-gradient(145deg,rgba(236,72,153,0.09),rgba(236,72,153,0.33))]",
+    iconBgClass: "bg-pink-500",
     icon: ImageIcon,
   },
   {
@@ -159,10 +166,65 @@ const CURATED_TEMPLATE_IDEAS: CuratedTemplate[] = [
     width: 1080,
     height: 1920,
     categories: ["all", "menu", "promotional", "print"],
-    color: "#f59e0b",
+    gradientClass:
+      "bg-[linear-gradient(145deg,rgba(245,158,11,0.09),rgba(245,158,11,0.33))]",
+    iconBgClass: "bg-amber-500",
     icon: FileText,
   },
 ];
+
+const TEMPLATE_THEME_CLASSES = [
+  {
+    cardGradientClass:
+      "bg-[linear-gradient(135deg,rgba(99,102,241,0.13),rgba(99,102,241,0.33))]",
+    iconBgClass: "bg-indigo-500",
+  },
+  {
+    cardGradientClass:
+      "bg-[linear-gradient(135deg,rgba(236,72,153,0.13),rgba(236,72,153,0.33))]",
+    iconBgClass: "bg-pink-500",
+  },
+  {
+    cardGradientClass:
+      "bg-[linear-gradient(135deg,rgba(20,184,166,0.13),rgba(20,184,166,0.33))]",
+    iconBgClass: "bg-teal-500",
+  },
+  {
+    cardGradientClass:
+      "bg-[linear-gradient(135deg,rgba(245,158,11,0.13),rgba(245,158,11,0.33))]",
+    iconBgClass: "bg-amber-500",
+  },
+  {
+    cardGradientClass:
+      "bg-[linear-gradient(135deg,rgba(239,68,68,0.13),rgba(239,68,68,0.33))]",
+    iconBgClass: "bg-red-500",
+  },
+  {
+    cardGradientClass:
+      "bg-[linear-gradient(135deg,rgba(139,92,246,0.13),rgba(139,92,246,0.33))]",
+    iconBgClass: "bg-violet-500",
+  },
+  {
+    cardGradientClass:
+      "bg-[linear-gradient(135deg,rgba(6,182,212,0.13),rgba(6,182,212,0.33))]",
+    iconBgClass: "bg-cyan-500",
+  },
+  {
+    cardGradientClass:
+      "bg-[linear-gradient(135deg,rgba(34,197,94,0.13),rgba(34,197,94,0.33))]",
+    iconBgClass: "bg-green-500",
+  },
+  {
+    cardGradientClass:
+      "bg-[linear-gradient(135deg,rgba(249,115,22,0.13),rgba(249,115,22,0.33))]",
+    iconBgClass: "bg-orange-500",
+  },
+  {
+    cardGradientClass:
+      "bg-[linear-gradient(135deg,rgba(100,116,139,0.13),rgba(100,116,139,0.33))]",
+    iconBgClass: "bg-slate-500",
+  },
+] as const;
 
 const FOOTER_LINKS = [
   { key: "contact", title: "Contact", href: "/contact" },
@@ -219,8 +281,7 @@ function SiteFooter() {
       <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
           <p
-            className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
-            style={{ fontFamily: '"Cinzel Decorative", serif' }}
+            className="font-['Cinzel_Decorative'] text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
           >
             ManuScript Studio
           </p>
@@ -261,9 +322,9 @@ export default function Home() {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <div className="h-0.5 w-32 bg-[oklch(0.22_0.008_260)] overflow-hidden rounded-full">
-            <div className="h-full bg-[oklch(0.78_0.17_75)] animate-[systemInit_1.2s_ease-in-out_infinite]" style={{ width: '60%' }} />
+            <div className="h-full w-3/5 bg-[oklch(0.78_0.17_75)] animate-[systemInit_1.2s_ease-in-out_infinite]" />
           </div>
-          <p className="text-[10px] tracking-[0.22em] uppercase text-[oklch(0.55_0.008_75)]" style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}>Initializing</p>
+          <p className="font-display text-[10px] tracking-[0.22em] uppercase text-[oklch(0.55_0.008_75)]">Initializing</p>
         </div>
       </div>
     );
@@ -440,19 +501,6 @@ function Dashboard({
     setNewProjectName("");
   };
 
-  const templateColors = [
-    "#6366f1",
-    "#ec4899",
-    "#14b8a6",
-    "#f59e0b",
-    "#ef4444",
-    "#8b5cf6",
-    "#06b6d4",
-    "#22c55e",
-    "#f97316",
-    "#64748b",
-  ];
-
   return (
     <div className="min-h-screen bg-background">
       <header className="site-header">
@@ -499,7 +547,7 @@ function Dashboard({
         <section className="mb-12 text-center relative">
           <div className="absolute inset-x-0 top-0 h-px bg-[var(--measurement-line)]" />
           <div className="mx-auto mb-6 max-w-3xl">
-            <h2 className="text-xl font-semibold tracking-[0.05em] text-foreground" style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}>
+            <h2 className="font-display text-xl font-semibold tracking-[0.05em] text-foreground">
               Create a design
             </h2>
             <p className="mt-2 text-xs text-muted-foreground">
@@ -529,7 +577,7 @@ function Dashboard({
                     <Plus className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-[oklch(0.78_0.17_75)]" />
                   </div>
                   <div>
-                    <span className="block text-xs font-medium text-foreground" style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}>
+                    <span className="font-display block text-xs font-medium text-foreground">
                       {preset.label}
                     </span>
                     <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
@@ -590,7 +638,7 @@ function Dashboard({
 
         <section className="mb-12 text-center">
           <div className="mx-auto mb-6 max-w-3xl">
-            <h2 className="text-2xl font-semibold text-foreground" style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}>
+            <h2 className="font-display text-2xl font-semibold text-foreground">
               Start from a template
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -633,6 +681,11 @@ function Dashboard({
                 visibleCuratedTemplates.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 text-left sm:grid-cols-2 lg:grid-cols-4">
                   {visibleDbTemplates.map((template: any, index: number) => (
+                    (() => {
+                      const theme =
+                        TEMPLATE_THEME_CLASSES[index % TEMPLATE_THEME_CLASSES.length];
+
+                      return (
                     <button
                       key={template.id}
                       onClick={() =>
@@ -643,18 +696,11 @@ function Dashboard({
                       className="group"
                     >
                       <div
-                        className="relative mb-3 aspect-[3/4] overflow-hidden rounded-2xl border border-border transition-all group-hover:ring-2 group-hover:ring-primary"
-                        style={{
-                          background: `linear-gradient(135deg, ${templateColors[index % templateColors.length]}22, ${templateColors[index % templateColors.length]}55)`,
-                        }}
+                        className={`relative mb-3 aspect-[3/4] overflow-hidden rounded-2xl border border-border transition-all group-hover:ring-2 group-hover:ring-primary ${theme.cardGradientClass}`}
                       >
                         <div className="flex h-full w-full flex-col items-center justify-center p-5 text-center">
                           <div
-                            className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl"
-                            style={{
-                              background:
-                                templateColors[index % templateColors.length],
-                            }}
+                            className={`mb-3 flex h-12 w-12 items-center justify-center rounded-xl ${theme.iconBgClass}`}
                           >
                             <FileText className="h-5 w-5 text-white" />
                           </div>
@@ -675,6 +721,8 @@ function Dashboard({
                         {template.name}
                       </p>
                     </button>
+                      );
+                    })()
                   ))}
 
                   {visibleCuratedTemplates.map(template => {
@@ -691,15 +739,11 @@ function Dashboard({
                         className="group"
                       >
                         <div
-                          className="relative mb-3 aspect-[3/4] overflow-hidden rounded-2xl border border-border p-5 transition-all group-hover:ring-2 group-hover:ring-primary"
-                          style={{
-                            background: `linear-gradient(145deg, ${template.color}18, ${template.color}55)`,
-                          }}
+                          className={`relative mb-3 aspect-[3/4] overflow-hidden rounded-2xl border border-border p-5 transition-all group-hover:ring-2 group-hover:ring-primary ${template.gradientClass}`}
                         >
                           <div className="flex h-full flex-col justify-between">
                             <div
-                              className="flex h-12 w-12 items-center justify-center rounded-xl text-white"
-                              style={{ background: template.color }}
+                              className={`flex h-12 w-12 items-center justify-center rounded-xl text-white ${template.iconBgClass}`}
                             >
                               <Icon className="h-5 w-5" />
                             </div>
@@ -836,6 +880,9 @@ function Dashboard({
                   </button>
                   <button
                     onClick={() => handleDeleteProject(project.id)}
+                    type="button"
+                    title="Delete project"
+                    aria-label={`Delete project ${project.name}`}
                     className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-background/80 opacity-0 transition-opacity hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -989,8 +1036,7 @@ function LandingPage() {
             />
           </div>
           <h1
-            className="text-sm font-semibold tracking-[0.18em] uppercase text-foreground"
-            style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}
+            className="font-display text-sm font-semibold tracking-[0.18em] uppercase text-foreground"
           >
             ManuScript Studio
           </h1>
@@ -1034,8 +1080,7 @@ function LandingPage() {
             </FlashInElement>
             <FlashInElement delay={140}>
               <h1
-                className="mb-6 text-5xl font-semibold leading-tight text-foreground md:text-6xl"
-                style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}
+                className="font-display mb-6 text-5xl font-semibold leading-tight text-foreground md:text-6xl"
               >
                 Design anything.
                 <br />
@@ -1077,7 +1122,7 @@ function LandingPage() {
           </ParallaxScroll>
           <div className="mx-auto max-w-6xl">
             <RevealOnScroll className="mb-12">
-              <h2 className="text-center text-3xl font-bold text-foreground" style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}>
+              <h2 className="font-display text-center text-3xl font-bold text-foreground">
                 Everything you need to create
               </h2>
             </RevealOnScroll>

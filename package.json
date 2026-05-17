@@ -5,8 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "sh -c 'pnpm dev:api & vite --host'",
-    "dev:full": "bash scripts/dev-full.sh",
-    "dev:api": "pnpm build:server && PORT=3010 NODE_ENV=development node --env-file=.env dist/index.js",
+    "dev:full": "node scripts/dev-full.mjs",
+    "dev:api": "node scripts/dev-api.mjs",
     "prisma:generate": "prisma generate",
     "build": "vite build && pnpm build:server",
     "build:server": "pnpm prisma:generate && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",

@@ -129,7 +129,7 @@
   input:focus-visible,
   textarea:focus-visible,
   button:focus-visible {
-    outline: 1.5px solid oklch(0.78 0.17 75);
+    outline: 1.5px solid #f5c850;
     outline-offset: 2px;
   }
 }

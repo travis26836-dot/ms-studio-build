@@ -142,7 +142,7 @@
 
 ## 5. Elements Tab AI UX
 
-### Search Box Dual Mode
+### Elements Search Box AI Mode
 
 - [ ] Add AI toggle button beside or inside Elements search box
 - [ ] Default mode: normal element search

@@ -1,0 +1,32 @@
+# Development overrides for hot reload and debugging
+services:
+  db:
+    environment:
+      POSTGRES_INITDB_ARGS: "-c log_statement=all"
+
+  app:
+    build:
+      target: builder  # Use builder stage for dev (includes dev dependencies)
+    command: pnpm dev
+    environment:
+      NODE_ENV: development
+    volumes:
+      # Mount source for hot reload
+      - ../client:/app/client
+      - ../server:/app/server
+      - ../shared:/app/shared
+      - ../prisma:/app/prisma
+      # Mount node_modules to avoid conflicts
+      - /app/node_modules
+    develop:
+      watch:
+        # Watch and restart on server changes
+        - action: sync+restart
+          path: ../server
+          target: /app/server
+          ignore:
+            - node_modules/
+        # Watch client source (Vite handles HMR)
+        - action: sync
+          path: ../client/src
+          target: /app/client/src

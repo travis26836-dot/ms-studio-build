@@ -1,0 +1,76 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:17-alpine
+    container_name: ms-studio-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ms_studio}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ms-studio-network
+    restart: unless-stopped
+
+  # Application (React client + Express API)
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+      target: runtime
+    container_name: ms-studio-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-ms_studio}
+      NODE_ENV: ${NODE_ENV:-production}
+      
+      # API
+      API_PORT: 3010
+      PORT: 3010
+      
+      # Authentication & External Services
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
+      CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY:-}
+      
+      # Stripe
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      
+      # AI
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      
+      # Feature Flags
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3010}
+    ports:
+      - "${APP_PORT:-3000}:3000"  # React client
+      - "${API_PORT:-3010}:3010"  # Express API
+    networks:
+      - ms-studio-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3010/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  ms-studio-network:
+    driver: bridge

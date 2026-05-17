@@ -23,6 +23,8 @@ services:
 
   # Application (React client + Express API)
   app:
+    env_file:
+      - ../.env
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
@@ -39,18 +41,6 @@ services:
       # API
       API_PORT: 3010
       PORT: 3010
-      
-      # Authentication & External Services
-      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
-      CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY:-}
-      
-      # Stripe
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
-      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      
-      # AI
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
       
       # Feature Flags
       VITE_API_URL: ${VITE_API_URL:-http://localhost:3010}

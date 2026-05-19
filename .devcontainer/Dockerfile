@@ -8,7 +8,8 @@ FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
-# Install build tools and pnpm globally
+
+# Install build tools and pnpm globally (no upgrade to minimize vulnerabilities)
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
@@ -37,6 +38,7 @@ FROM node:20-bookworm-slim AS runtime
 WORKDIR /app
 
 # Prisma requires OpenSSL in runtime for migration/client engine loading
+# Regularly rebuild this image to get the latest security patches from the base image.
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl \
   && rm -rf /var/lib/apt/lists/*

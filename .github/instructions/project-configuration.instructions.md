@@ -20,21 +20,21 @@ pnpm start                # run production server (dist/index.js)
 ## Build Pipeline
 
 ```
-pnpm dev                    → Vite dev server only (client-side, port 3003)
-pnpm dev:full               → All three dev servers via scripts/dev-full.sh:
+pnpm dev                    → API server + Vite dev server together (sh -c shortcut; use pnpm dev:full on Windows)
+pnpm dev:full               → All three dev servers via scripts/dev-full.mjs (cross-platform):
                               - API server      (port 3010, NODE_ENV=development)
                               - Main app Vite   (port 3003)
                               - Customer portal (port 3004)
 pnpm dev:api                → Express API server only (port 3010, NODE_ENV=development)
 pnpm build                  → Vite builds client/ → dist/public/
-                            → esbuild bundles server/index.ts → dist/index.js
-pnpm start (or node dist/)  → Express server (port 3000, production mode)
+                            → prisma generate + esbuild bundles server/index.ts → dist/index.js
+pnpm start (or node dist/)  → prisma generate + Express server (port 3000, production mode)
 ```
 
 **Key points:**
 
-- `pnpm dev:full` is the recommended local workflow — starts all servers together and cleans up on exit
-- `pnpm dev` runs only Vite (no API); use when you don't need the Express server
+- `pnpm dev:full` is the recommended local workflow — starts all servers together and cleans up on exit (works on Windows and Unix)
+- `pnpm dev` runs API + Vite together via `sh -c`; on Windows use `pnpm dev:full` instead
 - Default ports: main app `:3003`, customer portal `:3004`, API `:3010` (overridable via `MAIN_PORT`, `PORTAL_PORT`, `API_PORT` env vars)
 - In `customer-portal/`, use its own `pnpm dev` command if running in isolation
 - `dist/index.js` requires `dist/public/` present (SPA assets)
@@ -62,13 +62,27 @@ Create `.env` at **repo root** (not inside `client/`). Vite reads from the root 
 
 ### Feature-Gated (app degrades without these)
 
-| Variable              | Feature                          | Value                                       | Notes                                                              |
-| --------------------- | -------------------------------- | ------------------------------------------- | ------------------------------------------------------------------ |
-| `GROQ_API_KEY`        | AI chat + layout suggestions     | API key from groq.com                       | Returns 503 if missing                                             |
-| `TOGETHER_AI_API_KEY` | AI image & background generation | API key from together.ai                    | Returns 503 if missing; free tier available                        |
-| `STRIPE_SECRET_KEY`   | Subscription billing             | `sk_test_...` (dev) or `sk_live_...` (prod) | See [stripe-setup.instructions.md](./stripe-setup.instructions.md) |
-| `STRIPE_PRICE_PRO`    | Pro tier subscription            | Price ID from Stripe Dashboard              | Example: `price_...`                                               |
-| `STRIPE_PRICE_TEAM`   | Team tier subscription           | Price ID from Stripe Dashboard              | Example: `price_...`                                               |
+| Variable                        | Feature                          | Value                                       | Notes                                                              |
+| ------------------------------- | -------------------------------- | ------------------------------------------- | ------------------------------------------------------------------ |
+| `GOOGLE_GENERATIVE_AI_API_KEY`  | AI chat + image generation       | API key from Google AI Studio               | Returns 503 if missing; powers all AI routes via `server/ai.ts`   |
+| `AI_TEXT_MODEL`                 | Override default AI text model   | e.g. `gemini-2.5-flash`                     | Optional; defaults to `gemini-2.5-flash`                           |
+| `AI_IMAGE_MODEL`                | Override default AI image model  | e.g. `gemini-2.5-flash-image`               | Optional; defaults to `gemini-2.5-flash-image`                     |
+| `STRIPE_SECRET_KEY`             | Subscription billing             | `sk_test_...` (dev) or `sk_live_...` (prod) | See [stripe-setup.instructions.md](./stripe-setup.instructions.md) |
+| `STRIPE_PRICE_PRO`              | Pro tier subscription            | Price ID from Stripe Dashboard              | Example: `price_...`                                               |
+| `STRIPE_PRICE_TEAM`             | Team tier subscription           | Price ID from Stripe Dashboard              | Example: `price_...`                                               |
+| `STRIPE_PRICE_AI_CREDIT_PACK`   | AI credit pack purchases         | Price ID from Stripe Dashboard              | Optional; required when `AI_CREDIT_PACKS_ENABLED=true`             |
+| `AI_CREDIT_PACKS_ENABLED`       | Enables AI credit pack flow      | `true` / `false`                            | Optional; defaults to disabled                                     |
+
+### Optional CORS / URL Configuration
+
+| Variable                  | Purpose                                  | Example                          |
+| ------------------------- | ---------------------------------------- | -------------------------------- |
+| `CORS_ORIGINS`            | Extra comma-separated CORS origins       | `https://app.example.com`        |
+| `VITE_MAIN_APP_URL`       | Main app URL (used in CORS allow-list)   | `http://localhost:3003`          |
+| `VITE_PORTAL_URL`         | Customer portal URL (CORS allow-list)    | `http://localhost:3004`          |
+| `CUSTOMER_PORTAL_URL`     | Alternate customer portal URL            | `http://localhost:3004`          |
+| `VITE_CUSTOMER_PORTAL_URL`| Alternate customer portal URL (VITE var) | `http://localhost:3004`          |
+| `APP_URL`                 | Public app URL for absolute link generation | `https://app.example.com`     |
 
 **Important:** `VITE_` prefix is required for any variable accessed in **client-side code** only.
 
@@ -113,7 +127,7 @@ For full Prisma setup walkthrough, see [railway-database-setup.instructions.md](
 
 ### Feature Routes (see specific guides)
 
-- **AI endpoints** (chat, layout, image generation): See [server/ai.ts](../../server/ai.ts) + `GROQ_API_KEY` and `TOGETHER_AI_API_KEY` env vars
+- **AI endpoints** (chat, layout, image generation): See [server/ai.ts](../../server/ai.ts) + `GOOGLE_GENERATIVE_AI_API_KEY` env var
 - **Stripe webhook**: See [stripe-setup.instructions.md](./stripe-setup.instructions.md)
 - **Customer portal API**: See [railway-database-setup.instructions.md](./railway-database-setup.instructions.md)
 

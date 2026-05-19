@@ -16,16 +16,20 @@ applyTo: "server/db.ts,server/auth.ts,prisma/**,customer-portal/**"
 | Hosting  | Railway (existing service: `ms-studio-build-production`) |
 | Database | Railway PostgreSQL plugin                                |
 | ORM      | Prisma                                                   |
-| Auth     | Clerk (`@clerk/clerk-sdk-node`)                          |
+| Auth     | Clerk (`@clerk/express`)                                 |
 | Payments | Stripe                                                   |
 | Server   | `server/index.ts` (Express)                              |
 
 ## Current State (know before starting)
 
-- `server/index.ts` — Express static-file server only; **no API routes yet**
-- `client/src/lib/trpc.ts` — localStorage mock tRPC; **not connected to a real server**
-- `customer-portal/src/app.jsx` — already calls `GET /api/customer/1` at the Railway URL; **the route doesn't exist yet**
-- No `DATABASE_URL`, no ORM, no auth middleware anywhere in the repo
+> **Already implemented:** The core database, auth, and API infrastructure is in place. The sections below are guides for reference; use them when extending the server or onboarding to the codebase, not as first-time setup steps.
+
+- `server/index.ts` — Express server with Clerk middleware, Prisma, CORS, all core API routes
+- `server/db.ts` — Lazy Prisma client singleton (already exists)
+- `server/auth.ts` — `getOrCreateUser` helper (also in `server/index.ts`)
+- `client/src/lib/trpc.ts` — Real tRPC client connected to `/api/trpc/*`
+- `prisma/schema.prisma` — Full schema with 11 models and 5 enums
+- `DATABASE_URL`, `CLERK_SECRET_KEY`, and other env vars already wired via Railway
 
 ---
 
@@ -66,7 +70,7 @@ This creates `prisma/schema.prisma` and adds `DATABASE_URL` to `.env` (if not al
 
 ### 2.2 Schema
 
-Replace `prisma/schema.prisma` with:
+The full schema in `prisma/schema.prisma` includes all models below. When adding new models, follow this same file.
 
 ```prisma
 generator client {
@@ -78,26 +82,29 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  clerkId      String        @unique
-  email        String        @unique
-  createdAt    DateTime      @default(now())
+  id           String           @id @default(cuid())
+  clerkId      String           @unique
+  email        String           @unique
+  createdAt    DateTime         @default(now())
   subscription Subscription?
   projects     Project[]
   customer     Customer?
+  aiRequests   AiRequest[]
+  aiUsage      AiUsageSummary[]
+  assets       GeneratedAsset[]
 }
 
 model Subscription {
-  id                 String   @id @default(cuid())
-  userId             String   @unique
-  user               User     @relation(fields: [userId], references: [id])
-  stripeCustomerId   String   @unique
-  stripePriceId      String
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  stripeCustomerId String   @unique
+  stripePriceId    String
   // Tier: "free" | "pro" | "team" — derive from stripePriceId
   // Add STRIPE_PRICE_PRO and STRIPE_PRICE_TEAM to Railway env vars
-  status             String   // "active" | "canceled" | "past_due"
-  currentPeriodEnd   DateTime
-  updatedAt          DateTime @updatedAt
+  status           String   // "active" | "canceled" | "past_due"
+  currentPeriodEnd DateTime
+  updatedAt        DateTime @updatedAt
 }
 
 model Project {
@@ -111,12 +118,237 @@ model Project {
 }
 
 model Customer {
-  id     String  @id @default(cuid())
-  userId String  @unique
-  user   User    @relation(fields: [userId], references: [id])
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
   name   String
   email  String
-  plan   String  @default("free") // "free" | "pro" | "team"
+  plan   String @default("free") // "free" | "pro" | "team"
+}
+
+model AiRequest {
+  id               String   @id @default(cuid())
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  feature          String
+  provider         String
+  model            String
+  promptHash       String?
+  status           String
+  costUnits        Int      @default(0)
+  inputTokens      Int?
+  outputTokens     Int?
+  totalTokens      Int?
+  providerMetadata Json?
+  errorCode        String?
+  createdAt        DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([feature, createdAt])
+}
+
+model AiUsageSummary {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monthKey     String
+  feature      String
+  requestCount Int      @default(0)
+  costUnits    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, monthKey, feature])
+  @@index([userId, monthKey])
+}
+
+model GeneratedAsset {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature    String
+  url        String
+  provider   String
+  model      String
+  promptHash String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([feature, createdAt])
+}
+
+model StockAsset {
+  id                  String   @id @default(cuid())
+  mediaType           String
+  url                 String
+  thumbUrl            String?
+  alt                 String?
+  category            String
+  tags                String[]
+  orientation         String
+  colorHints          String[]
+  source              String
+  sourceUrl           String?
+  license             String
+  licenseUrl          String
+  attribution         String?
+  attributionRequired Boolean  @default(false)
+  commercialUse       Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([mediaType, category])
+  @@index([source])
+  @@index([license])
+}
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id               String        @id @default(cuid())
+  name             String
+  slug             String        @unique
+  description      String?
+  shortDescription String?
+  status           ProductStatus @default(DRAFT)
+  productType      ProductType
+  basePriceCents   Int
+  currency         String        @default("usd")
+  sku              String?       @unique
+  stripeProductId  String?
+  stripePriceId    String?
+  assets           ProductAsset[]
+  files            ProductFile[]
+  listings         MarketplaceListing[]
+  orderItems       OrderItem[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model ProductAsset {
+  id        String    @id @default(cuid())
+  productId String
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type      AssetType
+  url       String
+  altText   String?
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model ProductFile {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  fileName  String
+  fileType  String
+  fileUrl   String
+  version   String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MarketplaceListing {
+  id          String        @id @default(cuid())
+  productId   String
+  product     Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  marketplace Marketplace
+  status      ListingStatus @default(NOT_LISTED)
+  listingId   String?
+  listingUrl  String?
+  title       String?
+  description String?
+  priceCents  Int?
+  currency    String        @default("usd")
+  lastSyncedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([productId, marketplace])
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  userId                String?
+  stripeCustomerId      String?
+  stripeSessionId       String?
+  stripePaymentIntentId String?
+  totalCents            Int
+  currency              String      @default("usd")
+  status                OrderStatus @default(PENDING)
+  items                 OrderItem[]
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int      @default(1)
+  priceCents Int
+  createdAt DateTime @default(now())
+}
+
+enum ProductStatus {
+  DRAFT
+  READY
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ProductType {
+  DIGITAL_TEMPLATE
+  WALLPAPER_PACK
+  DESIGN_ASSET
+  MOCKUP
+  BUNDLE
+  DECAL
+  OTHER
+}
+
+enum AssetType {
+  MAIN_IMAGE
+  PREVIEW
+  MOCKUP
+  THUMBNAIL
+  DOWNLOAD
+}
+
+enum Marketplace {
+  WEBSITE
+  STRIPE
+  ETSY
+  EBAY
+  FACEBOOK
+  INSTAGRAM
+}
+
+enum ListingStatus {
+  NOT_LISTED
+  DRAFT
+  LIVE
+  NEEDS_UPDATE
+  RETIRED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELED
 }
 ```
 
@@ -248,7 +480,7 @@ If that passes, the file is in the right place and TypeScript can see it.
 ### 3.1 Install
 
 ```bash
-pnpm add @clerk/clerk-sdk-node
+pnpm add @clerk/express
 ```
 
 Add to Railway service variables:
@@ -262,13 +494,13 @@ CLERK_SECRET_KEY=sk_live_...
 Add clerk middleware **before** API routes. Edit `server/index.ts`:
 
 ```typescript
-import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
+import { clerkMiddleware } from "@clerk/express";
 import { getPrisma } from "./db.js";
 
 // After: const app = express();
 // Add:
 app.use(express.json());
-app.use(ClerkExpressWithAuth());
+app.use(clerkMiddleware());
 ```
 
 ### 3.3 Auth Helper (upsert user on first request)
@@ -515,7 +747,8 @@ This runs pending migrations against the production DB on every deploy before th
 Ensure `package.json` build script compiles the Prisma client:
 
 ```json
-"build": "prisma generate && vite build && tsc -p tsconfig.node.json"
+"build": "vite build && pnpm build:server",
+"build:server": "pnpm prisma:generate && esbuild server/index.ts ..."
 ```
 
 ---
@@ -542,7 +775,6 @@ curl https://ms-studio-build-production.up.railway.app/api/customer/1
 
 ## Follow-Up Tasks (after DB is live)
 
-1. **Replace localStorage tRPC mock** — `client/src/lib/trpc.ts` needs a real tRPC server adapter added to `server/index.ts` at `/api/trpc/*`
-2. **Clerk webhook** — listen for `user.created` event at `/api/clerk/webhook` to populate `User.email` on signup
-3. **Subscription gate** — use `GET /api/subscription/status` in the editor to conditionally enable Pro features
-4. **Subscription tier constants** — add `PLAN_FREE`, `PLAN_PRO`, `PLAN_TEAM` to `shared/const.ts`
+1. **Clerk webhook** — listen for `user.created` event at `/api/clerk/webhook` to populate `User.email` on signup
+2. **Subscription gate** — use `GET /api/subscription/status` in the editor to conditionally enable Pro features
+3. **Subscription tier constants** — add `PLAN_FREE`, `PLAN_PRO`, `PLAN_TEAM` to `shared/const.ts`

@@ -11,13 +11,15 @@ applyTo: "server/index.ts,server/**"
 
 ## Required Environment Variables
 
-Add all four to `.env` (root) and to Railway service Variables:
+Add all to `.env` (root) and to Railway service Variables:
 
 ```env
 STRIPE_SECRET_KEY="sk_test_..."          # test key during dev, sk_live_... in production
 STRIPE_WEBHOOK_SECRET="whsec_..."        # from Stripe Dashboard → Webhooks → signing secret
 STRIPE_PRICE_PRO="price_..."             # Price ID for Pro tier
 STRIPE_PRICE_TEAM="price_..."            # Price ID for Team tier
+STRIPE_PRICE_AI_CREDIT_PACK="price_..."  # Price ID for AI credit pack (required when AI_CREDIT_PACKS_ENABLED=true)
+AI_CREDIT_PACKS_ENABLED="true"           # Set to "true" to enable AI credit pack purchasing flow
 ```
 
 > Use test-mode keys (`sk_test_`, `pk_test_`) locally. Never commit real keys — `.env` is already in `.gitignore`.
@@ -63,7 +65,7 @@ Add this route to `server/index.ts` **before** `express.json()` middleware (Stri
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2024-04-10",
 });
 
 // Must use express.raw() — NOT express.json() — for Stripe webhook verification

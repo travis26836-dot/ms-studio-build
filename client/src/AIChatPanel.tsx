@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, Send, User, Sparkles, X } from "lucide-react";
 import { ApiRequestError, chatStream } from "@/lib/aiClient";
 import { Streamdown } from "streamdown";
+import { useAuth as useClerkAuth, useUser } from "@clerk/react";
 
 interface Message {
   role: "user" | "assistant";
@@ -16,6 +17,8 @@ interface AIChatPanelProps {
 }
 
 export default function AIChatPanel({ onClose }: AIChatPanelProps) {
+  const { getToken, userId } = useClerkAuth();
+  const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -45,6 +48,9 @@ export default function AIChatPanel({ onClose }: AIChatPanelProps) {
     setMessages(prev => [...prev, { role: "assistant", content: "" }]);
 
     try {
+      const token = await getToken();
+      const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+      const clerkUserId = user?.id ?? userId ?? null;
       await chatStream(
         input,
         messages.map(m => ({ role: m.role, content: m.content })),
@@ -56,7 +62,9 @@ export default function AIChatPanel({ onClose }: AIChatPanelProps) {
               { ...last, content: last.content + token },
             ];
           });
-        }
+        },
+        undefined,
+        { token, userEmail, clerkUserId }
       );
     } catch (err) {
       console.error("AI chat error:", err);

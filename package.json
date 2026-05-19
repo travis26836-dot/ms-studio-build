@@ -16,7 +16,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@ai-sdk/groq": "^3.0.39",
+    "@ai-sdk/google": "^3.0.75",
     "@clerk/express": "^2.1.17",
     "@clerk/react": "^6.6.4",
     "@hookform/resolvers": "^5.2.2",

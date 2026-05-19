@@ -36,6 +36,46 @@ type PhotoRecord = {
   thumb: string;
   alt: string;
   tags: string[];
+  mediaType?: "image" | "video";
+  category?: string;
+  orientation?: string;
+  colorHints?: string[];
+  source?: string;
+  sourceUrl?: string;
+  license?: string;
+  licenseUrl?: string;
+  attribution?: string;
+  attributionRequired?: boolean;
+  commercialUse?: boolean;
+};
+
+type StockAssetRecord = {
+  id: string;
+  mediaType: "image" | "video";
+  url: string;
+  thumbUrl?: string;
+  alt: string;
+  category: string;
+  tags: string[];
+  orientation: string;
+  colorHints: string[];
+  source: string;
+  sourceUrl: string;
+  license: string;
+  licenseUrl: string;
+  attribution?: string;
+  attributionRequired: boolean;
+  commercialUse: boolean;
+};
+
+type StockAssetSearchInput = {
+  query?: string;
+  mediaType?: "image" | "video";
+  category?: string;
+  orientation?: string;
+  color?: string;
+  license?: string;
+  recent?: boolean;
 };
 
 type LayoutSuggestion = {
@@ -534,7 +574,8 @@ function getTemplate(input: { id: number }) {
   return getTemplatesStore().find(template => template.id === input.id);
 }
 
-function getPhotos(query?: string): PhotoRecord[] {
+function fallbackPhotos(input?: StockAssetSearchInput): PhotoRecord[] {
+  const query = input?.query;
   const allPhotos: PhotoRecord[] = [
     {
       url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200",
@@ -602,6 +643,58 @@ function getPhotos(query?: string): PhotoRecord[] {
       photo.alt.toLowerCase().includes(lowered) ||
       photo.tags.some(tag => tag.includes(lowered))
   );
+}
+
+async function getPhotos(
+  input?: StockAssetSearchInput
+): Promise<PhotoRecord[]> {
+  const params = new URLSearchParams();
+  params.set("mediaType", input?.mediaType ?? "image");
+  if (input?.query?.trim()) {
+    params.set("query", input.query.trim());
+  }
+  if (input?.category?.trim()) {
+    params.set("category", input.category.trim());
+  }
+  if (input?.orientation?.trim()) {
+    params.set("orientation", input.orientation.trim());
+  }
+  if (input?.color?.trim()) {
+    params.set("color", input.color.trim());
+  }
+  if (input?.license?.trim()) {
+    params.set("license", input.license.trim());
+  }
+  if (input?.recent) {
+    params.set("recent", "true");
+  }
+
+  try {
+    const assets = await apiRequest<StockAssetRecord[]>(
+      `/api/stock-assets?${params.toString()}`
+    );
+
+    return assets.map(asset => ({
+      url: asset.url,
+      thumb: asset.thumbUrl ?? asset.url,
+      alt: asset.alt,
+      tags: asset.tags,
+      mediaType: asset.mediaType,
+      category: asset.category,
+      orientation: asset.orientation,
+      colorHints: asset.colorHints,
+      source: asset.source,
+      sourceUrl: asset.sourceUrl,
+      license: asset.license,
+      licenseUrl: asset.licenseUrl,
+      attribution: asset.attribution,
+      attributionRequired: asset.attributionRequired,
+      commercialUse: asset.commercialUse,
+    }));
+  } catch (error) {
+    console.warn("Falling back to bundled stock photos", error);
+    return input?.mediaType === "video" ? [] : fallbackPhotos(input);
+  }
 }
 
 function createAiImage(prompt: string, width = 1024, height = 1024) {
@@ -924,59 +1017,128 @@ export const trpc = {
   },
   assets: {
     searchPhotos: {
-      useQuery: (input?: { query?: string }, options?: QueryOptions) => {
+      useQuery: (input?: StockAssetSearchInput, options?: QueryOptions) => {
         const key = useMemo(() => JSON.stringify(input ?? null), [input]);
-        return useLocalQuery(() => getPhotos(input?.query), [key], options);
+        return useLocalQuery(() => getPhotos(input), [key], options);
       },
     },
   },
   ai: {
     chat: {
-      useMutation: () =>
-        useLocalMutation(
+      useMutation: () => {
+        const { getToken, userId } = useClerkAuth();
+        const { user } = useUser();
+
+        return useLocalMutation(
           async (input: {
             message: string;
             history?: Array<{ role: "user" | "assistant"; content: string }>;
           }) => {
+            const token = await getToken();
+            const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+            const clerkUserId = user?.id ?? userId ?? null;
             let response = "";
             await aiClient.chatStream(
               input.message,
               input.history ?? [],
               token => {
                 response += token;
-              }
+              },
+              undefined,
+              { token, userEmail, clerkUserId }
             );
             return { response };
           }
-        ),
+        );
+      },
     },
     generateImage: {
-      useMutation: () =>
-        useLocalMutation((input: { prompt: string }) =>
-          aiClient.generateImage(input.prompt)
-        ),
+      useMutation: () => {
+        const { getToken, userId } = useClerkAuth();
+        const { user } = useUser();
+
+        return useLocalMutation(async (input: { prompt: string }) => {
+          const token = await getToken();
+          const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+          const clerkUserId = user?.id ?? userId ?? null;
+          return aiClient.generateImage(input.prompt, 1024, 1024, {
+            token,
+            userEmail,
+            clerkUserId,
+          });
+        });
+      },
     },
     generateBackground: {
-      useMutation: () =>
-        useLocalMutation(
-          (input: { prompt: string; width: number; height: number }) =>
-            aiClient.generateBackground(input.prompt, input.width, input.height)
-        ),
+      useMutation: () => {
+        const { getToken, userId } = useClerkAuth();
+        const { user } = useUser();
+
+        return useLocalMutation(
+          async (input: { prompt: string; width: number; height: number }) => {
+            const token = await getToken();
+            const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+            const clerkUserId = user?.id ?? userId ?? null;
+            return aiClient.generateBackground(
+              input.prompt,
+              input.width,
+              input.height,
+              { token, userEmail, clerkUserId }
+            );
+          }
+        );
+      },
     },
     suggestLayout: {
-      useMutation: () =>
-        useLocalMutation(
-          (input: {
+      useMutation: () => {
+        const { getToken, userId } = useClerkAuth();
+        const { user } = useUser();
+
+        return useLocalMutation(
+          async (input: {
             purpose: string;
             canvasWidth: number;
             canvasHeight: number;
-          }) =>
-            aiClient.suggestLayout(
+            brandContext?: string;
+          }) => {
+            const token = await getToken();
+            const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+            const clerkUserId = user?.id ?? userId ?? null;
+            return aiClient.suggestLayout(
               input.purpose,
               input.canvasWidth,
-              input.canvasHeight
-            )
-        ),
+              input.canvasHeight,
+              { token, userEmail, clerkUserId },
+              input.brandContext
+            );
+          }
+        );
+      },
+    },
+    generateSvg: {
+      useMutation: () => {
+        const { getToken, userId } = useClerkAuth();
+        const { user } = useUser();
+
+        return useLocalMutation(
+          async (input: { prompt: string; width?: number; height?: number }) => {
+            const token = await getToken();
+            const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+            const clerkUserId = user?.id ?? userId ?? null;
+            return aiClient.generateSvg(
+              input.prompt,
+              input.width ?? 1024,
+              input.height ?? 1024,
+              { token, userEmail, clerkUserId }
+            );
+          }
+        );
+      },
+    },
+    creditConfig: {
+      useQuery: () => {
+        return useLocalQuery(() => aiClient.getAiCreditConfig(), []);
+      },
     },
   },
 };

@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { clerkMiddleware } from "@clerk/express";
 import { getPrisma } from "./db.js";
 import { createAiRouter } from "./ai.js";
+import { listStockAssets } from "./stockAssets.js";
 
 process.on("unhandledRejection", reason => {
   console.error("Unhandled promise rejection", reason);
@@ -735,7 +736,7 @@ async function startServer() {
       res.setHeader("Access-Control-Allow-Credentials", "true");
       res.setHeader(
         "Access-Control-Allow-Headers",
-        "Content-Type, Authorization, x-user-email, x-user-clerk-id"
+        "Content-Type, Authorization, x-user-email, x-user-clerk-id, x-ms-studio-client-id"
       );
       res.setHeader(
         "Access-Control-Allow-Methods",
@@ -1255,6 +1256,36 @@ async function startServer() {
     return res.json({ plan: user.customer?.plan ?? "free", subscription: sub });
   });
 
+  app.get("/api/stock-assets", (req, res) => {
+    const query =
+      typeof req.query.query === "string" ? req.query.query : undefined;
+    const category =
+      typeof req.query.category === "string" ? req.query.category : undefined;
+    const mediaType =
+      typeof req.query.mediaType === "string" ? req.query.mediaType : undefined;
+    const orientation =
+      typeof req.query.orientation === "string"
+        ? req.query.orientation
+        : undefined;
+    const color =
+      typeof req.query.color === "string" ? req.query.color : undefined;
+    const license =
+      typeof req.query.license === "string" ? req.query.license : undefined;
+    const recent = req.query.recent === "true";
+
+    return res.json(
+      listStockAssets({
+        query,
+        category,
+        mediaType,
+        orientation,
+        color,
+        license,
+        recent,
+      })
+    );
+  });
+
   app.get("/api/projects", async (req, res) => {
     const identity = getRequestIdentity(req) ?? getGuestIdentity(req);
     const user = await getOrCreateUser(req);
@@ -1480,7 +1511,7 @@ async function startServer() {
   });
 
   // AI routes
-  app.use("/api/ai", createAiRouter());
+  app.use("/api/ai", createAiRouter({ resolveUser: getOrCreateUser }));
 
   app.use("/api", (_req, res) => {
     return res.status(404).json({ error: "Not found" });

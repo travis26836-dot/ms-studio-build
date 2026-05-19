@@ -413,6 +413,48 @@ export function useCanvasEditor(
     [addObject, height, width]
   );
 
+  const addSvg = useCallback(
+    async (svg: string) => {
+      const canvas = fabricRef.current;
+      if (!canvas) {
+        return;
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        fabric.loadSVGFromString(svg, (objects, options) => {
+          if (!objects.length) {
+            reject(new Error("SVG did not contain editable canvas objects"));
+            return;
+          }
+
+          const object = fabric.util.groupSVGElements(
+            objects,
+            options
+          ) as fabric.Object;
+          const objectWidth = object.width || 240;
+          const objectHeight = object.height || 240;
+          const maxSize = Math.min(width, height) * 0.42;
+          const scale = Math.min(
+            maxSize / objectWidth,
+            maxSize / objectHeight,
+            1
+          );
+
+          object.set({
+            left: width / 2 - (objectWidth * scale) / 2,
+            top: height / 2 - (objectHeight * scale) / 2,
+            scaleX: scale,
+            scaleY: scale,
+          });
+
+          addObject(object);
+          resolve();
+        });
+      });
+    },
+    [addObject, height, width]
+  );
+
   const addShape = useCallback(
     (shapeType: ShapeType, props: Record<string, unknown> = {}) => {
       const base = {
@@ -891,6 +933,7 @@ export function useCanvasEditor(
     addHeading,
     addSubheading,
     addImage,
+    addSvg,
     addShape,
     addPath,
     addPolygonByCount,

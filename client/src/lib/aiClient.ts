@@ -1,5 +1,11 @@
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
+export type AiRequestAuth = {
+  token?: string | null;
+  userEmail?: string | null;
+  clerkUserId?: string | null;
+};
+
 export class ApiRequestError extends Error {
   constructor(
     message: string,
@@ -27,6 +33,81 @@ export type LayoutSuggestion = {
   description: string;
 };
 
+export type AiCreditConfig = {
+  currency: string;
+  monthlyCaps: {
+    free: number;
+    premium: number;
+  };
+  featureCosts: Record<string, number>;
+  paidUsage: {
+    enabled: boolean;
+    stripePriceId: string | null;
+  };
+};
+
+const AI_CLIENT_ID_KEY = "ms-studio.aiClientId.v1";
+
+function getClientId(): string {
+  if (typeof window === "undefined") {
+    return "server";
+  }
+
+  try {
+    const existing = window.localStorage.getItem(AI_CLIENT_ID_KEY);
+    if (existing) return existing;
+
+    const next =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `client-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    window.localStorage.setItem(AI_CLIENT_ID_KEY, next);
+    return next;
+  } catch {
+    return "local-client";
+  }
+}
+
+function createAiHeaders(auth?: AiRequestAuth): Headers {
+  const headers = new Headers({
+    "Content-Type": "application/json",
+    "X-MS-Studio-Client-Id": getClientId(),
+  });
+
+  if (auth?.token) {
+    headers.set("Authorization", `Bearer ${auth.token}`);
+  }
+
+  if (auth?.userEmail?.trim()) {
+    headers.set("x-user-email", auth.userEmail.trim().toLowerCase());
+  }
+
+  if (auth?.clerkUserId?.trim()) {
+    headers.set("x-user-clerk-id", auth.clerkUserId.trim());
+  }
+
+  return headers;
+}
+
+async function readApiError(response: Response, fallback: string) {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    const body = await response.json().catch(() => null);
+    if (
+      body &&
+      typeof body === "object" &&
+      "error" in body &&
+      typeof body.error === "string"
+    ) {
+      return body.error;
+    }
+  }
+
+  const detail = await response.text().catch(() => "");
+  return detail || fallback;
+}
+
 /**
  * Stream chat tokens from the server AI route.
  * Calls `onToken` for each text chunk as it arrives.
@@ -35,16 +116,21 @@ export async function chatStream(
   message: string,
   history: ChatMessage[],
   onToken: (token: string) => void,
-  canvasContext?: string
+  canvasContext?: string,
+  auth?: AiRequestAuth
 ): Promise<void> {
   const response = await fetch("/api/ai/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: createAiHeaders(auth),
+    credentials: "include",
     body: JSON.stringify({ message, history, canvasContext }),
   });
 
   if (!response.ok) {
-    const detail = await response.text().catch(() => "");
+    const detail = await readApiError(
+      response,
+      `Chat request failed (${response.status})`
+    );
     const fallback = `Chat request failed (${response.status})`;
     throw new ApiRequestError(detail || fallback, response.status);
   }
@@ -74,25 +160,40 @@ export async function chatStream(
 export async function suggestLayout(
   purpose: string,
   canvasWidth: number,
-  canvasHeight: number
+  canvasHeight: number,
+  auth?: AiRequestAuth,
+  brandContext?: string
 ): Promise<LayoutSuggestion> {
   const response = await fetch("/api/ai/suggest-layout", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ purpose, canvasWidth, canvasHeight }),
+    headers: createAiHeaders(auth),
+    credentials: "include",
+    body: JSON.stringify({ purpose, canvasWidth, canvasHeight, brandContext }),
   });
 
   if (!response.ok) {
-    const err = await response
-      .json()
-      .catch(() => ({ error: response.statusText }));
     throw new Error(
-      (err as { error?: string }).error ||
-        `Layout suggestion failed: ${response.status}`
+      await readApiError(response, `Layout suggestion failed: ${response.status}`)
     );
   }
 
   return response.json() as Promise<LayoutSuggestion>;
+}
+
+export async function getAiCreditConfig(): Promise<AiCreditConfig> {
+  const response = await fetch("/api/ai/credits/config", {
+    method: "GET",
+    headers: createAiHeaders(),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await readApiError(response, `AI credit config failed (${response.status})`)
+    );
+  }
+
+  return response.json() as Promise<AiCreditConfig>;
 }
 
 /**
@@ -102,21 +203,19 @@ export async function suggestLayout(
 export async function generateImage(
   prompt: string,
   width = 1024,
-  height = 1024
+  height = 1024,
+  auth?: AiRequestAuth
 ): Promise<{ url: string }> {
   const response = await fetch("/api/ai/generate-image", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: createAiHeaders(auth),
+    credentials: "include",
     body: JSON.stringify({ prompt, width, height }),
   });
 
   if (!response.ok) {
-    const err = await response
-      .json()
-      .catch(() => ({ error: response.statusText }));
     throw new Error(
-      (err as { error?: string }).error ||
-        `Image generation failed (${response.status})`
+      await readApiError(response, `Image generation failed (${response.status})`)
     );
   }
 
@@ -130,25 +229,52 @@ export async function generateImage(
 export async function generateBackground(
   prompt: string,
   width: number,
-  height: number
+  height: number,
+  auth?: AiRequestAuth
 ): Promise<{ url: string }> {
   const response = await fetch("/api/ai/generate-background", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: createAiHeaders(auth),
+    credentials: "include",
     body: JSON.stringify({ prompt, width, height }),
   });
 
   if (!response.ok) {
-    const err = await response
-      .json()
-      .catch(() => ({ error: response.statusText }));
     throw new Error(
-      (err as { error?: string }).error ||
+      await readApiError(
+        response,
         `Background generation failed (${response.status})`
+      )
     );
   }
 
   return response.json() as Promise<{ url: string }>;
+}
+
+export async function generateSvg(
+  prompt: string,
+  width = 1024,
+  height = 1024,
+  auth?: AiRequestAuth
+): Promise<{ svg: string; url: string; costUnits: number }> {
+  const response = await fetch("/api/ai/generate-svg", {
+    method: "POST",
+    headers: createAiHeaders(auth),
+    credentials: "include",
+    body: JSON.stringify({ prompt, width, height }),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await readApiError(response, `SVG generation failed (${response.status})`)
+    );
+  }
+
+  return response.json() as Promise<{
+    svg: string;
+    url: string;
+    costUnits: number;
+  }>;
 }
 
 // ── SVG placeholder helpers ──────────────────────────────────────────────────

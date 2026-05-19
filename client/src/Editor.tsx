@@ -128,7 +128,208 @@ const FONT_OPTIONS = [
 
 const AUTOSAVE_DRAFT_VERSION = 1;
 const AUTOSAVE_DRAFT_PREFIX = "ms-studio.editorDraft.";
+const RECENT_TEMPLATE_SEARCHES_KEY = "ms-studio.recentTemplateSearches.v1";
+const RECENT_TEMPLATE_AI_PROMPTS_KEY = "ms-studio.recentTemplateAiPrompts.v1";
+const RECENT_ELEMENT_SEARCHES_KEY = "ms-studio.recentElementSearches.v1";
+const RECENT_ELEMENT_AI_PROMPTS_KEY = "ms-studio.recentElementAiPrompts.v1";
+const RECENT_STOCK_ASSETS_KEY = "ms-studio.recentStockAssets.v1";
+const BRAND_KIT_STORAGE_KEY = "ms-studio.brandKit.v1";
+const MAX_RECENT_AI_ITEMS = 6;
+
+const AI_CREDIT_ESTIMATES = {
+  chat: 1,
+  layout: 2,
+  image: 10,
+  background: 10,
+  svg: 2,
+  code: 2,
+  chart: 2,
+  form: 2,
+} as const;
+
+const DEFAULT_BRAND_COLORS = [
+  { name: "Primary", hex: "#6366f1" },
+  { name: "Secondary", hex: "#ec4899" },
+  { name: "Accent", hex: "#14b8a6" },
+  { name: "Dark", hex: "#1e293b" },
+  { name: "Light", hex: "#f8fafc" },
+];
+
+const BRAND_FONT_OPTIONS = [
+  { name: "Montserrat", style: "Geometric Sans" },
+  { name: "Poppins", style: "Round Sans" },
+  { name: "Inter", style: "Neutral Sans" },
+  { name: "Playfair Display", style: "Elegant Serif" },
+  { name: "Roboto", style: "Material Sans" },
+  { name: "Lato", style: "Humanist Sans" },
+  { name: "Oswald", style: "Condensed" },
+  { name: "Raleway", style: "Thin Sans" },
+  { name: "Nunito", style: "Friendly Sans" },
+  { name: "Work Sans", style: "Modern Sans" },
+  { name: "DM Sans", style: "Contemporary Sans" },
+  { name: "Source Sans 3", style: "Readable Sans" },
+  { name: "Bebas Neue", style: "Display Sans" },
+  { name: "Lora", style: "Editorial Serif" },
+  { name: "Rubik", style: "Rounded Sans" },
+  { name: "PT Sans", style: "Classic Sans" },
+  { name: "Quicksand", style: "Soft Sans" },
+  { name: "Anton", style: "Bold Display" },
+];
+
+const RECOMMENDED_TEMPLATE_PROMPTS = [
+  "Social media launch post",
+  "Product mockup layout",
+  "Blog outline graphic",
+  "Flyer",
+  "Brand announcement",
+  "Sale promo creative",
+  "Story reel cover",
+  "YouTube thumbnail",
+  "Email header",
+  "Print-ready product insert",
+];
+
+const ELEMENT_AI_SCOPES = [
+  "Image",
+  "Graphic",
+  "Code",
+  "Video",
+  "Music",
+  "Sound Effects",
+  "Voiceovers",
+  "Shapes",
+  "3D",
+  "Charts",
+  "Forms",
+] as const;
+
+const RECOMMENDED_ELEMENT_PROMPTS = [
+  "Minimal product icon",
+  "Editable abstract graphic",
+  "Promo badge",
+  "Rounded chart widget",
+  "Hero image accent",
+  "Geometric shape cluster",
+];
 const AUTOSAVE_INTERVAL_MS = 2000;
+
+function readRecentItems(key: string): string[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    const items = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(items)
+      ? items.filter((item): item is string => typeof item === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberRecentItem(key: string, value: string): string[] {
+  const trimmed = value.trim();
+  if (!trimmed || typeof window === "undefined") {
+    return readRecentItems(key);
+  }
+
+  const next = [
+    trimmed,
+    ...readRecentItems(key).filter(
+      item => item.toLowerCase() !== trimmed.toLowerCase()
+    ),
+  ].slice(0, MAX_RECENT_AI_ITEMS);
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(next));
+  } catch {
+    // Local recent chips are a convenience; failed storage should not block editing.
+  }
+
+  return next;
+}
+
+type BrandKitSnapshot = {
+  colors: Array<{ name: string; hex: string }>;
+  fonts: string[];
+  logoCount: number;
+};
+
+function readBrandKitSnapshot(): BrandKitSnapshot | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(BRAND_KIT_STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<BrandKitSnapshot>;
+    const colors = Array.isArray(parsed.colors)
+      ? parsed.colors.filter(
+          (item): item is { name: string; hex: string } =>
+            typeof item?.name === "string" && typeof item?.hex === "string"
+        )
+      : [];
+    const fonts = Array.isArray(parsed.fonts)
+      ? parsed.fonts.filter((item): item is string => typeof item === "string")
+      : [];
+
+    if (colors.length === 0 && fonts.length === 0 && !parsed.logoCount) {
+      return null;
+    }
+
+    return {
+      colors,
+      fonts,
+      logoCount:
+        typeof parsed.logoCount === "number" && parsed.logoCount > 0
+          ? parsed.logoCount
+          : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeBrandKitSnapshot(snapshot: BrandKitSnapshot) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(BRAND_KIT_STORAGE_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Brand Kit persistence is local convenience data; editing can continue.
+  }
+}
+
+function buildBrandKitContext(fallbackPurpose: string) {
+  const brandKit = readBrandKitSnapshot();
+  if (!brandKit) {
+    return [
+      "No saved Brand Kit was found for this browser session.",
+      `Infer a temporary style from: ${fallbackPurpose}`,
+    ].join("\n");
+  }
+
+  return [
+    "Use only this current user's saved Brand Kit context.",
+    brandKit.colors.length
+      ? `Colors: ${brandKit.colors.map(color => `${color.name} ${color.hex}`).join(", ")}`
+      : "Colors: not set",
+    brandKit.fonts.length
+      ? `Fonts: ${brandKit.fonts.join(", ")}`
+      : "Fonts: not set",
+    `Uploaded logo references available in this session: ${brandKit.logoCount}`,
+  ].join("\n");
+}
+
+function aiCreditLabel(cost: number) {
+  return `Estimated ${cost} AI credit${cost === 1 ? "" : "s"}`;
+}
 
 type AutosaveDraft = {
   version: number;
@@ -781,6 +982,7 @@ export default function Editor({
           {isEditingName ? (
             <input
               ref={nameInputRef}
+              placeholder="Project name"
               value={projectName}
               onChange={e => setProjectName(e.target.value)}
               onBlur={() => setIsEditingName(false)}
@@ -1050,6 +1252,11 @@ function SidePanel({
     ai: "AI Tools",
     layers: "Layers",
   };
+  const [aiSearchMode, setAiSearchMode] = useState<
+    Partial<Record<"templates" | "elements", boolean>>
+  >({});
+  const supportsAiSearch = panel === "templates" || panel === "elements";
+  const isAiMode = supportsAiSearch ? !!aiSearchMode[panel] : false;
 
   return (
     <>
@@ -1061,23 +1268,62 @@ function SidePanel({
           {panelTitles[panel || ""]}
         </h3>
         {panel !== "layers" && panel !== "brand" && (
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-8 h-8 text-xs bg-secondary border-border"
-            />
+          <div className="flex gap-1.5">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
+              <Input
+                placeholder={isAiMode ? "Describe what to create..." : "Search..."}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-8 h-8 text-xs bg-secondary border-border"
+              />
+            </div>
+            {supportsAiSearch && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant={isAiMode ? "default" : "secondary"}
+                    className="h-8 w-8 shrink-0"
+                    onClick={() =>
+                      setAiSearchMode(current => ({
+                        ...current,
+                        [panel]: !current[panel],
+                      }))
+                    }
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  {isAiMode ? "AI prompt mode" : "Search mode"}
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         )}
       </div>
       <ScrollArea className="flex-1">
         <div className="p-3">
           {panel === "templates" && (
-            <TemplatesPanel editor={editor} searchQuery={searchQuery} />
+            <TemplatesPanel
+              editor={editor}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              aiMode={isAiMode}
+              canvasWidth={canvasWidth}
+              canvasHeight={canvasHeight}
+            />
           )}
-          {panel === "elements" && <ElementsPanel editor={editor} />}
+          {panel === "elements" && (
+            <ElementsPanel
+              editor={editor}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              aiMode={isAiMode}
+            />
+          )}
           {panel === "text" && <TextPanel editor={editor} />}
           {panel === "photos" && (
             <PhotosPanel editor={editor} searchQuery={searchQuery} />
@@ -1098,19 +1344,80 @@ function SidePanel({
   );
 }
 
+function applyLayoutSuggestionToCanvas(
+  editor: ReturnType<typeof useCanvasEditor>,
+  result: {
+    description?: string;
+    elements?: Array<{
+      type: "text" | "shape" | "image";
+      left: number;
+      top: number;
+      width: number;
+      height: number;
+      fill?: string;
+      text?: string;
+      fontSize?: number;
+      fontFamily?: string;
+    }>;
+  }
+) {
+  if (!result.elements?.length) {
+    return false;
+  }
+
+  for (const el of result.elements) {
+    if (el.type === "text") {
+      editor.addText({
+        text: el.text || "Add text",
+        left: el.left,
+        top: el.top,
+        width: el.width,
+        fontSize: el.fontSize || 24,
+        fontFamily: el.fontFamily || "Inter",
+        fill: el.fill || "#000000",
+      } as any);
+    } else {
+      editor.addShape("rounded-rect", {
+        left: el.left,
+        top: el.top,
+        width: el.width,
+        height: el.height,
+        fill: el.fill || "#6366f1",
+      });
+    }
+  }
+
+  return true;
+}
+
 // ─── Templates Panel (DB-connected) ─────────────────────────
 function TemplatesPanel({
   editor,
   searchQuery,
+  setSearchQuery,
+  aiMode,
+  canvasWidth,
+  canvasHeight,
 }: {
   editor: ReturnType<typeof useCanvasEditor>;
   searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  aiMode: boolean;
+  canvasWidth: number;
+  canvasHeight: number;
 }) {
   const [activeCategory, setActiveCategory] = useState<string | undefined>(
     undefined
   );
   const { data: dbTemplates, isLoading } = trpc.templates.list.useQuery(
     activeCategory ? { category: activeCategory } : undefined
+  );
+  const suggestLayoutMut = trpc.ai.suggestLayout.useMutation();
+  const [recentSearches, setRecentSearches] = useState<string[]>(() =>
+    readRecentItems(RECENT_TEMPLATE_SEARCHES_KEY)
+  );
+  const [recentAiPrompts, setRecentAiPrompts] = useState<string[]>(() =>
+    readRecentItems(RECENT_TEMPLATE_AI_PROMPTS_KEY)
   );
 
   const categories = [
@@ -1126,14 +1433,22 @@ function TemplatesPanel({
 
   const filteredTemplates = useMemo(() => {
     if (!dbTemplates) return [];
-    if (!searchQuery) return dbTemplates;
+    if (!searchQuery || aiMode) return dbTemplates;
     const q = searchQuery.toLowerCase();
     return dbTemplates.filter(
       (t: any) =>
         t.name.toLowerCase().includes(q) ||
         (t.tags && JSON.stringify(t.tags).toLowerCase().includes(q))
     );
-  }, [dbTemplates, searchQuery]);
+  }, [aiMode, dbTemplates, searchQuery]);
+
+  useEffect(() => {
+    if (!aiMode && searchQuery.trim().length > 2) {
+      setRecentSearches(
+        rememberRecentItem(RECENT_TEMPLATE_SEARCHES_KEY, searchQuery)
+      );
+    }
+  }, [aiMode, searchQuery]);
 
   const handleApplyTemplate = (template: any) => {
     if (template.canvasData) {
@@ -1163,8 +1478,98 @@ function TemplatesPanel({
     "#64748b",
   ];
 
+  const handleGenerateTemplateLayout = async () => {
+    const prompt = searchQuery.trim();
+    if (!prompt || suggestLayoutMut.isPending) return;
+
+    toast.info("AI is designing a template layout...");
+    try {
+      const result = await suggestLayoutMut.mutateAsync({
+        purpose: prompt,
+        canvasWidth,
+        canvasHeight,
+        brandContext: buildBrandKitContext(prompt),
+      });
+
+      if (applyLayoutSuggestionToCanvas(editor, result)) {
+        setRecentAiPrompts(
+          rememberRecentItem(RECENT_TEMPLATE_AI_PROMPTS_KEY, prompt)
+        );
+        toast.success(`Layout applied: ${result.description}`);
+      }
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Template generation failed.";
+      toast.error(msg);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {aiMode ? (
+        <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/10 p-3">
+          <p className="text-[10px] text-muted-foreground">
+            {aiCreditLabel(AI_CREDIT_ESTIMATES.layout)}
+          </p>
+          <Button
+            size="sm"
+            className="h-8 w-full text-xs"
+            disabled={!searchQuery.trim() || suggestLayoutMut.isPending}
+            onClick={handleGenerateTemplateLayout}
+          >
+            {suggestLayoutMut.isPending ? (
+              <>
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-1 h-3 w-3" /> Generate Layout
+              </>
+            )}
+          </Button>
+          <div className="flex flex-wrap gap-1.5">
+            {RECOMMENDED_TEMPLATE_PROMPTS.map(prompt => (
+              <button
+                key={prompt}
+                type="button"
+                className="rounded-full bg-background/70 px-2 py-1 text-[10px] text-card-foreground hover:bg-background"
+                onClick={() => setSearchQuery(prompt)}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+          {recentAiPrompts.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 border-t border-primary/20 pt-2">
+              {recentAiPrompts.map(prompt => (
+                <button
+                  key={prompt}
+                  type="button"
+                  className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground hover:text-card-foreground"
+                  onClick={() => setSearchQuery(prompt)}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        recentSearches.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {recentSearches.map(query => (
+              <button
+                key={query}
+                type="button"
+                className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground hover:text-card-foreground"
+                onClick={() => setSearchQuery(query)}
+              >
+                {query}
+              </button>
+            ))}
+          </div>
+        )
+      )}
       <div className="grid grid-cols-3 gap-1.5">
         <button
           className={`flex flex-col items-center p-2 rounded-lg transition-colors text-xs ${
@@ -1473,13 +1878,126 @@ function ShapeBtn({
   );
 }
 
+function addCodeWidgetToCanvas(
+  editor: ReturnType<typeof useCanvasEditor>,
+  prompt: string
+) {
+  editor.addShape("rounded-rect", {
+    left: 120,
+    top: 120,
+    width: 520,
+    height: 320,
+    fill: "#0f172a",
+    stroke: "#38bdf8",
+    strokeWidth: 2,
+  });
+  editor.addText({
+    text: `// ${prompt.slice(0, 48) || "Generated widget"}\nconst widget = {\n  title: "Interactive block",\n  action: "Customize in editor"\n};`,
+    left: 150,
+    top: 155,
+    width: 460,
+    fontSize: 22,
+    fontFamily: "Source Code Pro, monospace",
+    fill: "#e2e8f0",
+  } as any);
+}
+
+function addChartWidgetToCanvas(
+  editor: ReturnType<typeof useCanvasEditor>,
+  prompt: string
+) {
+  const values = [68, 44, 82, 55];
+  editor.addText({
+    text: prompt || "AI chart",
+    left: 120,
+    top: 110,
+    width: 420,
+    fontSize: 28,
+    fontWeight: "700",
+    fontFamily: "Montserrat",
+    fill: "#111827",
+  } as any);
+  values.forEach((value, index) => {
+    editor.addShape("rounded-rect", {
+      left: 130 + index * 88,
+      top: 330 - value * 2,
+      width: 54,
+      height: value * 2,
+      fill: ["#2563eb", "#14b8a6", "#f97316", "#8b5cf6"][index],
+    });
+    editor.addText({
+      text: `${value}`,
+      left: 132 + index * 88,
+      top: 344,
+      width: 52,
+      fontSize: 16,
+      fontFamily: "Inter",
+      fill: "#475569",
+    } as any);
+  });
+}
+
+function addFormWidgetToCanvas(
+  editor: ReturnType<typeof useCanvasEditor>,
+  prompt: string
+) {
+  editor.addText({
+    text: prompt || "Contact form",
+    left: 120,
+    top: 110,
+    width: 420,
+    fontSize: 30,
+    fontWeight: "700",
+    fontFamily: "Montserrat",
+    fill: "#111827",
+  } as any);
+
+  ["Name", "Email", "Message"].forEach((label, index) => {
+    const top = 175 + index * 74;
+    editor.addText({
+      text: label,
+      left: 126,
+      top: top - 26,
+      width: 160,
+      fontSize: 16,
+      fontFamily: "Inter",
+      fill: "#475569",
+    } as any);
+    editor.addShape("rounded-rect", {
+      left: 120,
+      top,
+      width: 430,
+      height: index === 2 ? 86 : 46,
+      fill: "#ffffff",
+      stroke: "#cbd5e1",
+      strokeWidth: 2,
+    });
+  });
+}
+
 // ─── Elements Panel ──────────────────────────────────────────
 function ElementsPanel({
   editor,
+  searchQuery,
+  setSearchQuery,
+  aiMode,
 }: {
   editor: ReturnType<typeof useCanvasEditor>;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  aiMode: boolean;
 }) {
   const [activeCategory, setActiveCategory] = useState("basic");
+  const [aiScope, setAiScope] =
+    useState<(typeof ELEMENT_AI_SCOPES)[number]>("Image");
+  const generateImageMut = trpc.ai.generateImage.useMutation();
+  const generateSvgMut = trpc.ai.generateSvg.useMutation();
+  const [recentSearches, setRecentSearches] = useState<string[]>(() =>
+    readRecentItems(RECENT_ELEMENT_SEARCHES_KEY)
+  );
+  const [recentAiPrompts, setRecentAiPrompts] = useState<string[]>(() =>
+    readRecentItems(RECENT_ELEMENT_AI_PROMPTS_KEY)
+  );
 
   const categories = [
     { id: "basic", label: "Basic" },
@@ -1506,15 +2024,212 @@ function ElementsPanel({
     "#000000",
     "#ffffff",
   ];
+  const normalizedSearch = aiMode ? "" : searchQuery.trim().toLowerCase();
+  const isGeneratingElement =
+    generateImageMut.isPending || generateSvgMut.isPending;
+  const selectedScopeCost =
+    aiScope === "Image"
+      ? AI_CREDIT_ESTIMATES.image
+      : aiScope === "Graphic"
+        ? AI_CREDIT_ESTIMATES.svg
+        : aiScope === "Code"
+          ? AI_CREDIT_ESTIMATES.code
+          : aiScope === "Charts"
+            ? AI_CREDIT_ESTIMATES.chart
+            : aiScope === "Forms"
+              ? AI_CREDIT_ESTIMATES.form
+              : 0;
+  const visibleCategories = normalizedSearch
+    ? categories.filter(
+        category =>
+          category.id.includes(normalizedSearch) ||
+          category.label.toLowerCase().includes(normalizedSearch)
+      )
+    : categories;
+
+  useEffect(() => {
+    if (!aiMode && searchQuery.trim().length > 2) {
+      setRecentSearches(
+        rememberRecentItem(RECENT_ELEMENT_SEARCHES_KEY, searchQuery)
+      );
+    }
+  }, [aiMode, searchQuery]);
+
+  const handleGenerateElement = async () => {
+    const prompt = searchQuery.trim();
+    if (!prompt || isGeneratingElement) return;
+
+    if (aiScope === "Image") {
+      toast.info(`Generating AI element. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`);
+      try {
+        const result = await generateImageMut.mutateAsync({ prompt });
+        if (result.url) {
+          await editor.addImage(result.url);
+          setRecentAiPrompts(
+            rememberRecentItem(RECENT_ELEMENT_AI_PROMPTS_KEY, prompt)
+          );
+          toast.success("AI element added to canvas!");
+        }
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : "Element generation failed.";
+        toast.error(msg);
+      }
+      return;
+    }
+
+    if (aiScope === "Graphic") {
+      toast.info(`Generating editable SVG. ${aiCreditLabel(AI_CREDIT_ESTIMATES.svg)}.`);
+      try {
+        const result = await generateSvgMut.mutateAsync({
+          prompt,
+          width: 1024,
+          height: 1024,
+        });
+        await editor.addSvg(result.svg);
+        setRecentAiPrompts(
+          rememberRecentItem(RECENT_ELEMENT_AI_PROMPTS_KEY, prompt)
+        );
+        toast.success("Editable SVG added to canvas.");
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : "SVG generation failed.";
+        toast.error(msg);
+      }
+      return;
+    }
+
+    if (aiScope === "Code") {
+      addCodeWidgetToCanvas(editor, prompt);
+      setRecentAiPrompts(
+        rememberRecentItem(RECENT_ELEMENT_AI_PROMPTS_KEY, prompt)
+      );
+      toast.success("Code widget added to canvas.");
+      return;
+    }
+
+    if (aiScope === "Shapes") {
+      editor.addShape("rounded-rect", {
+        width: 180,
+        height: 120,
+        fill: "#6366f1",
+      });
+      setRecentAiPrompts(
+        rememberRecentItem(RECENT_ELEMENT_AI_PROMPTS_KEY, prompt)
+      );
+      toast.success("Shape added to canvas.");
+      return;
+    }
+
+    if (aiScope === "Charts") {
+      addChartWidgetToCanvas(editor, prompt);
+      setRecentAiPrompts(
+        rememberRecentItem(RECENT_ELEMENT_AI_PROMPTS_KEY, prompt)
+      );
+      toast.success("Chart widget added to canvas.");
+      return;
+    }
+
+    if (aiScope === "Forms") {
+      addFormWidgetToCanvas(editor, prompt);
+      setRecentAiPrompts(
+        rememberRecentItem(RECENT_ELEMENT_AI_PROMPTS_KEY, prompt)
+      );
+      toast.success("Form layout added to canvas.");
+      return;
+    }
+
+    toast.info(`${aiScope} generation is tracked for a later provider phase.`);
+  };
 
   return (
     <div className="space-y-3">
+      {aiMode ? (
+        <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/10 p-3">
+          <select
+            title="AI generation scope"
+            value={aiScope}
+            onChange={event =>
+              setAiScope(event.target.value as (typeof ELEMENT_AI_SCOPES)[number])
+            }
+            className="h-8 w-full rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
+          >
+            {ELEMENT_AI_SCOPES.map(scope => (
+              <option key={scope} value={scope}>
+                {scope}
+              </option>
+            ))}
+          </select>
+          <Button
+            size="sm"
+            className="h-8 w-full text-xs"
+            disabled={!searchQuery.trim() || isGeneratingElement}
+            onClick={handleGenerateElement}
+          >
+            {isGeneratingElement ? (
+              <>
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-1 h-3 w-3" /> Generate Element
+              </>
+            )}
+          </Button>
+          <p className="text-[10px] text-muted-foreground">
+            {selectedScopeCost > 0
+              ? aiCreditLabel(selectedScopeCost)
+              : "No AI credits charged until provider generation is enabled"}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {RECOMMENDED_ELEMENT_PROMPTS.map(prompt => (
+              <button
+                key={prompt}
+                type="button"
+                className="rounded-full bg-background/70 px-2 py-1 text-[10px] text-card-foreground hover:bg-background"
+                onClick={() => setSearchQuery(prompt)}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+          {recentAiPrompts.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 border-t border-primary/20 pt-2">
+              {recentAiPrompts.map(prompt => (
+                <button
+                  key={prompt}
+                  type="button"
+                  className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground hover:text-card-foreground"
+                  onClick={() => setSearchQuery(prompt)}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        recentSearches.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {recentSearches.map(query => (
+              <button
+                key={query}
+                type="button"
+                className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground hover:text-card-foreground"
+                onClick={() => setSearchQuery(query)}
+              >
+                {query}
+              </button>
+            ))}
+          </div>
+        )
+      )}
       {/* Category tabs */}
       <div
         className="flex gap-1 overflow-x-auto pb-1"
         style={{ scrollbarWidth: "none" }}
       >
-        {categories.map(cat => (
+        {visibleCategories.map(cat => (
           <button
             key={cat.id}
             onClick={() => setActiveCategory(cat.id)}
@@ -1588,6 +2303,7 @@ function ElementsPanel({
                 onClick={() =>
                   editor.addShape("rect", { fill: c, width: 100, height: 100 })
                 }
+                title={c}
                 className="w-7 h-7 rounded-md border border-border hover:scale-110 transition-transform"
                 style={{ background: c }}
               />
@@ -1633,6 +2349,7 @@ function ElementsPanel({
                     height: 200,
                   })
                 }
+                title={`Gradient: ${c1} to ${c2}`}
                 className="aspect-square rounded-lg border border-border hover:scale-105 transition-transform"
                 style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
               />
@@ -2005,15 +2722,37 @@ function PhotosPanel({
   searchQuery: string;
 }) {
   const [query, setQuery] = useState("");
+  const [mediaType, setMediaType] = useState<"image" | "video">("image");
+  const [category, setCategory] = useState("");
+  const [orientation, setOrientation] = useState("");
+  const [color, setColor] = useState("");
+  const [license, setLicense] = useState("");
+  const [recentOnly, setRecentOnly] = useState(false);
+  const [recentStockAssets, setRecentStockAssets] = useState<string[]>(() =>
+    readRecentItems(RECENT_STOCK_ASSETS_KEY)
+  );
   const effectiveQuery = searchQuery || query;
   const {
     data: photos,
     isLoading,
     refetch,
   } = trpc.assets.searchPhotos.useQuery(
-    { query: effectiveQuery || "nature" },
+    {
+      query: effectiveQuery || "nature",
+      mediaType,
+      category: category || undefined,
+      orientation: orientation || undefined,
+      color: color || undefined,
+      license: license || undefined,
+      recent: recentOnly,
+    },
     { enabled: true }
   );
+  const visiblePhotos = useMemo(() => {
+    const items = photos || [];
+    if (!recentOnly) return items;
+    return items.filter((photo: any) => recentStockAssets.includes(photo.url));
+  }, [photos, recentOnly, recentStockAssets]);
 
   const handleSearch = () => {
     if (query.trim()) refetch();
@@ -2034,6 +2773,70 @@ function PhotosPanel({
         </Button>
       </div>
 
+      <div className="grid grid-cols-2 gap-1.5">
+        <select
+          title="Media type"
+          value={mediaType}
+          onChange={event => setMediaType(event.target.value as "image" | "video")}
+          className="h-8 rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
+        >
+          <option value="image">Images</option>
+          <option value="video">Videos</option>
+        </select>
+        <select
+          title="Category"
+          value={category}
+          onChange={event => setCategory(event.target.value)}
+          className="h-8 rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
+        >
+          <option value="">All categories</option>
+          <option value="nature">Nature</option>
+          <option value="business">Business</option>
+          <option value="technology">Technology</option>
+          <option value="food">Food</option>
+          <option value="abstract">Abstract</option>
+          <option value="product">Product</option>
+        </select>
+        <select
+          title="Orientation"
+          value={orientation}
+          onChange={event => setOrientation(event.target.value)}
+          className="h-8 rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
+        >
+          <option value="">Any orientation</option>
+          <option value="landscape">Landscape</option>
+          <option value="portrait">Portrait</option>
+          <option value="square">Square</option>
+        </select>
+        <select
+          title="License"
+          value={license}
+          onChange={event => setLicense(event.target.value)}
+          className="h-8 rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
+        >
+          <option value="">Any license</option>
+          <option value="Unsplash">Unsplash</option>
+          <option value="Pexels">Pexels</option>
+        </select>
+      </div>
+
+      <div className="flex items-center gap-1.5">
+        <Input
+          placeholder="Color/style"
+          value={color}
+          onChange={event => setColor(event.target.value)}
+          className="h-8 text-xs bg-secondary"
+        />
+        <Button
+          size="sm"
+          variant={recentOnly ? "default" : "secondary"}
+          className="h-8 px-2 text-xs"
+          onClick={() => setRecentOnly(value => !value)}
+        >
+          Recent
+        </Button>
+      </div>
+
       <div className="flex flex-wrap gap-1">
         {["Nature", "Business", "Technology", "People", "Food", "Abstract"].map(
           tag => (
@@ -2041,6 +2844,7 @@ function PhotosPanel({
               key={tag}
               onClick={() => {
                 setQuery(tag.toLowerCase());
+                setCategory(tag.toLowerCase());
               }}
               className="px-2 py-0.5 rounded-full bg-secondary text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
@@ -2051,7 +2855,9 @@ function PhotosPanel({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Click a photo to add it to your design
+        {mediaType === "video"
+          ? "Click a video result to open the licensed source page"
+          : "Click a photo to add it to your design"}
       </p>
 
       {isLoading ? (
@@ -2060,10 +2866,18 @@ function PhotosPanel({
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2">
-          {(photos || []).map((photo: any, i: number) => (
+          {visiblePhotos.map((photo: any, i: number) => (
             <button
               key={i}
               onClick={() => {
+                setRecentStockAssets(
+                  rememberRecentItem(RECENT_STOCK_ASSETS_KEY, photo.url)
+                );
+                if (photo.mediaType === "video") {
+                  window.open(photo.sourceUrl || photo.url, "_blank", "noopener,noreferrer");
+                  return;
+                }
+
                 editor.addImage(photo.url);
                 toast.success("Photo added to canvas");
               }}
@@ -2076,6 +2890,21 @@ function PhotosPanel({
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+              <div className="absolute bottom-0 left-0 right-0 bg-black/65 px-1.5 py-1 text-left">
+                <p className="truncate text-[9px] text-white">
+                  {photo.source ?? "Stock"} · {photo.license ?? "Licensed"}
+                </p>
+                <p className="truncate text-[8px] text-white/75">
+                  {photo.attributionRequired
+                    ? "Attribution required"
+                    : "Attribution not required"}
+                </p>
+              </div>
+              {photo.mediaType === "video" && (
+                <div className="absolute right-1.5 top-1.5 rounded bg-black/70 p-1 text-white">
+                  <ExternalLink className="h-3 w-3" />
+                </div>
+              )}
             </button>
           ))}
         </div>
@@ -2175,35 +3004,22 @@ function BrandPanel({
 }: {
   editor: ReturnType<typeof useCanvasEditor>;
 }) {
-  const [brandColors, setBrandColors] = useState([
-    { name: "Primary", hex: "#6366f1" },
-    { name: "Secondary", hex: "#ec4899" },
-    { name: "Accent", hex: "#14b8a6" },
-    { name: "Dark", hex: "#1e293b" },
-    { name: "Light", hex: "#f8fafc" },
-  ]);
+  const [brandColors, setBrandColors] = useState(() => {
+    const stored = readBrandKitSnapshot();
+    return stored?.colors.length ? stored.colors : DEFAULT_BRAND_COLORS;
+  });
+  const [logoCount, setLogoCount] = useState(
+    () => readBrandKitSnapshot()?.logoCount ?? 0
+  );
   const [newColor, setNewColor] = useState("#6366f1");
 
-  const brandFonts = [
-    { name: "Montserrat", style: "Geometric Sans" },
-    { name: "Poppins", style: "Round Sans" },
-    { name: "Inter", style: "Neutral Sans" },
-    { name: "Playfair Display", style: "Elegant Serif" },
-    { name: "Roboto", style: "Material Sans" },
-    { name: "Lato", style: "Humanist Sans" },
-    { name: "Oswald", style: "Condensed" },
-    { name: "Raleway", style: "Thin Sans" },
-    { name: "Nunito", style: "Friendly Sans" },
-    { name: "Work Sans", style: "Modern Sans" },
-    { name: "DM Sans", style: "Contemporary Sans" },
-    { name: "Source Sans 3", style: "Readable Sans" },
-    { name: "Bebas Neue", style: "Display Sans" },
-    { name: "Lora", style: "Editorial Serif" },
-    { name: "Rubik", style: "Rounded Sans" },
-    { name: "PT Sans", style: "Classic Sans" },
-    { name: "Quicksand", style: "Soft Sans" },
-    { name: "Anton", style: "Bold Display" },
-  ];
+  useEffect(() => {
+    writeBrandKitSnapshot({
+      colors: brandColors,
+      fonts: BRAND_FONT_OPTIONS.map(font => font.name),
+      logoCount,
+    });
+  }, [brandColors, logoCount]);
 
   return (
     <div className="space-y-4">
@@ -2215,6 +3031,7 @@ function BrandPanel({
           {brandColors.map((c, i) => (
             <div key={i} className="text-center">
               <button
+                title={c.name}
                 className="w-10 h-10 rounded-lg border border-border hover:scale-110 transition-transform"
                 style={{ background: c.hex }}
                 onClick={() => editor.updateActiveObject({ fill: c.hex })}
@@ -2228,6 +3045,7 @@ function BrandPanel({
         <div className="flex items-center gap-2 mt-3">
           <input
             type="color"
+            title="Pick a brand color"
             value={newColor}
             onChange={e => setNewColor(e.target.value)}
             className="w-8 h-8 rounded border border-border cursor-pointer"
@@ -2242,9 +3060,9 @@ function BrandPanel({
             size="sm"
             className="h-7 px-2 text-xs"
             onClick={() => {
-              setBrandColors([
-                ...brandColors,
-                { name: `Color ${brandColors.length + 1}`, hex: newColor },
+              setBrandColors(current => [
+                ...current,
+                { name: `Color ${current.length + 1}`, hex: newColor },
               ]);
               toast.success("Color added to brand kit");
             }}
@@ -2261,7 +3079,7 @@ function BrandPanel({
           Brand Fonts
         </p>
         <div className="space-y-1.5">
-          {brandFonts.map(font => (
+          {BRAND_FONT_OPTIONS.map(font => (
             <button
               key={font.name}
               className="w-full p-2 rounded-lg bg-secondary hover:bg-accent border border-border text-left transition-colors flex items-center justify-between"
@@ -2287,7 +3105,9 @@ function BrandPanel({
       <Separator />
 
       <div>
-        <p className="text-xs text-muted-foreground font-medium mb-2">Logos</p>
+        <p className="text-xs text-muted-foreground font-medium mb-2">
+          Logos {logoCount > 0 ? `(${logoCount})` : ""}
+        </p>
         <label className="flex flex-col items-center justify-center w-full h-16 border-2 border-dashed border-border rounded-lg hover:border-primary cursor-pointer transition-colors bg-secondary/50">
           <Upload className="w-4 h-4 text-muted-foreground mb-0.5" />
           <span className="text-[10px] text-muted-foreground">Upload logo</span>
@@ -2301,6 +3121,7 @@ function BrandPanel({
                 const reader = new FileReader();
                 reader.onload = ev => {
                   editor.addImage(ev.target?.result as string);
+                  setLogoCount(count => count + 1);
                   toast.success("Logo added to canvas");
                 };
                 reader.readAsDataURL(file);
@@ -2332,7 +3153,7 @@ function AIPanel({
 
   const handleGenerateElement = async () => {
     if (!aiPrompt.trim()) return;
-    toast.info("Generating with AI...");
+    toast.info(`Generating with AI. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`);
     try {
       const result = await generateImageMut.mutateAsync({ prompt: aiPrompt });
       if (result.url) {
@@ -2351,7 +3172,7 @@ function AIPanel({
 
   const handleGenerateBackground = async () => {
     if (!bgPrompt.trim()) return;
-    toast.info("Generating background...");
+    toast.info(`Generating background. ${aiCreditLabel(AI_CREDIT_ESTIMATES.background)}.`);
     try {
       const result = await generateBgMut.mutateAsync({
         prompt: bgPrompt,
@@ -2377,28 +3198,9 @@ function AIPanel({
         purpose,
         canvasWidth,
         canvasHeight,
+        brandContext: buildBrandKitContext(purpose),
       });
-      if (result.elements && result.elements.length > 0) {
-        for (const el of result.elements) {
-          if (el.type === "text" && el.text) {
-            editor.addText({
-              left: el.left,
-              top: el.top,
-              width: el.width,
-              fontSize: el.fontSize || 24,
-              fontFamily: el.fontFamily || "Inter",
-              fill: el.fill || "#000000",
-            } as any);
-          } else {
-            editor.addShape("rounded-rect", {
-              left: el.left,
-              top: el.top,
-              width: el.width,
-              height: el.height,
-              fill: el.fill || "#6366f1",
-            });
-          }
-        }
+      if (applyLayoutSuggestionToCanvas(editor, result)) {
         toast.success(`Layout applied: ${result.description}`);
       }
     } catch (err) {
@@ -2423,6 +3225,9 @@ function AIPanel({
       <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
         <p className="text-xs font-medium text-primary mb-1.5 flex items-center gap-1">
           <Sparkles className="w-3 h-3" /> AI Image Generation
+        </p>
+        <p className="mb-1.5 text-[10px] text-muted-foreground">
+          {aiCreditLabel(AI_CREDIT_ESTIMATES.image)}
         </p>
         <textarea
           value={aiPrompt}
@@ -2452,6 +3257,9 @@ function AIPanel({
       <div className="p-3 rounded-lg bg-secondary border border-border">
         <p className="text-xs font-medium text-card-foreground mb-1.5 flex items-center gap-1">
           <Paintbrush className="w-3 h-3" /> AI Background
+        </p>
+        <p className="mb-1.5 text-[10px] text-muted-foreground">
+          {aiCreditLabel(AI_CREDIT_ESTIMATES.background)}
         </p>
         <textarea
           value={bgPrompt}
@@ -2484,6 +3292,9 @@ function AIPanel({
       <div>
         <p className="text-xs text-muted-foreground font-medium mb-2">
           AI Layout Suggestions
+        </p>
+        <p className="mb-2 text-[10px] text-muted-foreground">
+          {aiCreditLabel(AI_CREDIT_ESTIMATES.layout)}
         </p>
         <div className="space-y-1.5">
           {[
@@ -2842,6 +3653,7 @@ function PropertiesPanel({
           <div className="flex items-center gap-2">
             <input
               type="color"
+              title="Fill color"
               value={(selectedObj.fill as string) || "#000000"}
               onChange={e =>
                 editor.updateActiveObject({ fill: e.target.value })
@@ -2870,6 +3682,7 @@ function PropertiesPanel({
               <button
                 key={c}
                 onClick={() => editor.updateActiveObject({ fill: c })}
+                title={c}
                 className="w-5 h-5 rounded border border-border hover:scale-125 transition-transform"
                 style={{ background: c }}
               />
@@ -2885,6 +3698,7 @@ function PropertiesPanel({
           <div className="flex items-center gap-2">
             <input
               type="color"
+              title="Stroke color"
               value={(selectedObj.stroke as string) || "#000000"}
               onChange={e =>
                 editor.updateActiveObject({ stroke: e.target.value })
@@ -2914,6 +3728,7 @@ function PropertiesPanel({
                 Typography
               </p>
               <select
+                title="Font family"
                 value={(selectedObj as any).fontFamily || "Inter"}
                 onChange={e =>
                   editor.updateActiveObject({ fontFamily: e.target.value })
@@ -3141,6 +3956,7 @@ function PropertiesPanel({
                 <button
                   key={c}
                   onClick={() => editor.setBackground(c)}
+                  title={c}
                   className="w-5 h-5 rounded border border-border hover:scale-125 transition-transform"
                   style={{ background: c }}
                 />

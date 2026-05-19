@@ -145,7 +145,25 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2>7. Privacy</h2>
+            <h2>7. AI-Generated and Stock Assets</h2>
+            <p>
+              AI-generated outputs may not be unique and similar outputs may be
+              generated for other users. You are responsible for reviewing AI
+              outputs before publishing, selling, trademarking, or otherwise
+              using them commercially.
+            </p>
+            <p>
+              Stock assets remain subject to the license terms shown for their
+              source. We may store source, license, attribution, and
+              commercial-use metadata with stock asset records, but you are
+              responsible for confirming that your final use complies with the
+              applicable third-party license and does not infringe rights of
+              identifiable people, brands, or property.
+            </p>
+          </section>
+
+          <section>
+            <h2>8. Privacy</h2>
             <p>
               Your use of the Service is also governed by our{" "}
               <button
@@ -159,7 +177,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2>8. Termination</h2>
+            <h2>9. Termination</h2>
             <p>
               We reserve the right to suspend or terminate your account or
               access to the Service at our sole discretion, with or without
@@ -170,7 +188,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2>9. Disclaimer of Warranties</h2>
+            <h2>10. Disclaimer of Warranties</h2>
             <p>
               The Service is provided "as is" and "as available" without
               warranties of any kind, whether express or implied, including but
@@ -182,7 +200,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2>10. Limitation of Liability</h2>
+            <h2>11. Limitation of Liability</h2>
             <p>
               To the fullest extent permitted by applicable law, ManuScript
               Studio and its affiliates, officers, directors, employees, and
@@ -196,7 +214,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2>11. Indemnification</h2>
+            <h2>12. Indemnification</h2>
             <p>
               You agree to indemnify, defend, and hold harmless ManuScript
               Studio and its affiliates from and against any claims,
@@ -208,7 +226,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2>12. Modifications to the Service</h2>
+            <h2>13. Modifications to the Service</h2>
             <p>
               We reserve the right to modify, suspend, or discontinue any part
               of the Service at any time without notice or liability. We may
@@ -219,7 +237,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2>13. Governing Law</h2>
+            <h2>14. Governing Law</h2>
             <p>
               These Terms are governed by the laws of the United States, without
               regard to conflict of law principles. Any disputes arising from
@@ -229,7 +247,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2>14. Contact</h2>
+            <h2>15. Contact</h2>
             <p>
               For questions about these Terms, please{" "}
               <button

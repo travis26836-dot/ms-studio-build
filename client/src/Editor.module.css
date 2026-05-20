@@ -47,6 +47,23 @@
   transform-origin: top left;
 }
 
+.canvasGridOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background-image:
+    linear-gradient(to right, rgba(100, 116, 139, 0.22) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(100, 116, 139, 0.22) 1px, transparent 1px),
+    linear-gradient(to right, rgba(59, 130, 246, 0.22) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(59, 130, 246, 0.22) 1px, transparent 1px);
+  background-size:
+    var(--grid-size, 20px) var(--grid-size, 20px),
+    var(--grid-size, 20px) var(--grid-size, 20px),
+    var(--grid-major-size, 100px) var(--grid-major-size, 100px),
+    var(--grid-major-size, 100px) var(--grid-major-size, 100px);
+}
+
 .heartOutline {
   fill: none;
   stroke: currentColor;

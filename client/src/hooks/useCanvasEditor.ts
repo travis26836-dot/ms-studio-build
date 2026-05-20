@@ -11,6 +11,10 @@ type EditorState = {
   selectedObjects: fabric.Object[];
   zoom: number;
   snapToGrid: boolean;
+  showGridLines: boolean;
+  snapToEdges: boolean;
+  snapToCenter: boolean;
+  smartSpacing: boolean;
 };
 
 type FabricStyleSerializerUtil = typeof fabric.util & {
@@ -193,34 +197,318 @@ export function useCanvasEditor(
   height: number
 ) {
   const GRID_SIZE = 20;
+  const GRID_THRESHOLD = 8;
+  const EDGE_THRESHOLD = 10;
+  const CENTER_THRESHOLD = 16;
+  const SPACING_THRESHOLD = 10;
+
   const fabricRef = useRef<fabric.Canvas | null>(null);
   const [editorState, setEditorState] = useState<EditorState>({
     selectedObjects: [],
     zoom: 1,
     snapToGrid: false,
+    showGridLines: false,
+    snapToEdges: true,
+    snapToCenter: true,
+    smartSpacing: false,
   });
   const snapToGridRef = useRef(false);
+  const showGridLinesRef = useRef(false);
+  const snapToEdgesRef = useRef(true);
+  const snapToCenterRef = useRef(true);
+  const smartSpacingRef = useRef(false);
   const historyRef = useRef<string[]>([]);
   const historyIndexRef = useRef(-1);
   const isHistoryActionRef = useRef(false);
   const pendingHistoryFrameRef = useRef<number | null>(null);
 
-  const applyGridSnap = useCallback((object: fabric.Object) => {
-    if (!snapToGridRef.current) {
-      return;
-    }
+  const applySnapping = useCallback(
+    (object: fabric.Object) => {
+      const canvas = fabricRef.current;
+      if (!canvas) {
+        return;
+      }
 
-    const left = object.left ?? 0;
-    const top = object.top ?? 0;
-    const snappedLeft = Math.round(left / GRID_SIZE) * GRID_SIZE;
-    const snappedTop = Math.round(top / GRID_SIZE) * GRID_SIZE;
+      const bounds = object.getBoundingRect(true, true);
+      const boundsRight = bounds.left + bounds.width;
+      const boundsBottom = bounds.top + bounds.height;
+      const center = object.getCenterPoint();
+      const activeObjects = canvas.getActiveObjects();
+      const movingSet = new Set(activeObjects.length ? activeObjects : [object]);
+      const stationaryObjects = canvas
+        .getObjects()
+        .filter(candidate => !movingSet.has(candidate));
 
-    object.set({
-      left: object.lockMovementX ? left : snappedLeft,
-      top: object.lockMovementY ? top : snappedTop,
-    });
-    object.setCoords();
-  }, []);
+      const axisState = {
+        x: {
+          delta: 0,
+          priority: -1,
+          magnitude: Number.POSITIVE_INFINITY,
+        },
+        y: {
+          delta: 0,
+          priority: -1,
+          magnitude: Number.POSITIVE_INFINITY,
+        },
+      };
+
+      const consider = (
+        axis: "x" | "y",
+        delta: number,
+        priority: number,
+        threshold: number
+      ) => {
+        const magnitude = Math.abs(delta);
+        if (!Number.isFinite(magnitude) || magnitude > threshold) {
+          return;
+        }
+
+        const candidate = axisState[axis];
+        if (
+          priority > candidate.priority ||
+          (priority === candidate.priority && magnitude < candidate.magnitude)
+        ) {
+          candidate.delta = delta;
+          candidate.priority = priority;
+          candidate.magnitude = magnitude;
+        }
+      };
+
+      if (snapToGridRef.current) {
+        const snappedLeft = Math.round(bounds.left / GRID_SIZE) * GRID_SIZE;
+        const snappedTop = Math.round(bounds.top / GRID_SIZE) * GRID_SIZE;
+        consider("x", snappedLeft - bounds.left, 1, GRID_THRESHOLD);
+        consider("y", snappedTop - bounds.top, 1, GRID_THRESHOLD);
+      }
+
+      if (snapToEdgesRef.current) {
+        consider("x", -bounds.left, 2, EDGE_THRESHOLD);
+        consider("x", width - boundsRight, 2, EDGE_THRESHOLD);
+        consider("y", -bounds.top, 2, EDGE_THRESHOLD);
+        consider("y", height - boundsBottom, 2, EDGE_THRESHOLD);
+      }
+
+      if (smartSpacingRef.current && stationaryObjects.length >= 2) {
+        const stationaryBounds = stationaryObjects.map(candidate => ({
+          left: candidate.getBoundingRect(true, true).left,
+          top: candidate.getBoundingRect(true, true).top,
+          width: candidate.getBoundingRect(true, true).width,
+          height: candidate.getBoundingRect(true, true).height,
+          right:
+            candidate.getBoundingRect(true, true).left +
+            candidate.getBoundingRect(true, true).width,
+          bottom:
+            candidate.getBoundingRect(true, true).top +
+            candidate.getBoundingRect(true, true).height,
+          centerX:
+            candidate.getBoundingRect(true, true).left +
+            candidate.getBoundingRect(true, true).width / 2,
+          centerY:
+            candidate.getBoundingRect(true, true).top +
+            candidate.getBoundingRect(true, true).height / 2,
+        }));
+
+        const xSamples: number[] = [];
+        const ySamples: number[] = [];
+
+        const sortedX = [...stationaryBounds].sort((a, b) => a.left - b.left);
+        const sortedY = [...stationaryBounds].sort((a, b) => a.top - b.top);
+
+        for (let i = 0; i < sortedX.length - 1; i += 1) {
+          const gap = sortedX[i + 1].left - sortedX[i].right;
+          const overlap =
+            Math.min(sortedX[i].bottom, sortedX[i + 1].bottom) -
+            Math.max(sortedX[i].top, sortedX[i + 1].top);
+          if (gap > 0 && overlap > 8) {
+            xSamples.push(gap);
+          }
+        }
+
+        for (let i = 0; i < sortedY.length - 1; i += 1) {
+          const gap = sortedY[i + 1].top - sortedY[i].bottom;
+          const overlap =
+            Math.min(sortedY[i].right, sortedY[i + 1].right) -
+            Math.max(sortedY[i].left, sortedY[i + 1].left);
+          if (gap > 0 && overlap > 8) {
+            ySamples.push(gap);
+          }
+        }
+
+        const getMedianGap = (samples: number[]) => {
+          if (samples.length === 0) {
+            return null;
+          }
+          const sorted = [...samples].sort((a, b) => a - b);
+          return sorted[Math.floor(sorted.length / 2)];
+        };
+
+        const xGap = getMedianGap(xSamples);
+        const yGap = getMedianGap(ySamples);
+
+        for (const candidate of stationaryBounds) {
+          if (xGap !== null) {
+            consider("x", candidate.right + xGap - bounds.left, 3, SPACING_THRESHOLD);
+            consider("x", candidate.left - xGap - boundsRight, 3, SPACING_THRESHOLD);
+          }
+
+          if (yGap !== null) {
+            consider("y", candidate.bottom + yGap - bounds.top, 3, SPACING_THRESHOLD);
+            consider("y", candidate.top - yGap - boundsBottom, 3, SPACING_THRESHOLD);
+          }
+
+          // Center-to-center alignment with nearby elements.
+          consider("x", candidate.centerX - center.x, 3, CENTER_THRESHOLD);
+          consider("y", candidate.centerY - center.y, 3, CENTER_THRESHOLD);
+        }
+      }
+
+      if (snapToCenterRef.current) {
+        consider("x", width / 2 - center.x, 4, CENTER_THRESHOLD);
+        consider("y", height / 2 - center.y, 4, CENTER_THRESHOLD);
+      }
+
+      const nextLeft = (object.left ?? 0) + axisState.x.delta;
+      const nextTop = (object.top ?? 0) + axisState.y.delta;
+
+      object.set({
+        left: object.lockMovementX ? object.left : nextLeft,
+        top: object.lockMovementY ? object.top : nextTop,
+      });
+      object.setCoords();
+    },
+    [height, width]
+  );
+
+  const applyScalingSnapping = useCallback(
+    (object: fabric.Object, corner?: string) => {
+      const canvas = fabricRef.current;
+      if (!canvas) {
+        return;
+      }
+
+      const bounds = object.getBoundingRect(true, true);
+      const boundsRight = bounds.left + bounds.width;
+      const boundsBottom = bounds.top + bounds.height;
+      const center = object.getCenterPoint();
+
+      const activeObjects = canvas.getActiveObjects();
+      const movingSet = new Set(activeObjects.length ? activeObjects : [object]);
+      const stationaryBounds = canvas
+        .getObjects()
+        .filter(candidate => !movingSet.has(candidate))
+        .map(candidate => {
+          const rect = candidate.getBoundingRect(true, true);
+          return {
+            left: rect.left,
+            top: rect.top,
+            width: rect.width,
+            height: rect.height,
+            right: rect.left + rect.width,
+            bottom: rect.top + rect.height,
+            centerX: rect.left + rect.width / 2,
+            centerY: rect.top + rect.height / 2,
+          };
+        });
+
+      const xGuides = new Set<number>([0, width, width / 2]);
+      const yGuides = new Set<number>([0, height, height / 2]);
+
+      stationaryBounds.forEach(candidate => {
+        xGuides.add(candidate.left);
+        xGuides.add(candidate.right);
+        xGuides.add(candidate.centerX);
+        yGuides.add(candidate.top);
+        yGuides.add(candidate.bottom);
+        yGuides.add(candidate.centerY);
+      });
+
+      const xAffects =
+        !corner || ["ml", "mr", "tl", "tr", "bl", "br"].includes(corner);
+      const yAffects =
+        !corner || ["mt", "mb", "tl", "tr", "bl", "br"].includes(corner);
+
+      const isLeftHandle = corner ? ["ml", "tl", "bl"].includes(corner) : false;
+      const isRightHandle = corner ? ["mr", "tr", "br"].includes(corner) : false;
+      const isTopHandle = corner ? ["mt", "tl", "tr"].includes(corner) : false;
+      const isBottomHandle = corner ? ["mb", "bl", "br"].includes(corner) : false;
+
+      const nearestGuide = (value: number, guides: Set<number>, threshold: number) => {
+        let nearest: number | null = null;
+        let distance = Number.POSITIVE_INFINITY;
+        guides.forEach(guide => {
+          const nextDistance = Math.abs(value - guide);
+          if (nextDistance <= threshold && nextDistance < distance) {
+            nearest = guide;
+            distance = nextDistance;
+          }
+        });
+        return nearest;
+      };
+
+      if (xAffects) {
+        const leftGuide = nearestGuide(bounds.left, xGuides, EDGE_THRESHOLD);
+        const rightGuide = nearestGuide(boundsRight, xGuides, EDGE_THRESHOLD);
+        const centerGuide = nearestGuide(center.x, xGuides, CENTER_THRESHOLD);
+
+        if (leftGuide !== null && isLeftHandle) {
+          const nextWidth = Math.max(4, boundsRight - leftGuide);
+          object.set("scaleX", nextWidth / Math.max(object.width || 1, 1));
+          object.setPositionByOrigin(
+            new fabric.Point(leftGuide + nextWidth / 2, center.y),
+            "center",
+            "center"
+          );
+        } else if (rightGuide !== null && isRightHandle) {
+          const nextWidth = Math.max(4, rightGuide - bounds.left);
+          object.set("scaleX", nextWidth / Math.max(object.width || 1, 1));
+          object.setPositionByOrigin(
+            new fabric.Point(bounds.left + nextWidth / 2, center.y),
+            "center",
+            "center"
+          );
+        } else if (centerGuide !== null) {
+          object.setPositionByOrigin(
+            new fabric.Point(centerGuide, center.y),
+            "center",
+            "center"
+          );
+        }
+      }
+
+      if (yAffects) {
+        const topGuide = nearestGuide(bounds.top, yGuides, EDGE_THRESHOLD);
+        const bottomGuide = nearestGuide(boundsBottom, yGuides, EDGE_THRESHOLD);
+        const centerGuide = nearestGuide(center.y, yGuides, CENTER_THRESHOLD);
+
+        if (topGuide !== null && isTopHandle) {
+          const nextHeight = Math.max(4, boundsBottom - topGuide);
+          object.set("scaleY", nextHeight / Math.max(object.height || 1, 1));
+          object.setPositionByOrigin(
+            new fabric.Point(center.x, topGuide + nextHeight / 2),
+            "center",
+            "center"
+          );
+        } else if (bottomGuide !== null && isBottomHandle) {
+          const nextHeight = Math.max(4, bottomGuide - bounds.top);
+          object.set("scaleY", nextHeight / Math.max(object.height || 1, 1));
+          object.setPositionByOrigin(
+            new fabric.Point(center.x, bounds.top + nextHeight / 2),
+            "center",
+            "center"
+          );
+        } else if (centerGuide !== null) {
+          object.setPositionByOrigin(
+            new fabric.Point(center.x, centerGuide),
+            "center",
+            "center"
+          );
+        }
+      }
+
+      object.setCoords();
+    },
+    [height, width]
+  );
 
   const updateSelectionState = useCallback(() => {
     const canvas = fabricRef.current;
@@ -324,7 +612,15 @@ export function useCanvasEditor(
         return;
       }
 
-      applyGridSnap(event.target);
+      applySnapping(event.target);
+    });
+    canvas.on("object:scaling", event => {
+      if (!event.target) {
+        return;
+      }
+
+      applyScalingSnapping(event.target, event.transform?.corner);
+      applySnapping(event.target);
     });
     canvas.on("object:modified", () => {
       updateSelectionState();
@@ -344,7 +640,15 @@ export function useCanvasEditor(
     fabricRef.current = canvas;
     saveHistory();
     return canvas;
-  }, [canvasRef, height, saveHistory, updateSelectionState, width]);
+  }, [
+    applyScalingSnapping,
+    applySnapping,
+    canvasRef,
+    height,
+    saveHistory,
+    updateSelectionState,
+    width,
+  ]);
 
   const addObject = useCallback(
     (object: fabric.Object) => {
@@ -704,9 +1008,75 @@ export function useCanvasEditor(
     setEditorState(prev => ({ ...prev, snapToGrid: enabled }));
   }, []);
 
+  const setShowGridLines = useCallback((enabled: boolean) => {
+    showGridLinesRef.current = enabled;
+    setEditorState(prev => ({ ...prev, showGridLines: enabled }));
+  }, []);
+
+  const setSnapToEdges = useCallback((enabled: boolean) => {
+    snapToEdgesRef.current = enabled;
+    setEditorState(prev => ({ ...prev, snapToEdges: enabled }));
+  }, []);
+
+  const setSnapToCenter = useCallback((enabled: boolean) => {
+    snapToCenterRef.current = enabled;
+    setEditorState(prev => ({ ...prev, snapToCenter: enabled }));
+  }, []);
+
+  const setSmartSpacing = useCallback((enabled: boolean) => {
+    smartSpacingRef.current = enabled;
+    setEditorState(prev => ({ ...prev, smartSpacing: enabled }));
+  }, []);
+
   const toggleSnapToGrid = useCallback(() => {
     setSnapToGrid(!snapToGridRef.current);
   }, [setSnapToGrid]);
+
+  const centerSelectionHorizontally = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const active = canvas.getActiveObject();
+    if (!active) {
+      return;
+    }
+
+    const currentCenter = active.getCenterPoint();
+    active.setPositionByOrigin(
+      new fabric.Point(width / 2, currentCenter.y),
+      "center",
+      "center"
+    );
+    active.setCoords();
+    canvas.renderAll();
+    updateSelectionState();
+    saveHistory();
+  }, [saveHistory, updateSelectionState, width]);
+
+  const centerSelectionVertically = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const active = canvas.getActiveObject();
+    if (!active) {
+      return;
+    }
+
+    const currentCenter = active.getCenterPoint();
+    active.setPositionByOrigin(
+      new fabric.Point(currentCenter.x, height / 2),
+      "center",
+      "center"
+    );
+    active.setCoords();
+    canvas.renderAll();
+    updateSelectionState();
+    saveHistory();
+  }, [height, saveHistory, updateSelectionState]);
   const bringForward = useCallback(() => {
     const canvas = fabricRef.current;
     if (!canvas) return;
@@ -981,7 +1351,13 @@ export function useCanvasEditor(
     redo,
     setZoom,
     setSnapToGrid,
+    setShowGridLines,
+    setSnapToEdges,
+    setSnapToCenter,
+    setSmartSpacing,
     toggleSnapToGrid,
+    centerSelectionHorizontally,
+    centerSelectionVertically,
     bringForward,
     sendBackward,
     bringToFront,

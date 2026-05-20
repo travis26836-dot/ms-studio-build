@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Type,
@@ -493,6 +494,9 @@ export default function Editor({
   const [projectName, setProjectName] = useState(
     initialProjectName || "Untitled Design"
   );
+  const [showSnapMenu, setShowSnapMenu] = useState(false);
+  const snapMenuRef = useRef<HTMLDivElement>(null);
+  const snapMenuButtonRef = useRef<HTMLButtonElement>(null);
   const sourceFingerprint = useMemo(
     () => getInitialCanvasFingerprint(templateData),
     [templateData]
@@ -877,6 +881,24 @@ export default function Editor({
     }
   }, [isEditingName]);
 
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        snapMenuRef.current?.contains(target) ||
+        snapMenuButtonRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setShowSnapMenu(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, []);
+
   const togglePanel = (panel: SidebarPanel) => {
     setActivePanel(activePanel === panel ? null : panel);
   };
@@ -884,6 +906,11 @@ export default function Editor({
   const selectedObj = editor.editorState.selectedObjects[0];
   const hasSelection = editor.editorState.selectedObjects.length > 0;
   const multiSelect = editor.editorState.selectedObjects.length > 1;
+  const anySnapOptionEnabled =
+    editor.editorState.snapToGrid ||
+    editor.editorState.snapToEdges ||
+    editor.editorState.snapToCenter ||
+    editor.editorState.smartSpacing;
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
@@ -941,12 +968,91 @@ export default function Editor({
             }
           }}
         />
-        <ToolbarButton
-          icon={Grid3x3}
-          tooltip={`Snap to Grid (${editor.editorState.snapToGrid ? "On" : "Off"})`}
-          onClick={editor.toggleSnapToGrid}
-          active={editor.editorState.snapToGrid}
-        />
+
+        <div className="relative" ref={snapMenuRef}>
+          <Button
+            ref={snapMenuButtonRef}
+            variant="ghost"
+            size="icon"
+            className={`w-8 h-8 rounded-sm text-toolbar-foreground hover:bg-[oklch(0.19_0.006_260)] hover:text-[oklch(0.91_0.008_75)] ${anySnapOptionEnabled ? "bg-[oklch(0.78_0.17_75)]/15 text-[oklch(0.78_0.17_75)]" : ""}`}
+            aria-label="Grid and snapping settings"
+            onClick={() => setShowSnapMenu(prev => !prev)}
+          >
+            <Grid3x3 className="w-4 h-4" />
+          </Button>
+
+          {showSnapMenu && (
+            <div className="absolute left-0 top-10 z-50 w-80 rounded-md border bg-popover p-3 shadow-md">
+              <div className="space-y-3">
+                <div>
+                  <h4 className="text-sm font-semibold">Grid and Snapping</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Configure canvas snapping behavior and alignment helpers.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <SnapSettingRow
+                    label="Snap to grid"
+                    description="Align dragged elements to 20px increments"
+                    checked={editor.editorState.snapToGrid}
+                    onCheckedChange={editor.setSnapToGrid}
+                  />
+                  <SnapSettingRow
+                    label="Show grid lines"
+                    description="Render alignment grid on the canvas"
+                    checked={editor.editorState.showGridLines}
+                    onCheckedChange={editor.setShowGridLines}
+                  />
+                  <SnapSettingRow
+                    label="Snap to canvas edges"
+                    description="Attract objects to top, bottom, left, and right bounds"
+                    checked={editor.editorState.snapToEdges}
+                    onCheckedChange={editor.setSnapToEdges}
+                  />
+                  <SnapSettingRow
+                    label="Strong center snap"
+                    description="Use stronger magnetism at horizontal and vertical center"
+                    checked={editor.editorState.snapToCenter}
+                    onCheckedChange={editor.setSnapToCenter}
+                  />
+                  <SnapSettingRow
+                    label="Smart equal spacing"
+                    description="Snap dragged or resized objects to matching spacing"
+                    checked={editor.editorState.smartSpacing}
+                    onCheckedChange={editor.setSmartSpacing}
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-muted-foreground">
+                    Center selected object
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={!hasSelection}
+                      onClick={editor.centerSelectionHorizontally}
+                    >
+                      Horizontal
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={!hasSelection}
+                      onClick={editor.centerSelectionVertically}
+                    >
+                      Vertical
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
@@ -1150,9 +1256,15 @@ export default function Editor({
                 applyNodeStyles(node, {
                   width: `${canvasWidth * editor.editorState.zoom}px`,
                   height: `${canvasHeight * editor.editorState.zoom}px`,
+                  "--grid-size": `${20 * editor.editorState.zoom}px`,
+                  "--grid-major-size": `${100 * editor.editorState.zoom}px`,
                 });
               }}
             >
+              {editor.editorState.showGridLines && (
+                <div className={styles.canvasGridOverlay} />
+              )}
+
               {/* Inner div: CSS scale the native canvas without resizing the element */}
               <div
                 className={styles.canvasInner}
@@ -1228,6 +1340,28 @@ function ToolbarButton({
         {tooltip}
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+function SnapSettingRow({
+  label,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  onCheckedChange: (enabled: boolean) => void;
+}) {
+  return (
+    <label className="flex items-start justify-between gap-3 rounded-md border border-border/70 p-2.5">
+      <div>
+        <div className="text-sm font-medium leading-tight">{label}</div>
+        <div className="text-xs text-muted-foreground mt-1">{description}</div>
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+    </label>
   );
 }
 

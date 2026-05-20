@@ -6,8 +6,9 @@ applyTo: "server/db.ts,server/auth.ts,prisma/**,customer-portal/**"
 # Railway + Database Setup Guide
 
 > **Prerequisites:** Follow **02-PROJECT-CONFIGURATION.md** first to set up .env and understand the app structure.
-
-> **Use this guide when:** Setting up a PostgreSQL database on Railway, connecting Prisma ORM, adding Clerk authentication middleware, or wiring the customer portal API.
+> **Use this guide when:** Setting up a PostgreSQL database on Railway,
+> connecting Prisma ORM, adding Clerk authentication middleware, or wiring
+> the customer portal API.
 
 ---
 
@@ -24,7 +25,7 @@ docker run --name ms-build-postgres \
 
 ### Update `.env.local`
 
-```
+```dotenv
 DATABASE_URL=postgresql://postgres:password@localhost:5432/ms_build
 ```
 
@@ -116,6 +117,7 @@ app.use(authMiddleware);
 ```
 
 This middleware:
+
 - Validates Clerk JWT tokens
 - Populates `req.auth` with user info
 - Allows unauthenticated requests (auth is checked per-route)
@@ -181,7 +183,7 @@ app.get("/api/portal/subscriptions", auth(), async (req, res) => {
 ## Environment Variables Reference
 
 | Variable | Purpose | Local Example | Production |
-|----------|---------|---------|---|
+| -------- | ------- | ------------- | ---------- |
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:password@localhost:5432/ms_build` | `postgresql://user:pass@railway-host:5432/dbname` |
 | `NODE_ENV` | Environment mode | `development` | `production` |
 | `API_PORT` | Express server port | `3010` | `3010` |
@@ -202,13 +204,13 @@ model NewTable {
 }
 ```
 
-2. Create migration:
+1. Create migration:
 
 ```bash
 pnpm exec prisma migrate dev --name add_new_table
 ```
 
-3. Push to git
+1. Push to git
 
 ### Deploy Migration to Railway
 
@@ -230,6 +232,7 @@ railway run pnpm exec prisma migrate deploy
 **Cause:** PostgreSQL not running or DATABASE_URL invalid
 
 **Fix (Local):**
+
 ```bash
 # Check Docker container
 docker ps | grep postgres
@@ -242,6 +245,7 @@ docker run --name ms-build-postgres \
 ```
 
 **Fix (Railway):**
+
 - Verify PostgreSQL service is running in Railway Dashboard
 - Confirm `DATABASE_URL` is set in Railway Variables
 - Check it matches the PostgreSQL connection string

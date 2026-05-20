@@ -7,12 +7,14 @@ dist/
 build/
 *.dist
 
-# Environment variables
+# Environment variables - NEVER commit credentials
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+railway.json
 
 # IDE and editor files
 .vscode/
@@ -108,7 +110,6 @@ temp/
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
 
-# Manus version file (auto-generated, not part of source)
-client/public/__manus__/version.json
+
 
 /generated/prisma

@@ -10,11 +10,14 @@ const env = {
 
 execSync("pnpm build:server", { stdio: "inherit" });
 
-const server = spawn("node --env-file-if-exists=.env dist/index.js", {
+const server = spawn(
+  "node --env-file-if-exists=.env --env-file-if-exists=.env.local dist/index.js",
+  {
   shell: true,
   stdio: "inherit",
   env,
-});
+  }
+);
 
 process.on("SIGINT", () => server.kill("SIGTERM"));
 process.on("SIGTERM", () => server.kill("SIGTERM"));

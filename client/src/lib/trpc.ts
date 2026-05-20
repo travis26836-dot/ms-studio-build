@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAuth as useClerkAuth, useUser } from "@clerk/react";
+import { useSafeClerkAuth, useSafeClerkUser } from "@/lib/safeClerk";
 import * as aiClient from "./aiClient";
 
 type QueryOptions = {
@@ -845,8 +845,8 @@ export const trpc = {
   projects: {
     list: {
       useQuery: () => {
-        const { getToken, isSignedIn, userId } = useClerkAuth();
-        const { user } = useUser();
+        const { getToken, isSignedIn, userId } = useSafeClerkAuth();
+        const { user } = useSafeClerkUser();
         return useLocalQuery(async () => {
           if (!isSignedIn) {
             return [] as ProjectRecord[];
@@ -866,8 +866,8 @@ export const trpc = {
     },
     get: {
       useQuery: (input?: { id: string }, options?: QueryOptions) => {
-        const { getToken, isSignedIn, userId } = useClerkAuth();
-        const { user } = useUser();
+        const { getToken, isSignedIn, userId } = useSafeClerkAuth();
+        const { user } = useSafeClerkUser();
         const key = useMemo(() => JSON.stringify(input ?? null), [input]);
         return useLocalQuery(
           async () => {
@@ -892,8 +892,8 @@ export const trpc = {
     },
     create: {
       useMutation: () => {
-        const { getToken, isSignedIn, userId } = useClerkAuth();
-        const { user } = useUser();
+        const { getToken, isSignedIn, userId } = useSafeClerkAuth();
+        const { user } = useSafeClerkUser();
         return useLocalMutation(
           async (input: {
             name: string;
@@ -931,8 +931,8 @@ export const trpc = {
     },
     save: {
       useMutation: () => {
-        const { getToken, isSignedIn, userId } = useClerkAuth();
-        const { user } = useUser();
+        const { getToken, isSignedIn, userId } = useSafeClerkAuth();
+        const { user } = useSafeClerkUser();
         return useLocalMutation(
           async (input: {
             id: string;
@@ -972,8 +972,8 @@ export const trpc = {
     },
     delete: {
       useMutation: () => {
-        const { getToken, isSignedIn, userId } = useClerkAuth();
-        const { user } = useUser();
+        const { getToken, isSignedIn, userId } = useSafeClerkAuth();
+        const { user } = useSafeClerkUser();
         return useLocalMutation(async (input: { id: string }) => {
           if (!isSignedIn) {
             throw new Error("Please sign in to delete projects.");
@@ -1026,8 +1026,8 @@ export const trpc = {
   ai: {
     chat: {
       useMutation: () => {
-        const { getToken, userId } = useClerkAuth();
-        const { user } = useUser();
+        const { getToken, userId } = useSafeClerkAuth();
+        const { user } = useSafeClerkUser();
 
         return useLocalMutation(
           async (input: {
@@ -1054,8 +1054,8 @@ export const trpc = {
     },
     generateImage: {
       useMutation: () => {
-        const { getToken, userId } = useClerkAuth();
-        const { user } = useUser();
+        const { getToken, userId } = useSafeClerkAuth();
+        const { user } = useSafeClerkUser();
 
         return useLocalMutation(async (input: { prompt: string }) => {
           const token = await getToken();
@@ -1071,8 +1071,8 @@ export const trpc = {
     },
     generateBackground: {
       useMutation: () => {
-        const { getToken, userId } = useClerkAuth();
-        const { user } = useUser();
+        const { getToken, userId } = useSafeClerkAuth();
+        const { user } = useSafeClerkUser();
 
         return useLocalMutation(
           async (input: { prompt: string; width: number; height: number }) => {
@@ -1091,8 +1091,8 @@ export const trpc = {
     },
     suggestLayout: {
       useMutation: () => {
-        const { getToken, userId } = useClerkAuth();
-        const { user } = useUser();
+        const { getToken, userId } = useSafeClerkAuth();
+        const { user } = useSafeClerkUser();
 
         return useLocalMutation(
           async (input: {
@@ -1117,8 +1117,8 @@ export const trpc = {
     },
     generateSvg: {
       useMutation: () => {
-        const { getToken, userId } = useClerkAuth();
-        const { user } = useUser();
+        const { getToken, userId } = useSafeClerkAuth();
+        const { user } = useSafeClerkUser();
 
         return useLocalMutation(
           async (input: { prompt: string; width?: number; height?: number }) => {

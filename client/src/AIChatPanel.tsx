@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, Send, User, Sparkles, X } from "lucide-react";
 import { ApiRequestError, chatStream } from "@/lib/aiClient";
 import { Streamdown } from "streamdown";
-import { useAuth as useClerkAuth, useUser } from "@clerk/react";
+import { useSafeClerkAuth, useSafeClerkUser } from "@/lib/safeClerk";
 
 interface Message {
   role: "user" | "assistant";
@@ -17,8 +17,8 @@ interface AIChatPanelProps {
 }
 
 export default function AIChatPanel({ onClose }: AIChatPanelProps) {
-  const { getToken, userId } = useClerkAuth();
-  const { user } = useUser();
+  const { getToken, userId } = useSafeClerkAuth();
+  const { user } = useSafeClerkUser();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -159,16 +159,13 @@ export default function AIChatPanel({ onClose }: AIChatPanelProps) {
               <div className="bg-secondary rounded-xl px-3 py-2">
                 <div className="flex gap-1">
                   <div
-                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce"
-                    style={{ animationDelay: "0ms" }}
+                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]"
                   />
                   <div
-                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce"
-                    style={{ animationDelay: "150ms" }}
+                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]"
                   />
                   <div
-                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce"
-                    style={{ animationDelay: "300ms" }}
+                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]"
                   />
                 </div>
               </div>

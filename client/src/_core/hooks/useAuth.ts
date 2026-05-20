@@ -1,4 +1,4 @@
-import { useUser, useAuth as useClerkAuth } from "@clerk/react";
+import { useSafeClerkAuth, useSafeClerkUser } from "@/lib/safeClerk";
 
 const HAS_CLERK = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
@@ -11,8 +11,8 @@ export function useAuth() {
     };
   }
 
-  const { user, isLoaded } = useUser();
-  const { isSignedIn } = useClerkAuth();
+  const { user, isLoaded } = useSafeClerkUser();
+  const { isSignedIn } = useSafeClerkAuth();
 
   return {
     user: user

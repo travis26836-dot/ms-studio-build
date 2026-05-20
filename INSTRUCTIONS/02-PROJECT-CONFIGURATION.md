@@ -20,6 +20,10 @@ API runs at <http://localhost:3010>
 
 Create `.env.local` in repository root with test/development keys:
 
+Priority note: Vite resolves env files with `.env.local` overriding `.env`.
+Keep each variable in one place to avoid accidental overrides (especially
+`VITE_CLERK_PUBLISHABLE_KEY`).
+
 - DATABASE_URL (local PostgreSQL)
 - CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY, VITE_CLERK_PUBLISHABLE_KEY
 - API_PORT, NODE_ENV, VITE_API_URL
@@ -38,7 +42,7 @@ See individual guide files for where to obtain each key:
 
 ## Application Structure
 
-```
+```text
 ├── client/                 # Main app (Vite + React 19)
 ├── server/                 # Express API
 ├── shared/                 # Shared code

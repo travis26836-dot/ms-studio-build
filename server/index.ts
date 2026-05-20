@@ -1,5 +1,6 @@
 import express from "express";
 import { createServer } from "http";
+import { existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { clerkMiddleware } from "@clerk/express";
@@ -1545,13 +1546,17 @@ async function startServer() {
     }
   );
 
-  // Serve static files from dist/public in production
+  // Serve SPA assets when they exist. In API-only dev mode these files may not be built.
   const staticPath =
     process.env.NODE_ENV === "production"
       ? path.resolve(__dirname, "public")
       : path.resolve(__dirname, "..", "dist", "public");
+  const indexHtmlPath = path.join(staticPath, "index.html");
+  const canServeSpa = existsSync(indexHtmlPath);
 
-  app.use(express.static(staticPath));
+  if (canServeSpa) {
+    app.use(express.static(staticPath));
+  }
 
   // Handle client-side routing - serve index.html for all non-API routes.
   // Explicitly reject unmatched /api/* paths so they never receive SPA HTML.
@@ -1560,7 +1565,23 @@ async function startServer() {
       res.status(404).json({ error: "Not found" });
       return;
     }
-    res.sendFile(path.join(staticPath, "index.html"));
+
+    if (canServeSpa) {
+      res.sendFile(indexHtmlPath);
+      return;
+    }
+
+    if (req.path === "/") {
+      res
+        .status(200)
+        .type("text/plain")
+        .send(
+          "API server is running. Frontend build not found (dist/public/index.html). Run `pnpm dev` for Vite or `pnpm build` to generate static assets."
+        );
+      return;
+    }
+
+    res.status(404).type("text/plain").send("Not found");
   });
 
   const port = process.env.PORT || 3000;

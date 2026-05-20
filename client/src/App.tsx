@@ -7,7 +7,6 @@ import {
   RedirectToSignIn,
   SignIn,
   SignUp,
-  useClerk,
 } from "@clerk/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Route, Switch } from "wouter";
@@ -21,9 +20,67 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
 import RefundPolicyPage from "./pages/RefundPolicyPage";
 import { useEffect } from "react";
+import { useSafeClerk } from "@/lib/safeClerk";
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
-const HAS_CLERK = Boolean(PUBLISHABLE_KEY);
+type ClerkConfig = {
+  enabled: boolean;
+  publishableKey: string;
+  reason?: string;
+};
+
+function resolveClerkConfig(rawKey: unknown): ClerkConfig {
+  const publishableKey = typeof rawKey === "string" ? rawKey.trim() : "";
+
+  if (!publishableKey) {
+    return {
+      enabled: false,
+      publishableKey: "",
+      reason: "VITE_CLERK_PUBLISHABLE_KEY is missing.",
+    };
+  }
+
+  const match = /^pk_(test|live)_(.+)$/.exec(publishableKey);
+  if (!match) {
+    return {
+      enabled: false,
+      publishableKey,
+      reason: "VITE_CLERK_PUBLISHABLE_KEY format is invalid.",
+    };
+  }
+
+  // Decode the frontend API payload from Clerk's publishable key to catch
+  // malformed or truncated values that would otherwise crash app boot.
+  try {
+    const encoded = match[2];
+    const normalized = encoded.replace(/-/g, "+").replace(/_/g, "/");
+    const padding = "=".repeat((4 - (normalized.length % 4)) % 4);
+    const decoded = atob(`${normalized}${padding}`);
+    const frontendApi = decoded.replace(/\$/g, "").trim();
+
+    if (!frontendApi || !frontendApi.includes(".")) {
+      return {
+        enabled: false,
+        publishableKey,
+        reason:
+          "VITE_CLERK_PUBLISHABLE_KEY appears malformed (frontend API could not be resolved).",
+      };
+    }
+  } catch {
+    return {
+      enabled: false,
+      publishableKey,
+      reason: "VITE_CLERK_PUBLISHABLE_KEY appears malformed (base64 decode failed).",
+    };
+  }
+
+  return {
+    enabled: true,
+    publishableKey,
+  };
+}
+
+const clerkConfig = resolveClerkConfig(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+const HAS_CLERK = clerkConfig.enabled;
 
 function ProtectedRoute({
   component: Component,
@@ -42,7 +99,7 @@ function ProtectedRoute({
 }
 
 function LogoutPage() {
-  const { signOut } = useClerk();
+  const { signOut } = useSafeClerk();
   useEffect(() => {
     signOut({ redirectUrl: "/sign-in" });
   }, []);
@@ -59,7 +116,10 @@ function Router() {
             {HAS_CLERK ? (
               <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
             ) : (
-              <p className="text-sm text-muted-foreground">Authentication is not configured for local dev.</p>
+              <p className="text-sm text-muted-foreground">
+                Authentication is not configured for local dev.
+                {clerkConfig.reason ? ` ${clerkConfig.reason}` : ""}
+              </p>
             )}
           </div>
         )}
@@ -70,7 +130,10 @@ function Router() {
             {HAS_CLERK ? (
               <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
             ) : (
-              <p className="text-sm text-muted-foreground">Authentication is not configured for local dev.</p>
+              <p className="text-sm text-muted-foreground">
+                Authentication is not configured for local dev.
+                {clerkConfig.reason ? ` ${clerkConfig.reason}` : ""}
+              </p>
             )}
           </div>
         )}
@@ -81,7 +144,10 @@ function Router() {
             {HAS_CLERK ? (
               <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" />
             ) : (
-              <p className="text-sm text-muted-foreground">Authentication is not configured for local dev.</p>
+              <p className="text-sm text-muted-foreground">
+                Authentication is not configured for local dev.
+                {clerkConfig.reason ? ` ${clerkConfig.reason}` : ""}
+              </p>
             )}
           </div>
         )}
@@ -92,7 +158,10 @@ function Router() {
             {HAS_CLERK ? (
               <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" />
             ) : (
-              <p className="text-sm text-muted-foreground">Authentication is not configured for local dev.</p>
+              <p className="text-sm text-muted-foreground">
+                Authentication is not configured for local dev.
+                {clerkConfig.reason ? ` ${clerkConfig.reason}` : ""}
+              </p>
             )}
           </div>
         )}
@@ -126,7 +195,7 @@ function App() {
   return (
     <ErrorBoundary>
       {HAS_CLERK ? (
-        <ClerkProvider publishableKey={PUBLISHABLE_KEY}>{appTree}</ClerkProvider>
+        <ClerkProvider publishableKey={clerkConfig.publishableKey}>{appTree}</ClerkProvider>
       ) : (
         appTree
       )}

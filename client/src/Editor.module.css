@@ -29,10 +29,6 @@
   font-family: Inter;
 }
 
-.scrollbarNone {
-  scrollbar-width: none;
-}
-
 .colorPreset {
   /* color and fontWeight will be set via style or utility classes */
 }

@@ -1,5 +1,4 @@
 import React, {
-  import styles from "./Editor.module.css";
   useCallback,
   useEffect,
   useRef,
@@ -93,6 +92,7 @@ import { CANVAS_PRESETS } from "@shared/designTypes";
 import AIChatPanel from "@/components/AIChatPanel";
 import DownloadMenu from "@/components/DownloadMenu";
 import { getPortalUrl } from "@/const";
+import styles from "./Editor.module.css";
 
 type SidebarPanel =
   | "templates"
@@ -137,6 +137,24 @@ const RECENT_ELEMENT_AI_PROMPTS_KEY = "ms-studio.recentElementAiPrompts.v1";
 const RECENT_STOCK_ASSETS_KEY = "ms-studio.recentStockAssets.v1";
 const BRAND_KIT_STORAGE_KEY = "ms-studio.brandKit.v1";
 const MAX_RECENT_AI_ITEMS = 6;
+
+function applyNodeStyles(
+  node: HTMLElement | SVGElement | null,
+  styleMap: Record<string, string | number>
+) {
+  if (!node) return;
+  for (const [key, value] of Object.entries(styleMap)) {
+    node.style.setProperty(key, String(value));
+  }
+}
+
+function getTextPresetClass(label: string): string {
+  if (label === "Sale Banner") return styles.textPresetSale;
+  if (label === "Announcement") return styles.textPresetAnnouncement;
+  if (label === "Thank You") return styles.textPresetThankYou;
+  if (label === "New Badge") return styles.textPresetNew;
+  return "";
+}
 
 const AI_CREDIT_ESTIMATES = {
   chat: 1,
@@ -870,7 +888,9 @@ export default function Editor({
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       {/* Top Toolbar */}
-      <div className={`h-12 flex items-center gap-1 px-3 shrink-0 bg-[oklch(0.12_0.006_260)] ${styles.toolbar}`}>
+      <div
+        className={`h-12 flex items-center gap-1 px-3 shrink-0 bg-[oklch(0.12_0.006_260)] ${styles.toolbar}`}
+      >
         <Button
           variant="ghost"
           size="sm"
@@ -989,7 +1009,6 @@ export default function Editor({
         <div className="flex-1 flex justify-center items-center px-2">
           {isEditingName ? (
             <input
-              ref={nameInputRef}
               placeholder="Project name"
               value={projectName}
               onChange={e => setProjectName(e.target.value)}
@@ -999,11 +1018,12 @@ export default function Editor({
                   setIsEditingName(false);
                 }
               }}
-              className="bg-transparent border border-primary rounded px-2 py-0.5 text-sm text-foreground text-center outline-none"
-              style={{
-                minWidth: 120,
-                maxWidth: 280,
-                width: `${Math.max(120, projectName.length * 8 + 24)}px`,
+              className={`bg-transparent border border-primary rounded px-2 py-0.5 text-sm text-foreground text-center outline-none ${styles.projectNameInput}`}
+              ref={node => {
+                nameInputRef.current = node;
+                applyNodeStyles(node, {
+                  width: `${Math.max(120, projectName.length * 8 + 24)}px`,
+                });
               }}
               maxLength={80}
             />
@@ -1047,7 +1067,9 @@ export default function Editor({
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Icon Sidebar */}
-        <div className={`w-[52px] border-r bg-[oklch(0.12_0.006_260)] flex flex-col items-center py-3 gap-0.5 shrink-0 ${styles.panelBorderRight}`}> 
+        <div
+          className={`w-[52px] border-r bg-[oklch(0.12_0.006_260)] flex flex-col items-center py-3 gap-0.5 shrink-0 ${styles.panelBorderRight}`}
+        >
           <SidebarIcon
             icon={LayoutTemplate}
             label="Templates"
@@ -1100,7 +1122,9 @@ export default function Editor({
 
         {/* Expandable Side Panel */}
         {activePanel && (
-          <div className={`w-64 border-r bg-[oklch(0.14_0.006_260)] flex flex-col shrink-0 panel-glide ${styles.panelBorderRight}`}> 
+          <div
+            className={`w-64 border-r bg-[oklch(0.14_0.006_260)] flex flex-col shrink-0 panel-glide ${styles.panelBorderRight}`}
+          >
             <SidePanel
               panel={activePanel}
               editor={editor}
@@ -1121,22 +1145,21 @@ export default function Editor({
           <div className="min-h-full min-w-full flex items-center justify-center p-10">
             {/* Outer div sizes to visual (zoomed) dimensions for layout and shadow */}
             <div
-              style={{
-                position: "relative",
-                width: canvasWidth * editor.editorState.zoom,
-                height: canvasHeight * editor.editorState.zoom,
-                flexShrink: 0,
-                boxShadow: "0 4px 40px rgba(0,0,0,0.4)",
+              className={styles.canvasOuter}
+              ref={node => {
+                applyNodeStyles(node, {
+                  width: `${canvasWidth * editor.editorState.zoom}px`,
+                  height: `${canvasHeight * editor.editorState.zoom}px`,
+                });
               }}
             >
               {/* Inner div: CSS scale the native canvas without resizing the element */}
               <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  transform: `scale(${editor.editorState.zoom})`,
-                  transformOrigin: "top left",
+                className={styles.canvasInner}
+                ref={node => {
+                  applyNodeStyles(node, {
+                    transform: `scale(${editor.editorState.zoom})`,
+                  });
                 }}
               >
                 <canvas ref={canvasRef} />
@@ -1268,8 +1291,7 @@ function SidePanel({
     <>
       <div className="p-3 border-b border-border">
         <h3
-          className="text-xs font-semibold text-card-foreground mb-2 tracking-[0.08em] uppercase"
-          style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}
+          className={`text-xs font-semibold text-card-foreground mb-2 tracking-[0.08em] uppercase ${styles.fontSpaceGrotesk}`}
         >
           {panelTitles[panel || ""]}
         </h3>
@@ -1618,8 +1640,11 @@ function TemplatesPanel({
               <button
                 key={t.id}
                 className="aspect-[3/4] rounded-lg border border-border overflow-hidden hover:ring-2 hover:ring-primary transition-all group relative"
-                style={{
-                  background: `linear-gradient(135deg, ${templateColors[i % templateColors.length]}22, ${templateColors[i % templateColors.length]}44)`,
+                ref={node => {
+                  const color = templateColors[i % templateColors.length];
+                  applyNodeStyles(node, {
+                    background: `linear-gradient(135deg, ${color}22, ${color}44)`,
+                  });
                 }}
                 onClick={() => handleApplyTemplate(t)}
               >
@@ -1627,8 +1652,10 @@ function TemplatesPanel({
                   <div className="text-center">
                     <div
                       className="w-8 h-8 rounded-lg mx-auto mb-1.5"
-                      style={{
-                        background: templateColors[i % templateColors.length],
+                      ref={node => {
+                        applyNodeStyles(node, {
+                          background: templateColors[i % templateColors.length],
+                        });
                       }}
                     />
                     <p className="text-[10px] text-card-foreground font-medium leading-tight">
@@ -2233,7 +2260,6 @@ function ElementsPanel({
       {/* Category tabs */}
       <div
         className="flex gap-1 overflow-x-auto pb-1"
-        style={{ scrollbarWidth: "none" }}
       >
         {visibleCategories.map(cat => (
           <button
@@ -2311,7 +2337,9 @@ function ElementsPanel({
                 }
                 title={c}
                 className="w-7 h-7 rounded-md border border-border hover:scale-110 transition-transform"
-                style={{ background: c }}
+                ref={node => {
+                  applyNodeStyles(node, { background: c });
+                }}
               />
             ))}
           </div>
@@ -2357,7 +2385,11 @@ function ElementsPanel({
                 }
                 title={`Gradient: ${c1} to ${c2}`}
                 className="aspect-square rounded-lg border border-border hover:scale-105 transition-transform"
-                style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
+                ref={node => {
+                  applyNodeStyles(node, {
+                    background: `linear-gradient(135deg, ${c1}, ${c2})`,
+                  });
+                }}
               />
             ))}
           </div>
@@ -2492,13 +2524,10 @@ function ElementsPanel({
             >
               <svg
                 viewBox={s.vb}
-                className="w-9 h-9 text-card-foreground"
                 preserveAspectRatio="xMidYMid meet"
-                style={
-                  s.opts
-                    ? { fill: "none", stroke: "currentColor", strokeWidth: 10 }
-                    : { fill: "currentColor" }
-                }
+                className={`w-9 h-9 text-card-foreground ${
+                  s.opts ? styles.heartOutline : styles.heartFill
+                }`}
               >
                 <path d={s.path} />
               </svg>
@@ -2563,8 +2592,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
         className="w-full p-3 rounded-lg bg-secondary hover:bg-accent border border-border text-left transition-colors"
       >
         <p
-          className="text-lg font-bold text-card-foreground"
-          style={{ fontFamily: "Montserrat" }}
+          className={`text-lg font-bold text-card-foreground ${styles.fontMontserrat}`}
         >
           Add a heading
         </p>
@@ -2577,8 +2605,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
         className="w-full p-3 rounded-lg bg-secondary hover:bg-accent border border-border text-left transition-colors"
       >
         <p
-          className="text-base font-semibold text-card-foreground"
-          style={{ fontFamily: "Poppins" }}
+          className={`text-base font-semibold text-card-foreground ${styles.fontPoppins}`}
         >
           Add a subheading
         </p>
@@ -2591,8 +2618,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
         className="w-full p-3 rounded-lg bg-secondary hover:bg-accent border border-border text-left transition-colors"
       >
         <p
-          className="text-sm text-card-foreground"
-          style={{ fontFamily: "Inter" }}
+          className={`text-sm text-card-foreground ${styles.fontInter}`}
         >
           Add body text
         </p>
@@ -2652,7 +2678,9 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
           >
             <p
               className="text-sm font-bold text-card-foreground"
-              style={{ fontFamily: combo.heading }}
+              ref={node => {
+                applyNodeStyles(node, { "font-family": combo.heading });
+              }}
             >
               {combo.label}
             </p>
@@ -2707,8 +2735,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
             }
           >
             <span
-              className="text-xs"
-              style={{ color: preset.color, fontWeight: preset.weight }}
+              className={`text-xs ${getTextPresetClass(preset.label)}`}
             >
               {preset.label}
             </span>
@@ -2967,6 +2994,7 @@ function UploadsPanel({
         </span>
         <input
           type="file"
+          title="Upload images"
           accept="image/*"
           multiple
           className="hidden"
@@ -3039,7 +3067,9 @@ function BrandPanel({
               <button
                 title={c.name}
                 className="w-10 h-10 rounded-lg border border-border hover:scale-110 transition-transform"
-                style={{ background: c.hex }}
+                ref={node => {
+                  applyNodeStyles(node, { background: c.hex });
+                }}
                 onClick={() => editor.updateActiveObject({ fill: c.hex })}
               />
               <p className="text-[9px] text-muted-foreground mt-0.5">
@@ -3096,7 +3126,9 @@ function BrandPanel({
             >
               <span
                 className="text-sm text-card-foreground"
-                style={{ fontFamily: font.name }}
+                ref={node => {
+                  applyNodeStyles(node, { "font-family": font.name });
+                }}
               >
                 {font.name}
               </span>
@@ -3119,6 +3151,7 @@ function BrandPanel({
           <span className="text-[10px] text-muted-foreground">Upload logo</span>
           <input
             type="file"
+            title="Upload brand logo"
             accept="image/*"
             className="hidden"
             onChange={e => {
@@ -3690,7 +3723,9 @@ function PropertiesPanel({
                 onClick={() => editor.updateActiveObject({ fill: c })}
                 title={c}
                 className="w-5 h-5 rounded border border-border hover:scale-125 transition-transform"
-                style={{ background: c }}
+                ref={node => {
+                  applyNodeStyles(node, { background: c });
+                }}
               />
             ))}
           </div>
@@ -3946,6 +3981,7 @@ function PropertiesPanel({
           <div className="flex items-center gap-2">
             <input
               type="color"
+              title="Canvas background color"
               defaultValue="#ffffff"
               onChange={e => editor.setBackground(e.target.value)}
               className="w-8 h-8 rounded border border-border cursor-pointer"
@@ -3964,7 +4000,9 @@ function PropertiesPanel({
                   onClick={() => editor.setBackground(c)}
                   title={c}
                   className="w-5 h-5 rounded border border-border hover:scale-125 transition-transform"
-                  style={{ background: c }}
+                  ref={node => {
+                    applyNodeStyles(node, { background: c });
+                  }}
                 />
               ))}
             </div>

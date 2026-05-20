@@ -29,10 +29,50 @@
   font-family: Inter;
 }
 
-.colorPreset {
-  /* color and fontWeight will be set via style or utility classes */
+.projectNameInput {
+  min-width: 120px;
+  max-width: 280px;
 }
 
-.bgDynamic {
-  /* background will be set via style or utility classes */
+.canvasOuter {
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.4);
+}
+
+.canvasInner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}
+
+.heartOutline {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 10;
+}
+
+.heartFill {
+  fill: currentColor;
+}
+
+.textPresetSale {
+  color: #ef4444;
+  font-weight: 900;
+}
+
+.textPresetAnnouncement {
+  color: #6366f1;
+  font-weight: 300;
+}
+
+.textPresetThankYou {
+  color: #22c55e;
+  font-weight: 700;
+}
+
+.textPresetNew {
+  color: #f59e0b;
+  font-weight: 900;
 }

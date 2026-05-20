@@ -10,6 +10,7 @@ import { fabric } from "fabric";
 type EditorState = {
   selectedObjects: fabric.Object[];
   zoom: number;
+  snapToGrid: boolean;
 };
 
 type FabricStyleSerializerUtil = typeof fabric.util & {
@@ -191,15 +192,35 @@ export function useCanvasEditor(
   width: number,
   height: number
 ) {
+  const GRID_SIZE = 20;
   const fabricRef = useRef<fabric.Canvas | null>(null);
   const [editorState, setEditorState] = useState<EditorState>({
     selectedObjects: [],
     zoom: 1,
+    snapToGrid: false,
   });
+  const snapToGridRef = useRef(false);
   const historyRef = useRef<string[]>([]);
   const historyIndexRef = useRef(-1);
   const isHistoryActionRef = useRef(false);
   const pendingHistoryFrameRef = useRef<number | null>(null);
+
+  const applyGridSnap = useCallback((object: fabric.Object) => {
+    if (!snapToGridRef.current) {
+      return;
+    }
+
+    const left = object.left ?? 0;
+    const top = object.top ?? 0;
+    const snappedLeft = Math.round(left / GRID_SIZE) * GRID_SIZE;
+    const snappedTop = Math.round(top / GRID_SIZE) * GRID_SIZE;
+
+    object.set({
+      left: object.lockMovementX ? left : snappedLeft,
+      top: object.lockMovementY ? top : snappedTop,
+    });
+    object.setCoords();
+  }, []);
 
   const updateSelectionState = useCallback(() => {
     const canvas = fabricRef.current;
@@ -298,6 +319,13 @@ export function useCanvasEditor(
     canvas.on("selection:created", updateSelectionState);
     canvas.on("selection:updated", updateSelectionState);
     canvas.on("selection:cleared", updateSelectionState);
+    canvas.on("object:moving", event => {
+      if (!event.target) {
+        return;
+      }
+
+      applyGridSnap(event.target);
+    });
     canvas.on("object:modified", () => {
       updateSelectionState();
       saveHistory();
@@ -670,6 +698,15 @@ export function useCanvasEditor(
     const clamped = clamp(zoom, 0.2, 3);
     setEditorState(prev => ({ ...prev, zoom: clamped }));
   }, []);
+
+  const setSnapToGrid = useCallback((enabled: boolean) => {
+    snapToGridRef.current = enabled;
+    setEditorState(prev => ({ ...prev, snapToGrid: enabled }));
+  }, []);
+
+  const toggleSnapToGrid = useCallback(() => {
+    setSnapToGrid(!snapToGridRef.current);
+  }, [setSnapToGrid]);
   const bringForward = useCallback(() => {
     const canvas = fabricRef.current;
     if (!canvas) return;
@@ -943,6 +980,8 @@ export function useCanvasEditor(
     undo,
     redo,
     setZoom,
+    setSnapToGrid,
+    toggleSnapToGrid,
     bringForward,
     sendBackward,
     bringToFront,

@@ -1,4 +1,5 @@
 import React, {
+  import styles from "./Editor.module.css";
   useCallback,
   useEffect,
   useRef,
@@ -54,6 +55,7 @@ import {
   MessageSquare,
   FileText,
   LayoutTemplate,
+  Grid3x3,
   ImageIcon,
   Shapes,
   Upload,
@@ -868,7 +870,7 @@ export default function Editor({
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       {/* Top Toolbar */}
-      <div className="h-12 flex items-center gap-1 px-3 shrink-0 bg-[oklch(0.12_0.006_260)]" style={{ borderTop: '1px solid var(--amber)', borderBottom: '1px solid var(--toolbar-border)' }}>
+      <div className={`h-12 flex items-center gap-1 px-3 shrink-0 bg-[oklch(0.12_0.006_260)] ${styles.toolbar}`}>
         <Button
           variant="ghost"
           size="sm"
@@ -918,6 +920,12 @@ export default function Editor({
               editor.setZoom(Math.min(scaleX, scaleY, 1));
             }
           }}
+        />
+        <ToolbarButton
+          icon={Grid3x3}
+          tooltip={`Snap to Grid (${editor.editorState.snapToGrid ? "On" : "Off"})`}
+          onClick={editor.toggleSnapToGrid}
+          active={editor.editorState.snapToGrid}
         />
 
         <Separator orientation="vertical" className="h-6 mx-1" />
@@ -1002,8 +1010,7 @@ export default function Editor({
           ) : (
             <button
               onClick={() => setIsEditingName(true)}
-              className="text-sm font-medium tracking-wide text-[oklch(0.82_0.007_75)] hover:text-[oklch(0.91_0.008_75)] rounded-sm px-3 py-1 hover:bg-[oklch(0.19_0.006_260)] transition-colors truncate max-w-xs"
-              style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}
+              className={`text-sm font-medium tracking-wide text-[oklch(0.82_0.007_75)] hover:text-[oklch(0.91_0.008_75)] rounded-sm px-3 py-1 hover:bg-[oklch(0.19_0.006_260)] transition-colors truncate max-w-xs ${styles.fontSpaceGrotesk}`}
               title="Click to rename"
             >
               {projectName}
@@ -1040,7 +1047,7 @@ export default function Editor({
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Icon Sidebar */}
-        <div className="w-[52px] border-r bg-[oklch(0.12_0.006_260)] flex flex-col items-center py-3 gap-0.5 shrink-0" style={{ borderRightColor: 'var(--panel-border)' }}>
+        <div className={`w-[52px] border-r bg-[oklch(0.12_0.006_260)] flex flex-col items-center py-3 gap-0.5 shrink-0 ${styles.panelBorderRight}`}> 
           <SidebarIcon
             icon={LayoutTemplate}
             label="Templates"
@@ -1093,7 +1100,7 @@ export default function Editor({
 
         {/* Expandable Side Panel */}
         {activePanel && (
-          <div className="w-64 border-r bg-[oklch(0.14_0.006_260)] flex flex-col shrink-0 panel-glide" style={{ borderRightColor: 'var(--panel-border)' }}>
+          <div className={`w-64 border-r bg-[oklch(0.14_0.006_260)] flex flex-col shrink-0 panel-glide ${styles.panelBorderRight}`}> 
             <SidePanel
               panel={activePanel}
               editor={editor}
@@ -1109,8 +1116,7 @@ export default function Editor({
              preserving retina (devicePixelRatio) context scaling and correct pointer coordinates */}
         <div
           ref={canvasContainerRef}
-          className="flex-1 overflow-auto relative"
-          style={{ background: "oklch(0.18 0.005 260)" }}
+          className={`flex-1 overflow-auto relative ${styles.panelBackground}`}
         >
           <div className="min-h-full min-w-full flex items-center justify-center p-10">
             {/* Outer div sizes to visual (zoomed) dimensions for layout and shadow */}

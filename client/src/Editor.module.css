@@ -1,0 +1,42 @@
+/* Editor.module.css - Extracted from inline styles in Editor.tsx */
+
+.toolbar {
+  border-top: 1px solid var(--amber);
+  border-bottom: 1px solid var(--toolbar-border);
+}
+
+.panelBorderRight {
+  border-right-color: var(--panel-border);
+}
+
+.panelBackground {
+  background: oklch(0.18 0.005 260);
+}
+
+.fontSpaceGrotesk {
+  font-family: "Space Grotesk", ui-sans-serif;
+}
+
+.fontMontserrat {
+  font-family: Montserrat;
+}
+
+.fontPoppins {
+  font-family: Poppins;
+}
+
+.fontInter {
+  font-family: Inter;
+}
+
+.scrollbarNone {
+  scrollbar-width: none;
+}
+
+.colorPreset {
+  /* color and fontWeight will be set via style or utility classes */
+}
+
+.bgDynamic {
+  /* background will be set via style or utility classes */
+}

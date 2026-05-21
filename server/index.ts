@@ -1287,6 +1287,138 @@ async function startServer() {
     );
   });
 
+  // ── Unsplash API proxy ──────────────────────────────────────────────────────
+  // Proxies requests to api.unsplash.com so the access key stays server-side.
+  // Unsplash requires attribution: we forward photographer info to the client.
+  app.get("/api/unsplash/search", async (req, res) => {
+    const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+    if (!accessKey) {
+      return res.status(503).json({
+        error:
+          "Unsplash not configured. Set UNSPLASH_ACCESS_KEY in your environment.",
+      });
+    }
+
+    const query =
+      typeof req.query.query === "string" && req.query.query.trim()
+        ? req.query.query.trim()
+        : "nature";
+    const page =
+      typeof req.query.page === "string" ? parseInt(req.query.page, 10) || 1 : 1;
+    const perPage = 20;
+    const orientation =
+      typeof req.query.orientation === "string" && req.query.orientation
+        ? req.query.orientation
+        : undefined;
+    const color =
+      typeof req.query.color === "string" && req.query.color
+        ? req.query.color
+        : undefined;
+
+    const params = new URLSearchParams({
+      query,
+      page: String(page),
+      per_page: String(perPage),
+    });
+    if (orientation && ["landscape", "portrait", "squarish"].includes(orientation)) {
+      params.set("orientation", orientation === "square" ? "squarish" : orientation);
+    }
+    if (color) {
+      params.set("color", color);
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.unsplash.com/search/photos?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Client-ID ${accessKey}`,
+            "Accept-Version": "v1",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const body = await response.text();
+        console.error("Unsplash API error:", response.status, body);
+        return res.status(response.status).json({ error: "Unsplash API error" });
+      }
+
+      const data = (await response.json()) as {
+        total: number;
+        total_pages: number;
+        results: Array<{
+          id: string;
+          description?: string;
+          alt_description?: string;
+          urls: { regular: string; small: string; thumb: string };
+          links: { html: string; download_location: string };
+          user: {
+            name: string;
+            username: string;
+            links: { html: string };
+          };
+          width: number;
+          height: number;
+        }>;
+      };
+
+      const photos = data.results.map(photo => ({
+        id: photo.id,
+        url: photo.urls.regular,
+        thumb: photo.urls.small,
+        alt: photo.alt_description || photo.description || "Unsplash photo",
+        source: "Unsplash" as const,
+        sourceUrl: photo.links.html,
+        downloadLocation: photo.links.download_location,
+        photographer: photo.user.name,
+        photographerUsername: photo.user.username,
+        photographerUrl: `${photo.user.links.html}?utm_source=ms_studio&utm_medium=referral`,
+        unsplashUrl: `${photo.links.html}?utm_source=ms_studio&utm_medium=referral`,
+        license: "Unsplash License",
+        licenseUrl: "https://unsplash.com/license",
+        attributionRequired: false,
+        commercialUse: true,
+        orientation:
+          photo.width > photo.height
+            ? ("landscape" as const)
+            : photo.width < photo.height
+              ? ("portrait" as const)
+              : ("square" as const),
+      }));
+
+      return res.json({
+        photos,
+        total: data.total,
+        totalPages: data.total_pages,
+        page,
+        perPage,
+      });
+    } catch (err) {
+      console.error("Unsplash fetch error:", err);
+      return res.status(500).json({ error: "Failed to fetch from Unsplash" });
+    }
+  });
+
+  // Unsplash requires apps to trigger the download endpoint when a user
+  // "downloads" (uses) a photo. This endpoint proxies that trigger.
+  app.post("/api/unsplash/download-trigger", async (req, res) => {
+    const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+    if (!accessKey) return res.json({ ok: false });
+
+    const { downloadLocation } = req.body as { downloadLocation?: string };
+    if (!downloadLocation) return res.json({ ok: false });
+
+    try {
+      await fetch(downloadLocation, {
+        headers: { Authorization: `Client-ID ${accessKey}` },
+      });
+      return res.json({ ok: true });
+    } catch {
+      return res.json({ ok: false });
+    }
+  });
+
   app.get("/api/projects", async (req, res) => {
     const identity = getRequestIdentity(req) ?? getGuestIdentity(req);
     const user = await getOrCreateUser(req);

@@ -1,20 +1,26 @@
 import React from "react";
-import { renderWithOptionalSlot } from "@/lib/utils";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { cn } from "@/lib/utils";
 
 type TooltipSide = "top" | "bottom" | "left" | "right";
 type TooltipAlign = "start" | "center" | "end";
 
 export function TooltipProvider({
   children,
+  delayDuration = 150,
 }: {
   children: React.ReactNode;
   delayDuration?: number;
 }) {
-  return <>{children}</>;
+  return (
+    <TooltipPrimitive.Provider delayDuration={delayDuration}>
+      {children}
+    </TooltipPrimitive.Provider>
+  );
 }
 
 export function Tooltip({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <TooltipPrimitive.Root>{children}</TooltipPrimitive.Root>;
 }
 
 export function TooltipTrigger({
@@ -24,14 +30,17 @@ export function TooltipTrigger({
   children: React.ReactNode;
   asChild?: boolean;
 }) {
-  if (asChild) {
-    return renderWithOptionalSlot(children, {});
-  }
-  return <>{children}</>;
+  return (
+    <TooltipPrimitive.Trigger asChild={asChild}>
+      {children}
+    </TooltipPrimitive.Trigger>
+  );
 }
 
 export function TooltipContent({
   children,
+  side = "top",
+  align = "center",
   className,
 }: {
   children: React.ReactNode;
@@ -40,5 +49,19 @@ export function TooltipContent({
   className?: string;
   hidden?: boolean;
 }) {
-  return <span className={className ?? "sr-only"}>{children}</span>;
+  return (
+    <TooltipPrimitive.Portal>
+      <TooltipPrimitive.Content
+        side={side}
+        align={align}
+        sideOffset={6}
+        className={cn(
+          "z-50 overflow-hidden rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md",
+          className
+        )}
+      >
+        {children}
+      </TooltipPrimitive.Content>
+    </TooltipPrimitive.Portal>
+  );
 }

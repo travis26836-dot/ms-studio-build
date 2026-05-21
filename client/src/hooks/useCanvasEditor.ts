@@ -1244,6 +1244,58 @@ export function useCanvasEditor(
     [saveHistory]
   );
 
+  const setSelectedImageAsBackground = useCallback(async () => {
+    const canvas = fabricRef.current;
+    if (!canvas) {
+      return false;
+    }
+
+    const active = canvas.getActiveObject();
+    if (!active || active.type !== "image") {
+      return false;
+    }
+
+    const image = active as fabric.Image;
+
+    await new Promise<void>((resolve, reject) => {
+      image.clone((cloned: fabric.Object) => {
+        const backgroundImage = cloned as fabric.Image | undefined;
+        if (!backgroundImage) {
+          reject(new Error("Image could not be cloned for the background."));
+          return;
+        }
+
+        const imageWidth = backgroundImage.width || width;
+        const imageHeight = backgroundImage.height || height;
+        const scale = Math.max(width / imageWidth, height / imageHeight);
+
+        backgroundImage.set({
+          left: (width - imageWidth * scale) / 2,
+          top: (height - imageHeight * scale) / 2,
+          scaleX: scale,
+          scaleY: scale,
+          originX: "left",
+          originY: "top",
+          selectable: false,
+          evented: false,
+        });
+
+        isHistoryActionRef.current = true;
+        canvas.setBackgroundImage(backgroundImage, () => {
+          canvas.remove(image);
+          canvas.discardActiveObject();
+          canvas.renderAll();
+          isHistoryActionRef.current = false;
+          updateSelectionState();
+          saveHistory();
+          resolve();
+        });
+      });
+    });
+
+    return true;
+  }, [saveHistory, updateSelectionState, width, height]);
+
   const exportCanvas = useCallback(
     (format: "png" | "jpg" | "json", quality = 1) => {
       const canvas = fabricRef.current;
@@ -1368,6 +1420,7 @@ export function useCanvasEditor(
     alignObjects,
     updateActiveObject,
     setBackground,
+    setSelectedImageAsBackground,
     exportCanvas,
     loadFromJSON,
     getObjects,

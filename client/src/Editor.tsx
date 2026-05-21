@@ -85,10 +85,12 @@ import {
   RotateCcw,
   Eye,
   ExternalLink,
+  ChevronDown,
+  Camera,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { trpc } from "@/lib/trpc";
+import { trpc, type UnsplashPhoto } from "@/lib/trpc";
 import { CANVAS_PRESETS } from "@shared/designTypes";
 import AIChatPanel from "@/components/AIChatPanel";
 import DownloadMenu from "@/components/DownloadMenu";
@@ -137,6 +139,7 @@ const RECENT_ELEMENT_SEARCHES_KEY = "ms-studio.recentElementSearches.v1";
 const RECENT_ELEMENT_AI_PROMPTS_KEY = "ms-studio.recentElementAiPrompts.v1";
 const RECENT_STOCK_ASSETS_KEY = "ms-studio.recentStockAssets.v1";
 const BRAND_KIT_STORAGE_KEY = "ms-studio.brandKit.v1";
+const UPLOADS_STORAGE_KEY = "ms-studio.uploads.v1";
 const MAX_RECENT_AI_ITEMS = 6;
 
 function applyNodeStyles(
@@ -519,6 +522,12 @@ export default function Editor({
   const hasCompletedInitialLoadRef = useRef(false);
   const [isCanvasReady, setIsCanvasReady] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
+  const [canvasContextMenu, setCanvasContextMenu] = useState<{
+    open: boolean;
+    x: number;
+    y: number;
+  }>({ open: false, x: 0, y: 0 });
+  const canvasContextMenuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const persistDraftOnUnmountRef = useRef<() => void>(() => {});
   const { isAuthenticated } = useAuth();
@@ -541,6 +550,11 @@ export default function Editor({
   editorRef.current = editor;
   const currentProjectIdRef = useRef(currentProjectId);
   currentProjectIdRef.current = currentProjectId;
+  const closeCanvasContextMenu = useCallback(() => {
+    setCanvasContextMenu(current =>
+      current.open ? { ...current, open: false } : current
+    );
+  }, []);
 
   // Initialize canvas — run once on mount only
   useEffect(() => {
@@ -789,6 +803,84 @@ export default function Editor({
     projectName,
     sourceFingerprint,
   ]);
+
+  useEffect(() => {
+    if (!canvasContextMenu.open) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        canvasContextMenuRef.current?.contains(event.target as Node | null)
+      ) {
+        return;
+      }
+      closeCanvasContextMenu();
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeCanvasContextMenu();
+      }
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [canvasContextMenu.open, closeCanvasContextMenu]);
+
+  const handleCanvasContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+
+      const canvas = editor.fabricRef.current;
+      if (!canvas) {
+        closeCanvasContextMenu();
+        return;
+      }
+
+      const target = canvas.findTarget(
+        event.nativeEvent as unknown as Event,
+        false
+      ) as { type?: string } | undefined;
+
+      if (!target || target.type !== "image") {
+        closeCanvasContextMenu();
+        return;
+      }
+
+      canvas.setActiveObject(target as never);
+      canvas.renderAll();
+
+      setCanvasContextMenu({
+        open: true,
+        x: event.clientX,
+        y: event.clientY,
+      });
+    },
+    [closeCanvasContextMenu, editor.fabricRef]
+  );
+
+  const handleMakeBackgroundFromContextMenu = useCallback(async () => {
+    closeCanvasContextMenu();
+
+    try {
+      const didApply = await editor.setSelectedImageAsBackground();
+      if (!didApply) {
+        toast.error("Right-click an image to make it the background.");
+        return;
+      }
+
+      toast.success("Image set as the canvas background.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to set background.";
+      toast.error(message);
+    }
+  }, [closeCanvasContextMenu, editor]);
 
   useEffect(() => {
     if (!isCanvasReady || !hasCompletedInitialLoadRef.current || !isAuthenticated) {
@@ -1213,16 +1305,16 @@ export default function Editor({
             onClick={() => togglePanel("brand")}
           />
           <SidebarIcon
-            icon={Sparkles}
-            label="AI Tools"
-            active={activePanel === "ai"}
-            onClick={() => togglePanel("ai")}
-          />
-          <SidebarIcon
             icon={Layers}
             label="Layers"
             active={activePanel === "layers"}
             onClick={() => togglePanel("layers")}
+          />
+          <SidebarIcon
+            icon={Sparkles}
+            label="AI Tools"
+            active={activePanel === "ai"}
+            onClick={() => togglePanel("ai")}
           />
         </div>
 
@@ -1247,6 +1339,8 @@ export default function Editor({
         <div
           ref={canvasContainerRef}
           className={`flex-1 overflow-auto relative ${styles.panelBackground}`}
+          onContextMenu={handleCanvasContextMenu}
+          onScroll={closeCanvasContextMenu}
         >
           <div className="min-h-full min-w-full flex items-center justify-center p-10">
             {/* Outer div sizes to visual (zoomed) dimensions for layout and shadow */}
@@ -1278,6 +1372,28 @@ export default function Editor({
               </div>
             </div>
           </div>
+
+          {canvasContextMenu.open && (
+            <div
+              ref={node => {
+                canvasContextMenuRef.current = node;
+                applyNodeStyles(node, {
+                  left: `${canvasContextMenu.x}px`,
+                  top: `${canvasContextMenu.y}px`,
+                });
+              }}
+              className="fixed z-50 min-w-[220px] rounded-md border border-border bg-popover p-1 shadow-md"
+              onContextMenu={event => event.preventDefault()}
+            >
+              <button
+                type="button"
+                className="flex w-full items-center rounded-sm px-2 py-1.5 text-left text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground"
+                onClick={() => void handleMakeBackgroundFromContextMenu()}
+              >
+                Make Image Background
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right Properties Panel */}
@@ -1434,7 +1550,11 @@ function SidePanel({
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
               <Input
-                placeholder={isAiMode ? "Describe what to create..." : "Search..."}
+                placeholder={
+                  isAiMode
+                    ? "WHAT CAN WE HELP YOU MAKE TODAY?"
+                    : "SEARCH FOR ANYTHING"
+                }
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="pl-8 h-8 text-xs bg-secondary border-border"
@@ -2311,15 +2431,15 @@ function ElementsPanel({
 
   return (
     <div className="space-y-3">
-      {aiMode ? (
-        <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/10 p-3">
+      {aiMode && (
+        <div className="flex gap-1.5">
           <select
             title="AI generation scope"
             value={aiScope}
             onChange={event =>
               setAiScope(event.target.value as (typeof ELEMENT_AI_SCOPES)[number])
             }
-            className="h-8 w-full rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
+            className="h-8 flex-1 rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
           >
             {ELEMENT_AI_SCOPES.map(scope => (
               <option key={scope} value={scope}>
@@ -2329,54 +2449,19 @@ function ElementsPanel({
           </select>
           <Button
             size="sm"
-            className="h-8 w-full text-xs"
+            className="h-8 px-2 text-xs shrink-0"
             disabled={!searchQuery.trim() || isGeneratingElement}
             onClick={handleGenerateElement}
           >
             {isGeneratingElement ? (
-              <>
-                <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Generating...
-              </>
+              <Loader2 className="h-3 w-3 animate-spin" />
             ) : (
-              <>
-                <Sparkles className="mr-1 h-3 w-3" /> Generate Element
-              </>
+              <Sparkles className="h-3 w-3" />
             )}
           </Button>
-          <p className="text-[10px] text-muted-foreground">
-            {selectedScopeCost > 0
-              ? aiCreditLabel(selectedScopeCost)
-              : "No AI credits charged until provider generation is enabled"}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {RECOMMENDED_ELEMENT_PROMPTS.map(prompt => (
-              <button
-                key={prompt}
-                type="button"
-                className="rounded-full bg-background/70 px-2 py-1 text-[10px] text-card-foreground hover:bg-background"
-                onClick={() => setSearchQuery(prompt)}
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-          {recentAiPrompts.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 border-t border-primary/20 pt-2">
-              {recentAiPrompts.map(prompt => (
-                <button
-                  key={prompt}
-                  type="button"
-                  className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground hover:text-card-foreground"
-                  onClick={() => setSearchQuery(prompt)}
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
-      ) : (
-        recentSearches.length > 0 && (
+      )}
+      {recentSearches.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {recentSearches.map(query => (
               <button
@@ -2389,8 +2474,7 @@ function ElementsPanel({
               </button>
             ))}
           </div>
-        )
-      )}
+        )}
       {/* Category tabs */}
       <div
         className="flex gap-1 overflow-x-auto pb-1"
@@ -2888,193 +2972,265 @@ function PhotosPanel({
   editor: ReturnType<typeof useCanvasEditor>;
   searchQuery: string;
 }) {
-  const [query, setQuery] = useState("");
-  const [mediaType, setMediaType] = useState<"image" | "video">("image");
-  const [category, setCategory] = useState("");
+  const [query, setQuery] = useState(searchQuery || "");
+  const [committedQuery, setCommittedQuery] = useState(searchQuery || "nature");
   const [orientation, setOrientation] = useState("");
-  const [color, setColor] = useState("");
-  const [license, setLicense] = useState("");
-  const [recentOnly, setRecentOnly] = useState(false);
-  const [recentStockAssets, setRecentStockAssets] = useState<string[]>(() =>
-    readRecentItems(RECENT_STOCK_ASSETS_KEY)
-  );
-  const effectiveQuery = searchQuery || query;
-  const {
-    data: photos,
-    isLoading,
-    refetch,
-  } = trpc.assets.searchPhotos.useQuery(
-    {
-      query: effectiveQuery || "nature",
-      mediaType,
-      category: category || undefined,
-      orientation: orientation || undefined,
-      color: color || undefined,
-      license: license || undefined,
-      recent: recentOnly,
-    },
-    { enabled: true }
-  );
-  const visiblePhotos = useMemo(() => {
-    const items = photos || [];
-    if (!recentOnly) return items;
-    return items.filter((photo: any) => recentStockAssets.includes(photo.url));
-  }, [photos, recentOnly, recentStockAssets]);
+  const [page, setPage] = useState(1);
+  const [allPhotos, setAllPhotos] = useState<UnsplashPhoto[]>([]);
+  const [photoAiMode, setPhotoAiMode] = useState(false);
+  const [photoAiPrompt, setPhotoAiPrompt] = useState("");
+  const generatePhotoMut = trpc.ai.generateImage.useMutation();
+  const triggerDownload = trpc.assets.triggerUnsplashDownload.useMutation();
 
-  const handleSearch = () => {
-    if (query.trim()) refetch();
+  const handleGeneratePhoto = async () => {
+    if (!photoAiPrompt.trim() || generatePhotoMut.isPending) return;
+    toast.info(`Generating AI photo. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`);
+    try {
+      const result = await generatePhotoMut.mutateAsync({ prompt: photoAiPrompt });
+      if (result.url) {
+        await editor.addImage(result.url);
+        toast.success("AI photo added to canvas!");
+        setPhotoAiPrompt("");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Photo generation failed.");
+    }
   };
+
+  // When the query input changes, reset to page 1 and clear accumulated photos
+  const handleSearch = () => {
+    const trimmed = query.trim() || "nature";
+    setCommittedQuery(trimmed);
+    setPage(1);
+    setAllPhotos([]);
+  };
+
+  const {
+    data: unsplashResult,
+    isLoading,
+  } = trpc.assets.searchUnsplash.useQuery(
+    { query: committedQuery, page, orientation: orientation || undefined },
+    { enabled: !photoAiMode }
+  );
+
+  // Accumulate pages — reset when query/orientation changes (page resets to 1)
+  useEffect(() => {
+    if (!unsplashResult?.photos) return;
+    if (page === 1) {
+      setAllPhotos(unsplashResult.photos);
+    } else {
+      setAllPhotos(prev => [...prev, ...unsplashResult.photos]);
+    }
+  }, [unsplashResult, page]);
+
+  // Sync external searchQuery prop into our local query state
+  useEffect(() => {
+    if (searchQuery && searchQuery !== committedQuery) {
+      setQuery(searchQuery);
+      setCommittedQuery(searchQuery);
+      setPage(1);
+      setAllPhotos([]);
+    }
+  }, [searchQuery]);
+
+  const hasMore =
+    unsplashResult != null && page < (unsplashResult.totalPages ?? 1);
+
+  const handleAddPhoto = async (photo: UnsplashPhoto) => {
+    await editor.addImage(photo.url);
+    toast.success("Photo added to canvas");
+    triggerDownload.mutateAsync(photo.downloadLocation).catch(() => {/* non-fatal */});
+  };
+
+  const QUICK_TOPICS = ["Nature", "Business", "Technology", "People", "Food", "Abstract", "Architecture", "Travel"];
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-1.5">
-        <Input
-          placeholder="Search free photos..."
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && handleSearch()}
-          className="h-8 text-xs bg-secondary"
-        />
-        <Button size="sm" className="h-8 px-2" onClick={handleSearch}>
-          <Search className="w-3.5 h-3.5" />
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-2 gap-1.5">
-        <select
-          title="Media type"
-          value={mediaType}
-          onChange={event => setMediaType(event.target.value as "image" | "video")}
-          className="h-8 rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
-        >
-          <option value="image">Images</option>
-          <option value="video">Videos</option>
-        </select>
-        <select
-          title="Category"
-          value={category}
-          onChange={event => setCategory(event.target.value)}
-          className="h-8 rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
-        >
-          <option value="">All categories</option>
-          <option value="nature">Nature</option>
-          <option value="business">Business</option>
-          <option value="technology">Technology</option>
-          <option value="food">Food</option>
-          <option value="abstract">Abstract</option>
-          <option value="product">Product</option>
-        </select>
-        <select
-          title="Orientation"
-          value={orientation}
-          onChange={event => setOrientation(event.target.value)}
-          className="h-8 rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
-        >
-          <option value="">Any orientation</option>
-          <option value="landscape">Landscape</option>
-          <option value="portrait">Portrait</option>
-          <option value="square">Square</option>
-        </select>
-        <select
-          title="License"
-          value={license}
-          onChange={event => setLicense(event.target.value)}
-          className="h-8 rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
-        >
-          <option value="">Any license</option>
-          <option value="Unsplash">Unsplash</option>
-          <option value="Pexels">Pexels</option>
-        </select>
-      </div>
-
-      <div className="flex items-center gap-1.5">
-        <Input
-          placeholder="Color/style"
-          value={color}
-          onChange={event => setColor(event.target.value)}
-          className="h-8 text-xs bg-secondary"
-        />
-        <Button
-          size="sm"
-          variant={recentOnly ? "default" : "secondary"}
-          className="h-8 px-2 text-xs"
-          onClick={() => setRecentOnly(value => !value)}
-        >
-          Recent
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap gap-1">
-        {["Nature", "Business", "Technology", "People", "Food", "Abstract"].map(
-          tag => (
-            <button
-              key={tag}
-              onClick={() => {
-                setQuery(tag.toLowerCase());
-                setCategory(tag.toLowerCase());
-              }}
-              className="px-2 py-0.5 rounded-full bg-secondary text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] text-muted-foreground font-medium">
+          {photoAiMode ? "AI Generation" : "Free Photos · Unsplash"}
+        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              size="icon"
+              variant={photoAiMode ? "default" : "secondary"}
+              className="h-7 w-7"
+              onClick={() => setPhotoAiMode(v => !v)}
             >
-              {tag}
-            </button>
-          )
-        )}
+              <Sparkles className="h-3.5 w-3.5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">
+            {photoAiMode ? "Switch to Unsplash search" : "Switch to AI generation"}
+          </TooltipContent>
+        </Tooltip>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        {mediaType === "video"
-          ? "Click a video result to open the licensed source page"
-          : "Click a photo to add it to your design"}
-      </p>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      {/* AI generation mode */}
+      {photoAiMode && (
+        <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/10 p-3">
+          <p className="text-[10px] text-muted-foreground">{aiCreditLabel(AI_CREDIT_ESTIMATES.image)}</p>
+          <textarea
+            value={photoAiPrompt}
+            onChange={e => setPhotoAiPrompt(e.target.value)}
+            placeholder="Describe the photo you want to generate..."
+            className="w-full h-16 text-xs bg-secondary rounded-md border border-border p-2 resize-none text-card-foreground placeholder:text-muted-foreground"
+          />
+          <Button
+            size="sm"
+            className="w-full h-8 text-xs"
+            disabled={!photoAiPrompt.trim() || generatePhotoMut.isPending}
+            onClick={handleGeneratePhoto}
+          >
+            {generatePhotoMut.isPending ? (
+              <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Generating...</>
+            ) : (
+              <><Sparkles className="mr-1 h-3 w-3" /> Generate Photo</>
+            )}
+          </Button>
         </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-2">
-          {visiblePhotos.map((photo: any, i: number) => (
-            <button
-              key={i}
-              onClick={() => {
-                setRecentStockAssets(
-                  rememberRecentItem(RECENT_STOCK_ASSETS_KEY, photo.url)
-                );
-                if (photo.mediaType === "video") {
-                  window.open(photo.sourceUrl || photo.url, "_blank", "noopener,noreferrer");
-                  return;
-                }
+      )}
 
-                editor.addImage(photo.url);
-                toast.success("Photo added to canvas");
-              }}
-              className="aspect-square rounded-lg overflow-hidden border border-border hover:ring-2 hover:ring-primary transition-all group relative"
+      {/* Unsplash search mode */}
+      {!photoAiMode && (
+        <>
+          {/* Search bar */}
+          <div className="flex gap-1.5">
+            <Input
+              placeholder="Search millions of free photos..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSearch()}
+              className="h-8 text-xs bg-secondary"
+            />
+            <Button size="sm" className="h-8 px-2" onClick={handleSearch}>
+              <Search className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+
+          {/* Orientation filter */}
+          <select
+            title="Orientation"
+            value={orientation}
+            onChange={e => {
+              setOrientation(e.target.value);
+              setPage(1);
+              setAllPhotos([]);
+            }}
+            className="w-full h-8 rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
+          >
+            <option value="">Any orientation</option>
+            <option value="landscape">Landscape</option>
+            <option value="portrait">Portrait</option>
+            <option value="squarish">Square</option>
+          </select>
+
+          {/* Quick topic chips */}
+          <div className="flex flex-wrap gap-1">
+            {QUICK_TOPICS.map(tag => (
+              <button
+                key={tag}
+                onClick={() => {
+                  setQuery(tag.toLowerCase());
+                  setCommittedQuery(tag.toLowerCase());
+                  setPage(1);
+                  setAllPhotos([]);
+                }}
+                className="px-2 py-0.5 rounded-full bg-secondary text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+
+          <p className="text-[10px] text-muted-foreground">
+            Click a photo to add it to your design
+          </p>
+
+          {/* Photo grid */}
+          {isLoading && allPhotos.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {allPhotos.map((photo, i) => (
+                <button
+                  key={`${photo.id}-${i}`}
+                  onClick={() => handleAddPhoto(photo)}
+                  className="aspect-square rounded-lg overflow-hidden border border-border hover:ring-2 hover:ring-primary transition-all group relative"
+                >
+                  <img
+                    src={photo.thumb}
+                    alt={photo.alt}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
+                  {/* Photographer attribution — shown on hover, required by Unsplash */}
+                  <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform bg-black/75 px-1.5 py-1 text-left">
+                    <div className="flex items-center gap-1">
+                      <Camera className="h-2.5 w-2.5 text-white/70 shrink-0" />
+                      <a
+                        href={photo.photographerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="truncate text-[9px] text-white/90 hover:text-white hover:underline"
+                      >
+                        {photo.photographer}
+                      </a>
+                    </div>
+                    <a
+                      href={photo.unsplashUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      className="text-[8px] text-white/60 hover:text-white/90 hover:underline"
+                    >
+                      Unsplash
+                    </a>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Load more */}
+          {hasMore && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-full h-8 text-xs"
+              disabled={isLoading}
+              onClick={() => setPage(p => p + 1)}
             >
-              <img
-                src={photo.thumb}
-                alt={photo.alt}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-              <div className="absolute bottom-0 left-0 right-0 bg-black/65 px-1.5 py-1 text-left">
-                <p className="truncate text-[9px] text-white">
-                  {photo.source ?? "Stock"} · {photo.license ?? "Licensed"}
-                </p>
-                <p className="truncate text-[8px] text-white/75">
-                  {photo.attributionRequired
-                    ? "Attribution required"
-                    : "Attribution not required"}
-                </p>
-              </div>
-              {photo.mediaType === "video" && (
-                <div className="absolute right-1.5 top-1.5 rounded bg-black/70 p-1 text-white">
-                  <ExternalLink className="h-3 w-3" />
-                </div>
+              {isLoading ? (
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              ) : (
+                <ChevronDown className="mr-1 h-3 w-3" />
               )}
-            </button>
-          ))}
-        </div>
+              Load more photos
+            </Button>
+          )}
+
+          {/* Unsplash branding — required by Unsplash API guidelines */}
+          <div className="flex items-center justify-center gap-1.5 pt-1 border-t border-border">
+            <span className="text-[9px] text-muted-foreground">Photos by</span>
+            <a
+              href="https://unsplash.com/?utm_source=ms_studio&utm_medium=referral"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[9px] font-medium text-foreground hover:underline"
+            >
+              Unsplash
+            </a>
+            <span className="text-[9px] text-muted-foreground">· Free to use</span>
+          </div>
+        </>
       )}
     </div>
   );
@@ -3086,9 +3242,14 @@ function UploadsPanel({
 }: {
   editor: ReturnType<typeof useCanvasEditor>;
 }) {
-  const [uploads, setUploads] = useState<Array<{ url: string; name: string }>>(
-    []
-  );
+  const [uploads, setUploads] = useState<Array<{ url: string; name: string }>>(() => {
+    try {
+      const stored = window.localStorage.getItem(UPLOADS_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const [uploading, setUploading] = useState(false);
 
   const handleFileUpload = useCallback(
@@ -3101,7 +3262,13 @@ function UploadsPanel({
         const reader = new FileReader();
         reader.onload = ev => {
           const url = ev.target?.result as string;
-          setUploads(prev => [...prev, { url, name: file.name }]);
+          setUploads(prev => {
+            const next = [...prev, { url, name: file.name }];
+            try {
+              window.localStorage.setItem(UPLOADS_STORAGE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
           editor.addImage(url);
           toast.success(`Added ${file.name}`);
           setUploading(false);
@@ -3180,6 +3347,8 @@ function BrandPanel({
     () => readBrandKitSnapshot()?.logoCount ?? 0
   );
   const [newColor, setNewColor] = useState("#6366f1");
+  const [logoAiPrompt, setLogoAiPrompt] = useState("");
+  const generateLogoMut = trpc.ai.generateImage.useMutation();
 
   useEffect(() => {
     writeBrandKitSnapshot({
@@ -3303,6 +3472,47 @@ function BrandPanel({
           />
         </label>
       </div>
+
+      <Separator />
+
+      <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 space-y-2">
+        <p className="text-xs font-medium text-primary flex items-center gap-1">
+          <Sparkles className="w-3 h-3" /> AI Logo Generator
+        </p>
+        <p className="text-[10px] text-muted-foreground">{aiCreditLabel(AI_CREDIT_ESTIMATES.image)}</p>
+        <textarea
+          value={logoAiPrompt}
+          onChange={e => setLogoAiPrompt(e.target.value)}
+          placeholder="Use the power of AI to build your LOGO!"
+          className="w-full h-16 text-xs bg-secondary rounded-md border border-border p-2 resize-none text-card-foreground placeholder:text-muted-foreground"
+        />
+        <Button
+          size="sm"
+          className="w-full h-7 text-xs"
+          disabled={!logoAiPrompt.trim() || generateLogoMut.isPending}
+          onClick={async () => {
+            if (!logoAiPrompt.trim()) return;
+            toast.info(`Generating AI logo. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`);
+            try {
+              const result = await generateLogoMut.mutateAsync({ prompt: logoAiPrompt });
+              if (result.url) {
+                await editor.addImage(result.url);
+                setLogoCount(c => c + 1);
+                toast.success("AI logo added to canvas!");
+                setLogoAiPrompt("");
+              }
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Logo generation failed.");
+            }
+          }}
+        >
+          {generateLogoMut.isPending ? (
+            <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Generating...</>
+          ) : (
+            <><Sparkles className="w-3 h-3 mr-1" /> Generate Logo</>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -3318,10 +3528,8 @@ function AIPanel({
   canvasHeight: number;
 }) {
   const [aiPrompt, setAiPrompt] = useState("");
-  const [bgPrompt, setBgPrompt] = useState("");
 
   const generateImageMut = trpc.ai.generateImage.useMutation();
-  const generateBgMut = trpc.ai.generateBackground.useMutation();
   const suggestLayoutMut = trpc.ai.suggestLayout.useMutation();
 
   const handleGenerateElement = async () => {
@@ -3339,27 +3547,6 @@ function AIPanel({
         err instanceof Error
           ? err.message
           : "Generation failed. Please try again.";
-      toast.error(msg);
-    }
-  };
-
-  const handleGenerateBackground = async () => {
-    if (!bgPrompt.trim()) return;
-    toast.info(`Generating background. ${aiCreditLabel(AI_CREDIT_ESTIMATES.background)}.`);
-    try {
-      const result = await generateBgMut.mutateAsync({
-        prompt: bgPrompt,
-        width: canvasWidth,
-        height: canvasHeight,
-      });
-      if (result.url) {
-        await editor.addImage(result.url);
-        toast.success("AI background added!");
-        setBgPrompt("");
-      }
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Background generation failed.";
       toast.error(msg);
     }
   };
@@ -3421,39 +3608,6 @@ function AIPanel({
           ) : (
             <>
               <Sparkles className="w-3 h-3 mr-1" /> Generate Element
-            </>
-          )}
-        </Button>
-      </div>
-
-      {/* AI Background */}
-      <div className="p-3 rounded-lg bg-secondary border border-border">
-        <p className="text-xs font-medium text-card-foreground mb-1.5 flex items-center gap-1">
-          <Paintbrush className="w-3 h-3" /> AI Background
-        </p>
-        <p className="mb-1.5 text-[10px] text-muted-foreground">
-          {aiCreditLabel(AI_CREDIT_ESTIMATES.background)}
-        </p>
-        <textarea
-          value={bgPrompt}
-          onChange={e => setBgPrompt(e.target.value)}
-          placeholder="Describe a background..."
-          className="w-full h-12 text-xs bg-background rounded-md border border-border p-2 resize-none text-card-foreground placeholder:text-muted-foreground"
-        />
-        <Button
-          size="sm"
-          variant="secondary"
-          className="w-full mt-1.5 h-7 text-xs"
-          disabled={!bgPrompt.trim() || generateBgMut.isPending}
-          onClick={handleGenerateBackground}
-        >
-          {generateBgMut.isPending ? (
-            <>
-              <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Generating...
-            </>
-          ) : (
-            <>
-              <Wand2 className="w-3 h-3 mr-1" /> Generate Background
             </>
           )}
         </Button>

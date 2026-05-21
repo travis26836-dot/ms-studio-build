@@ -102,6 +102,7 @@ type SidebarPanel =
   | "elements"
   | "text"
   | "uploads"
+  | "library"
   | "photos"
   | "ai"
   | "brand"
@@ -137,10 +138,12 @@ const RECENT_TEMPLATE_SEARCHES_KEY = "ms-studio.recentTemplateSearches.v1";
 const RECENT_TEMPLATE_AI_PROMPTS_KEY = "ms-studio.recentTemplateAiPrompts.v1";
 const RECENT_ELEMENT_SEARCHES_KEY = "ms-studio.recentElementSearches.v1";
 const RECENT_ELEMENT_AI_PROMPTS_KEY = "ms-studio.recentElementAiPrompts.v1";
+const RECENT_USED_ELEMENTS_KEY = "ms-studio.recentUsedElements.v1";
 const RECENT_STOCK_ASSETS_KEY = "ms-studio.recentStockAssets.v1";
 const BRAND_KIT_STORAGE_KEY = "ms-studio.brandKit.v1";
 const UPLOADS_STORAGE_KEY = "ms-studio.uploads.v1";
 const MAX_RECENT_AI_ITEMS = 6;
+const MAX_RECENT_USED_ELEMENTS = 10;
 
 function applyNodeStyles(
   node: HTMLElement | SVGElement | null,
@@ -235,6 +238,213 @@ const RECOMMENDED_ELEMENT_PROMPTS = [
   "Hero image accent",
   "Geometric shape cluster",
 ];
+
+const POPULAR_ELEMENT_SEARCHES = [
+  "Arrows",
+  "Shapes",
+  "Icons",
+  "Frames",
+  "Banners",
+  "Speech bubbles",
+  "Clouds",
+  "Hearts",
+  "Gradient blobs",
+  "Dividers",
+  "Ribbons",
+  "Stickers",
+  "Badges",
+  "Sparkles",
+  "Stars",
+  "Flowchart",
+  "Callout",
+  "CTA button",
+  "Chart",
+  "Abstract",
+  "Neon",
+  "Modern",
+  "Minimal",
+  "Business",
+  "Social media",
+];
+
+type RecentUsedElement = {
+  label: string;
+  query: string;
+  categoryId: string;
+};
+
+type SmartElementRecommendation = {
+  label: string;
+  query: string;
+  categoryId: string;
+  reason: string;
+};
+
+function readRecentUsedElements(): RecentUsedElement[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const raw = window.localStorage.getItem(RECENT_USED_ELEMENTS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.filter(
+      (item): item is RecentUsedElement =>
+        typeof item === "object" &&
+        item !== null &&
+        typeof (item as RecentUsedElement).label === "string" &&
+        typeof (item as RecentUsedElement).query === "string" &&
+        typeof (item as RecentUsedElement).categoryId === "string"
+    );
+  } catch {
+    return [];
+  }
+}
+
+function rememberRecentUsedElement(value: RecentUsedElement): RecentUsedElement[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  const normalizedLabel = value.label.trim();
+  const normalizedQuery = value.query.trim();
+  const normalizedCategory = value.categoryId.trim();
+  if (!normalizedLabel || !normalizedQuery || !normalizedCategory) {
+    return readRecentUsedElements();
+  }
+
+  const next: RecentUsedElement[] = [
+    {
+      label: normalizedLabel,
+      query: normalizedQuery,
+      categoryId: normalizedCategory,
+    },
+    ...readRecentUsedElements().filter(
+      item =>
+        !(
+          item.label.toLowerCase() === normalizedLabel.toLowerCase() &&
+          item.categoryId.toLowerCase() === normalizedCategory.toLowerCase()
+        )
+    ),
+  ].slice(0, MAX_RECENT_USED_ELEMENTS);
+
+  try {
+    window.localStorage.setItem(RECENT_USED_ELEMENTS_KEY, JSON.stringify(next));
+  } catch {
+    // Recent usage improves UX only; failures should not block edits.
+  }
+
+  return next;
+}
+
+function getSmartElementRecommendations(
+  objects: Array<{ type?: string; fill?: unknown; stroke?: unknown }>
+): SmartElementRecommendation[] {
+  let textCount = 0;
+  let imageCount = 0;
+  let shapeCount = 0;
+  let lineCount = 0;
+  const colorCounts = new Map<string, number>();
+
+  for (const object of objects) {
+    const type = String(object.type || "").toLowerCase();
+    if (!type) continue;
+
+    if (type.includes("text")) textCount += 1;
+    if (type.includes("image")) imageCount += 1;
+    if (type.includes("line")) lineCount += 1;
+    if (
+      type.includes("rect") ||
+      type.includes("circle") ||
+      type.includes("triangle") ||
+      type.includes("polygon") ||
+      type.includes("ellipse") ||
+      type.includes("path")
+    ) {
+      shapeCount += 1;
+    }
+
+    const fill = typeof object.fill === "string" ? object.fill : "";
+    const stroke = typeof object.stroke === "string" ? object.stroke : "";
+    const color =
+      fill.startsWith("#") && fill.length >= 4
+        ? fill.toLowerCase()
+        : stroke.startsWith("#") && stroke.length >= 4
+          ? stroke.toLowerCase()
+          : "";
+    if (color) {
+      colorCounts.set(color, (colorCounts.get(color) ?? 0) + 1);
+    }
+  }
+
+  const dominantColor =
+    Array.from(colorCounts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
+
+  if (objects.length === 0) {
+    return [
+      {
+        label: "Starter geometry",
+        query: "Geometric shape cluster",
+        categoryId: "basic",
+        reason: "Start with flexible foundational shapes",
+      },
+      {
+        label: "Modern arrows",
+        query: "Curved arrows",
+        categoryId: "arrows",
+        reason: "Great for guiding attention and flow",
+      },
+      {
+        label: "Speech callouts",
+        query: "Speech bubble set",
+        categoryId: "bubbles",
+        reason: "Useful for annotation and storytelling",
+      },
+    ];
+  }
+
+  const picks: SmartElementRecommendation[] = [];
+
+  if (textCount >= 2) {
+    picks.push({
+      label: "Text emphasis",
+      query: "Callout bubble",
+      categoryId: "bubbles",
+      reason: "Your layout is text-heavy; callouts add contrast",
+    });
+  }
+
+  if (shapeCount >= 3) {
+    picks.push({
+      label: "Organic counter-shape",
+      query: "Cloud shape",
+      categoryId: "clouds",
+      reason: "Break up rigid geometry with softer forms",
+    });
+  }
+
+  if (lineCount >= 2) {
+    picks.push({
+      label: "Directional accents",
+      query: "Arrow set",
+      categoryId: "arrows",
+      reason: "Line-dominant canvas benefits from arrows",
+    });
+  }
+
+  if (dominantColor) {
+    picks.push({
+      label: "Palette-matched accent",
+      query: `${dominantColor} gradient blob`,
+      categoryId: "basic",
+      reason: `Extends your dominant color ${dominantColor}`,
+    });
+  }
+
+  return picks.slice(0, 6);
+}
 const AUTOSAVE_INTERVAL_MS = 2000;
 
 function readRecentItems(key: string): string[] {
@@ -1316,6 +1526,13 @@ export default function Editor({
             active={activePanel === "ai"}
             onClick={() => togglePanel("ai")}
           />
+          <div className="mt-auto h-[132px] shrink-0" aria-hidden="true" />
+          <SidebarIcon
+            icon={Upload}
+            label="Library"
+            active={activePanel === "library"}
+            onClick={() => togglePanel("library")}
+          />
         </div>
 
         {/* Expandable Side Panel */}
@@ -1527,6 +1744,7 @@ function SidePanel({
     text: "Text",
     photos: "Photos",
     uploads: "Uploads",
+    library: "Library",
     brand: "Brand Kit",
     ai: "AI Tools",
     layers: "Layers",
@@ -1545,7 +1763,7 @@ function SidePanel({
         >
           {panelTitles[panel || ""]}
         </h3>
-        {panel !== "layers" && panel !== "brand" && (
+        {panel !== "layers" && panel !== "brand" && panel !== "library" && (
           <div className="flex gap-1.5">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
@@ -1611,6 +1829,7 @@ function SidePanel({
             <PhotosPanel editor={editor} searchQuery={searchQuery} />
           )}
           {panel === "uploads" && <UploadsPanel editor={editor} />}
+          {panel === "library" && <UploadsPanel editor={editor} />}
           {panel === "brand" && <BrandPanel editor={editor} />}
           {panel === "ai" && (
             <AIPanel
@@ -2285,17 +2504,60 @@ function ElementsPanel({
   const [recentAiPrompts, setRecentAiPrompts] = useState<string[]>(() =>
     readRecentItems(RECENT_ELEMENT_AI_PROMPTS_KEY)
   );
+  const [recentUsedElements, setRecentUsedElements] = useState<
+    RecentUsedElement[]
+  >(() => readRecentUsedElements());
 
   const categories = [
-    { id: "basic", label: "Basic" },
-    { id: "polygons", label: "Polygons" },
-    { id: "stars", label: "Stars" },
-    { id: "arrows", label: "Arrows" },
-    { id: "bubbles", label: "Bubbles" },
-    { id: "clouds", label: "Clouds" },
-    { id: "hearts", label: "Hearts" },
-    { id: "banners", label: "Banners" },
-  ];
+    {
+      id: "basic",
+      label: "Basic",
+      icon: Shapes,
+      tags: ["shape", "line", "gradient", "core"],
+    },
+    {
+      id: "polygons",
+      label: "Polygons",
+      icon: Hexagon,
+      tags: ["geometry", "polygon", "angles"],
+    },
+    {
+      id: "stars",
+      label: "Stars",
+      icon: Star,
+      tags: ["star", "burst", "badge"],
+    },
+    {
+      id: "arrows",
+      label: "Arrows",
+      icon: ArrowDown,
+      tags: ["flow", "direction", "pointer"],
+    },
+    {
+      id: "bubbles",
+      label: "Bubbles",
+      icon: MessageSquare,
+      tags: ["speech", "chat", "callout"],
+    },
+    {
+      id: "clouds",
+      label: "Clouds",
+      icon: ImageIcon,
+      tags: ["organic", "soft", "background"],
+    },
+    {
+      id: "hearts",
+      label: "Hearts",
+      icon: Heart,
+      tags: ["love", "emoji", "reaction"],
+    },
+    {
+      id: "banners",
+      label: "Banners",
+      icon: LayoutTemplate,
+      tags: ["label", "ribbon", "cta"],
+    },
+  ] as const;
 
   const quickColors = [
     "#6366f1",
@@ -2330,9 +2592,13 @@ function ElementsPanel({
     ? categories.filter(
         category =>
           category.id.includes(normalizedSearch) ||
-          category.label.toLowerCase().includes(normalizedSearch)
+          category.label.toLowerCase().includes(normalizedSearch) ||
+          category.tags.some(tag => tag.includes(normalizedSearch))
       )
     : categories;
+  const smartRecommendations = getSmartElementRecommendations(
+    editor.getObjects() as Array<{ type?: string; fill?: unknown; stroke?: unknown }>
+  );
 
   useEffect(() => {
     if (!aiMode && searchQuery.trim().length > 2) {
@@ -2341,6 +2607,16 @@ function ElementsPanel({
       );
     }
   }, [aiMode, searchQuery]);
+
+  const useElement = (
+    entry: RecentUsedElement,
+    action: () => void | Promise<void>
+  ) => {
+    Promise.resolve(action()).catch(() => {
+      // Keep interaction resilient even if an add action fails.
+    });
+    setRecentUsedElements(rememberRecentUsedElement(entry));
+  };
 
   const handleGenerateElement = async () => {
     const prompt = searchQuery.trim();
@@ -2461,20 +2737,120 @@ function ElementsPanel({
           </Button>
         </div>
       )}
-      {recentSearches.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {recentSearches.map(query => (
-              <button
-                key={query}
-                type="button"
-                className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground hover:text-card-foreground"
-                onClick={() => setSearchQuery(query)}
-              >
-                {query}
-              </button>
-            ))}
+      {!aiMode && (
+        <>
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground font-medium">Recently Used</p>
+            {recentUsedElements.length === 0 ? (
+              <p className="text-[10px] text-muted-foreground">
+                Elements you add will appear here for quick reuse.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {recentUsedElements.map(item => (
+                  <button
+                    key={`${item.categoryId}-${item.label}`}
+                    type="button"
+                    className="rounded-full border border-border bg-secondary px-2.5 py-1 text-[10px] text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-card-foreground"
+                    onClick={() => {
+                      setActiveCategory(item.categoryId);
+                      setSearchQuery(item.query);
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground font-medium">Recommended For You</p>
+            <div className="grid grid-cols-1 gap-1.5">
+              {smartRecommendations.map(item => (
+                <button
+                  key={item.query}
+                  type="button"
+                  className="rounded-lg border border-border bg-secondary/50 px-2.5 py-2 text-left transition-colors hover:border-primary/40 hover:bg-primary/10"
+                  onClick={() => {
+                    setActiveCategory(item.categoryId);
+                    setSearchQuery(item.query);
+                  }}
+                >
+                  <p className="text-[11px] font-medium text-card-foreground">{item.label}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{item.reason}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground font-medium">Popular Searches</p>
+            <div className="overflow-x-auto pb-1">
+              <div className="flex w-max gap-1.5 pr-2">
+                {POPULAR_ELEMENT_SEARCHES.map(term => (
+                  <button
+                    key={term}
+                    type="button"
+                    className="shrink-0 rounded-full border border-border bg-secondary px-2.5 py-1 text-[10px] text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-card-foreground"
+                    onClick={() => setSearchQuery(term)}
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground font-medium">Browse Categories</p>
+            <div className="grid grid-cols-2 gap-2">
+              {categories.map(category => {
+                const Icon = category.icon;
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => setActiveCategory(category.id)}
+                    className={`rounded-lg border px-2 py-2 text-left transition-colors ${
+                      activeCategory === category.id
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-secondary/50 hover:border-primary/35 hover:bg-secondary"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="h-7 w-7 rounded-md border border-border bg-background flex items-center justify-center">
+                        <Icon className="h-4 w-4 text-card-foreground" />
+                      </span>
+                      <div>
+                        <p className="text-[11px] font-medium text-card-foreground">{category.label}</p>
+                        <p className="text-[10px] text-muted-foreground">{category.tags[0]}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <Separator />
+        </>
+      )}
+
+      {recentSearches.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {recentSearches.map(query => (
+            <button
+              key={query}
+              type="button"
+              className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground hover:text-card-foreground"
+              onClick={() => setSearchQuery(query)}
+            >
+              {query}
+            </button>
+          ))}
+        </div>
+      )}
       {/* Category tabs */}
       <div
         className="flex gap-1 overflow-x-auto pb-1"
@@ -2532,7 +2908,16 @@ function ElementsPanel({
             ).map(s => (
               <button
                 key={s.type}
-                onClick={() => editor.addShape(s.type)}
+                onClick={() =>
+                  useElement(
+                    {
+                      label: s.label,
+                      query: s.label,
+                      categoryId: "basic",
+                    },
+                    () => editor.addShape(s.type)
+                  )
+                }
                 className="aspect-square rounded-lg bg-secondary hover:bg-accent border border-border flex flex-col items-center justify-center gap-1 transition-colors"
               >
                 <s.icon className="w-5 h-5 text-card-foreground" />
@@ -2551,7 +2936,19 @@ function ElementsPanel({
               <button
                 key={c}
                 onClick={() =>
-                  editor.addShape("rect", { fill: c, width: 100, height: 100 })
+                  useElement(
+                    {
+                      label: `Color Block ${c}`,
+                      query: c,
+                      categoryId: "basic",
+                    },
+                    () =>
+                      editor.addShape("rect", {
+                        fill: c,
+                        width: 100,
+                        height: 100,
+                      })
+                  )
                 }
                 title={c}
                 className="w-7 h-7 rounded-md border border-border hover:scale-110 transition-transform"
@@ -2565,14 +2962,34 @@ function ElementsPanel({
           <p className="text-xs text-muted-foreground font-medium">Lines</p>
           <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={() => editor.addShape("line")}
+              onClick={() =>
+                useElement(
+                  {
+                    label: "Line Thin",
+                    query: "line",
+                    categoryId: "basic",
+                  },
+                  () => editor.addShape("line")
+                )
+              }
               className="h-10 rounded-lg bg-secondary hover:bg-accent border border-border flex items-center justify-center text-xs text-card-foreground"
             >
               <Minus className="w-5 h-5 mr-1" /> Thin
             </button>
             <button
               onClick={() =>
-                editor.addShape("line", { stroke: "#6366f1", strokeWidth: 4 })
+                useElement(
+                  {
+                    label: "Line Thick",
+                    query: "thick line",
+                    categoryId: "basic",
+                  },
+                  () =>
+                    editor.addShape("line", {
+                      stroke: "#6366f1",
+                      strokeWidth: 4,
+                    })
+                )
               }
               className="h-10 rounded-lg bg-secondary hover:bg-accent border border-border flex items-center justify-center text-xs text-card-foreground"
             >
@@ -2595,11 +3012,19 @@ function ElementsPanel({
               <button
                 key={i}
                 onClick={() =>
-                  editor.addShape("rounded-rect", {
-                    fill: c1,
-                    width: 200,
-                    height: 200,
-                  })
+                  useElement(
+                    {
+                      label: `Gradient ${i + 1}`,
+                      query: `${c1} gradient`,
+                      categoryId: "basic",
+                    },
+                    () =>
+                      editor.addShape("rounded-rect", {
+                        fill: c1,
+                        width: 200,
+                        height: 200,
+                      })
+                  )
                 }
                 title={`Gradient: ${c1} to ${c2}`}
                 className="aspect-square rounded-lg border border-border hover:scale-105 transition-transform"
@@ -2628,7 +3053,16 @@ function ElementsPanel({
             <ShapeBtn
               key={sides}
               label={label}
-              onClick={() => editor.addPolygonByCount(sides)}
+              onClick={() =>
+                useElement(
+                  {
+                    label,
+                    query: `${label} polygon`,
+                    categoryId: "polygons",
+                  },
+                  () => editor.addPolygonByCount(sides)
+                )
+              }
             >
               <svg
                 viewBox="0 0 200 200"
@@ -2655,7 +3089,16 @@ function ElementsPanel({
             <ShapeBtn
               key={pts}
               label={label}
-              onClick={() => editor.addStarByCount(pts, ratio)}
+              onClick={() =>
+                useElement(
+                  {
+                    label,
+                    query: `${label} star`,
+                    categoryId: "stars",
+                  },
+                  () => editor.addStarByCount(pts, ratio)
+                )
+              }
             >
               <svg
                 viewBox="0 0 200 200"
@@ -2675,7 +3118,16 @@ function ElementsPanel({
             <ShapeBtn
               key={s.label}
               label={s.label}
-              onClick={() => editor.addPath(s.path, 0.9)}
+              onClick={() =>
+                useElement(
+                  {
+                    label: s.label,
+                    query: s.label,
+                    categoryId: "arrows",
+                  },
+                  () => editor.addPath(s.path, 0.9)
+                )
+              }
             >
               <svg
                 viewBox={s.vb}
@@ -2696,7 +3148,16 @@ function ElementsPanel({
             <ShapeBtn
               key={s.label}
               label={s.label}
-              onClick={() => editor.addPath(s.path, 0.85)}
+              onClick={() =>
+                useElement(
+                  {
+                    label: s.label,
+                    query: s.label,
+                    categoryId: "bubbles",
+                  },
+                  () => editor.addPath(s.path, 0.85)
+                )
+              }
             >
               <svg
                 viewBox={s.vb}
@@ -2717,7 +3178,16 @@ function ElementsPanel({
             <ShapeBtn
               key={s.label}
               label={s.label}
-              onClick={() => editor.addPath(s.path, 1.0)}
+              onClick={() =>
+                useElement(
+                  {
+                    label: s.label,
+                    query: s.label,
+                    categoryId: "clouds",
+                  },
+                  () => editor.addPath(s.path, 1.0)
+                )
+              }
             >
               <svg
                 viewBox={s.vb}
@@ -2738,7 +3208,16 @@ function ElementsPanel({
             <ShapeBtn
               key={s.label}
               label={s.label}
-              onClick={() => editor.addPath(s.path, 1.0, s.opts ?? {})}
+              onClick={() =>
+                useElement(
+                  {
+                    label: s.label,
+                    query: s.label,
+                    categoryId: "hearts",
+                  },
+                  () => editor.addPath(s.path, 1.0, s.opts ?? {})
+                )
+              }
             >
               <svg
                 viewBox={s.vb}
@@ -2763,7 +3242,14 @@ function ElementsPanel({
                 key={s.label}
                 label={s.label}
                 onClick={() =>
-                  editor.addStarByCount(s.star!.pts, s.star!.ratio)
+                  useElement(
+                    {
+                      label: s.label,
+                      query: s.label,
+                      categoryId: "banners",
+                    },
+                    () => editor.addStarByCount(s.star!.pts, s.star!.ratio)
+                  )
                 }
               >
                 <svg
@@ -2783,7 +3269,16 @@ function ElementsPanel({
               <ShapeBtn
                 key={s.label}
                 label={s.label}
-                onClick={() => editor.addPath(s.path!, s.scale ?? 1.0)}
+                onClick={() =>
+                  useElement(
+                    {
+                      label: s.label,
+                      query: s.label,
+                      categoryId: "banners",
+                    },
+                    () => editor.addPath(s.path!, s.scale ?? 1.0)
+                  )
+                }
               >
                 <svg
                   viewBox={s.vb}
@@ -3158,20 +3653,25 @@ function PhotosPanel({
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {allPhotos.map((photo, i) => (
-                <button
+                <div
                   key={`${photo.id}-${i}`}
-                  onClick={() => handleAddPhoto(photo)}
                   className="aspect-square rounded-lg overflow-hidden border border-border hover:ring-2 hover:ring-primary transition-all group relative"
                 >
+                  <button
+                    type="button"
+                    onClick={() => handleAddPhoto(photo)}
+                    className="absolute inset-0 z-10"
+                    aria-label={`Add ${photo.alt || "photo"} to canvas`}
+                  />
                   <img
                     src={photo.thumb}
                     alt={photo.alt}
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors pointer-events-none" />
                   {/* Photographer attribution — shown on hover, required by Unsplash */}
-                  <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform bg-black/75 px-1.5 py-1 text-left">
+                  <div className="absolute z-20 bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform bg-black/75 px-1.5 py-1 text-left">
                     <div className="flex items-center gap-1">
                       <Camera className="h-2.5 w-2.5 text-white/70 shrink-0" />
                       <a
@@ -3194,7 +3694,7 @@ function PhotosPanel({
                       Unsplash
                     </a>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           )}

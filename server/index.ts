@@ -6,7 +6,13 @@ import { fileURLToPath } from "url";
 import { clerkMiddleware } from "@clerk/express";
 import { getPrisma } from "./db.js";
 import { createAiRouter } from "./ai.js";
-import { listStockAssets } from "./stockAssets.js";
+import {
+  filterStockAssets,
+  getFallbackStockAssets,
+  getCustomAssetSource,
+  mapDbStockAsset,
+  renderGeneratedStockAssetSvg,
+} from "./stockAssets.js";
 
 process.on("unhandledRejection", reason => {
   console.error("Unhandled promise rejection", reason);
@@ -1257,7 +1263,22 @@ async function startServer() {
     return res.json({ plan: user.customer?.plan ?? "free", subscription: sub });
   });
 
-  app.get("/api/stock-assets", (req, res) => {
+  app.get("/api/generated-stock-assets/:assetId.svg", (req, res) => {
+    const assetId =
+      typeof req.params.assetId === "string" ? req.params.assetId : "";
+    const variant = req.query.variant === "thumb" ? "thumb" : "full";
+    const svg = renderGeneratedStockAssetSvg(assetId, variant);
+
+    if (!svg) {
+      return res.status(404).json({ error: "Generated asset not found." });
+    }
+
+    res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    return res.send(svg);
+  });
+
+  app.get("/api/stock-assets", async (req, res) => {
     const query =
       typeof req.query.query === "string" ? req.query.query : undefined;
     const category =
@@ -1273,18 +1294,58 @@ async function startServer() {
     const license =
       typeof req.query.license === "string" ? req.query.license : undefined;
     const recent = req.query.recent === "true";
+    const forwardedProto = req.header("x-forwarded-proto");
+    const protocol =
+      typeof forwardedProto === "string" && forwardedProto.trim()
+        ? forwardedProto.split(",")[0].trim()
+        : req.protocol;
+    const host = req.get("host");
+    const baseUrl = host ? `${protocol}://${host}` : undefined;
 
-    return res.json(
-      listStockAssets({
-        query,
-        category,
-        mediaType,
-        orientation,
-        color,
-        license,
-        recent,
-      })
-    );
+    try {
+      const prisma = await getPrisma();
+      const dbAssets = await prisma.stockAsset.findMany({
+        orderBy: { createdAt: "desc" },
+      });
+      const mappedDbAssets = dbAssets.map(
+        (asset: Parameters<typeof mapDbStockAsset>[0]) =>
+          mapDbStockAsset(asset, baseUrl)
+      );
+      const mappedAssets =
+        dbAssets.length > 0
+          ? [
+              ...mappedDbAssets,
+              ...getFallbackStockAssets(baseUrl).filter(
+                asset => asset.source !== getCustomAssetSource()
+              ),
+            ]
+          : getFallbackStockAssets(baseUrl);
+
+      return res.json(
+        filterStockAssets(mappedAssets, {
+          query,
+          category,
+          mediaType,
+          orientation,
+          color,
+          license,
+          recent,
+        })
+      );
+    } catch (error) {
+      console.error("Failed to load stock assets from the database", error);
+      return res.json(
+        filterStockAssets(getFallbackStockAssets(baseUrl), {
+          query,
+          category,
+          mediaType,
+          orientation,
+          color,
+          license,
+          recent,
+        })
+      );
+    }
   });
 
   // ── Unsplash API proxy ──────────────────────────────────────────────────────

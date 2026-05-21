@@ -9,6 +9,7 @@
     "dev:api": "node scripts/dev-api.mjs",
     "check:ai": "node scripts/validate-ai.mjs",
     "prisma:generate": "prisma generate",
+    "seed:stock-assets": "tsx scripts/seed-stock-assets.ts",
     "build": "vite build && pnpm build:server",
     "build:server": "pnpm prisma:generate && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "pnpm prisma:generate && NODE_ENV=production node dist/index.js",

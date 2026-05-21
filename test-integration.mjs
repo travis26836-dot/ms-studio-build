@@ -67,10 +67,23 @@ suite.test("Environment variables configured", () => {
   const hasDatabase = envContent.includes("DATABASE_URL");
   const hasClerk = envContent.includes("CLERK_SECRET_KEY");
   const hasViteClerk = envContent.includes("VITE_CLERK_PUBLISHABLE_KEY");
+  const hasGeminiKey =
+    envContent.includes("GOOGLE_GENERATIVE_AI_API_KEY") ||
+    envContent.includes("GEMINI_API_KEY") ||
+    envContent.includes("GOOGLE_API_KEY");
+  const hasAiTextModel = envContent.includes("AI_TEXT_MODEL");
+  const hasAiImageModel = envContent.includes("AI_IMAGE_MODEL");
 
   if (!hasDatabase) throw new Error("DATABASE_URL not in .env");
   if (!hasClerk) throw new Error("CLERK_SECRET_KEY not in .env");
   if (!hasViteClerk) throw new Error("VITE_CLERK_PUBLISHABLE_KEY not in .env");
+  if (!hasGeminiKey) {
+    throw new Error(
+      "Gemini API key env var missing (.env must include GOOGLE_GENERATIVE_AI_API_KEY, GEMINI_API_KEY, or GOOGLE_API_KEY)"
+    );
+  }
+  if (!hasAiTextModel) throw new Error("AI_TEXT_MODEL not in .env");
+  if (!hasAiImageModel) throw new Error("AI_IMAGE_MODEL not in .env");
 });
 
 // Test 2: Prisma Schema Valid
@@ -228,11 +241,11 @@ suite.test("Critical dependencies are in package.json", () => {
 suite.test("Setup documentation exists", () => {
   const docPath = path.join(
     __dirname,
-    ".github/instructions/railway-database-setup.instructions.md"
+    "INSTRUCTIONS/04-RAILWAY-DATABASE.md"
   );
 
   if (!fs.existsSync(docPath)) {
-    throw new Error("railway-database-setup.instructions.md not found");
+    throw new Error("INSTRUCTIONS/04-RAILWAY-DATABASE.md not found");
   }
 });
 
@@ -240,12 +253,12 @@ suite.test("Setup documentation exists", () => {
 suite.test("Project instructions exist", () => {
   const instructionsPath = path.join(
     __dirname,
-    ".github/instructions/project-configuration.instructions.md"
+    "INSTRUCTIONS/02-PROJECT-CONFIGURATION.md"
   );
 
   if (!fs.existsSync(instructionsPath)) {
     throw new Error(
-      ".github/instructions/project-configuration.instructions.md not found"
+      "INSTRUCTIONS/02-PROJECT-CONFIGURATION.md not found"
     );
   }
 });

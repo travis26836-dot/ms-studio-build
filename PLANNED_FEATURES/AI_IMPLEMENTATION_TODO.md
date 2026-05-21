@@ -1,11 +1,10 @@
 # AI Implementation TODO: Gemini Migration + AI Creation Workflow
 
-> Status: IN PROGRESS (BLOCKED: API keys not configured)
+> Status: IN PROGRESS (BLOCKED: Gemini API key authentication/permissions failing at runtime)
 > Owner: Nightfall / MS Studio
 > Repo: `travis26836-dot/ms-studio-build`
 > Working rule: every AI implementation task must update this checklist before, during, and after code changes.
-> Blocking condition: do not mark complete until required AI env vars are set and
-> validated in runtime.
+> Blocking condition: do not mark complete until Gemini requests succeed at runtime for chat, layout, image, and background.
 
 ---
 
@@ -36,9 +35,9 @@
 
 ### Required Env Vars
 
-- [ ] Add `GOOGLE_GENERATIVE_AI_API_KEY`
-- [ ] Add `AI_TEXT_MODEL`
-- [ ] Add `AI_IMAGE_MODEL`
+- [x] Add `GOOGLE_GENERATIVE_AI_API_KEY`
+- [x] Add `AI_TEXT_MODEL`
+- [x] Add `AI_IMAGE_MODEL`
 - [x] Remove production dependency on `GROQ_API_KEY`
 - [x] Remove production dependency on `TOGETHER_IMAGE_API_KEY`
 - [x] Remove production dependency on `TOGETHER_AI_API_KEY`
@@ -284,18 +283,22 @@ The Gemini migration is complete when:
 
 - [x] Groq is removed from runtime code
 - [x] Together is removed from runtime code
-- [ ] Gemini handles chat
-- [ ] Gemini handles layout suggestions
-- [ ] Gemini/Google handles image/background generation or returns a planned, gated provider error
+- [ ] Gemini handles chat (currently returning provider_auth in local runtime)
+- [ ] Gemini handles layout suggestions (currently returning provider_auth in local runtime)
+- [ ] Gemini/Google handles image/background generation or returns a planned, gated provider error (currently provider_auth)
 - [x] AI routes validate input
 - [x] AI routes enforce usage limits
 - [x] Templates tab has AI toggle plan implemented or tracked
 - [x] Elements tab has AI toggle plan implemented or tracked
-- [ ] Tests/typecheck pass
+- [x] Tests/typecheck pass
 - [ ] This TODO is moved from `PLANNED_FEATURES` to `IMPLEMENTED` after completion
 
 ---
 
 ## Notes
 
-The product direction is not just "prompt to image." Nightfall should become a conversational editable design engine. Raster image generation is necessary, but it should be treated as a paid/high-cost operation. Editable layouts, SVGs, shapes, forms, charts, and template-aware modifications should be cheaper default AI paths.
+The product direction is not just "prompt to image."
+Nightfall should become a conversational editable design engine.
+Raster image generation is necessary, but it should be treated as a paid/high-cost operation.
+Editable layouts, SVGs, shapes, forms, charts, and template-aware modifications
+should be cheaper default AI paths.

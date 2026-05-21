@@ -281,7 +281,7 @@ function SiteFooter() {
       <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
           <p
-            className="font-['Cinzel_Decorative'] text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
+            className="font-['Impact'] text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
           >
             ManuScript Studio
           </p>

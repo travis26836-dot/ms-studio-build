@@ -1,11 +1,11 @@
 # Project Guidelines
 
-> **Getting Started?** Start with [`.github/instructions/project-configuration.instructions.md`](./instructions/project-configuration.instructions.md) for setup. This file covers code style and architecture — use it as a reference while coding.
+> **Getting Started?** Start with INSTRUCTIONS/02-PROJECT-CONFIGURATION.md for setup. This file covers code style and architecture — use it as a reference while coding.
 
 > **Feature Setup?** After initial setup, refer to:
 >
-> - [railway-database-setup.instructions.md](./instructions/railway-database-setup.instructions.md) — for database & auth
-> - [stripe-setup.instructions.md](./instructions/stripe-setup.instructions.md) — for subscriptions
+> - INSTRUCTIONS/04-RAILWAY-DATABASE.md — for database & auth
+> - INSTRUCTIONS/05-STRIPE-SETUP.md — for subscriptions
 
 ## Code Style
 

@@ -19,8 +19,6 @@ Railway Variables → build + start → Railway runtime
 - Database: Railway PostgreSQL (managed)
 - API: <https://your-railway-domain.com>
 
-```
-
 ---
 
 ## Quick Start: Local Development
@@ -36,21 +34,25 @@ pnpm install
 Install PostgreSQL 16 or later on your system:
 
 **macOS (via Homebrew):**
+
 ```bash
 brew install postgresql@16
 brew services start postgresql@16
 ```
 
 **Windows:**
+
 Download and install from [postgresql.org](https://www.postgresql.org/download/windows/)
 
 **Linux (Ubuntu/Debian):**
+
 ```bash
 sudo apt-get install postgresql postgresql-contrib
 sudo systemctl start postgresql
 ```
 
 Then create a database:
+
 ```bash
 psql -U postgres -c "CREATE DATABASE ms_build;"
 ```
@@ -113,13 +115,13 @@ pnpm dev:full
 
 ### Step 2: Deploy Your Application
 
-**Option A: GitHub Integration (Recommended)**
+#### Option A: GitHub Integration (Recommended)
 
 1. Push your code to GitHub
 2. In Railway Dashboard, connect GitHub repo
 3. Railway auto-deploys on push to `main`
 
-**Option B: Railway CLI**
+#### Option B: Railway CLI
 
 ```bash
 npm i -g @railway/cli
@@ -132,41 +134,41 @@ railway up
 
 Set required environment variables in **Railway Dashboard** → Your Project → **Variables**.
 
-**Database (Railway will provide this)**
+#### Database (Railway will provide this)
 
-```
+```bash
 DATABASE_URL=postgresql://username:password@host:5432/dbname
 ```
 
-**Application**
+#### Application
 
-```
+```bash
 NODE_ENV=production
 API_PORT=3010
 PORT=3010
 VITE_API_URL=https://your-railway-domain.com
 ```
 
-**Authentication (Production Keys)**
+#### Authentication (Production Keys)
 
-```
+```bash
 CLERK_SECRET_KEY=sk_live_YOUR_PRODUCTION_KEY
 CLERK_PUBLISHABLE_KEY=pk_live_YOUR_PRODUCTION_KEY
 VITE_CLERK_PUBLISHABLE_KEY=pk_live_YOUR_PRODUCTION_KEY
 ```
 
-**Stripe (Production Keys)**
+#### Stripe (Production Keys)
 
-```
+```bash
 STRIPE_SECRET_KEY=sk_live_YOUR_PRODUCTION_KEY
 STRIPE_PUBLISHABLE_KEY=pk_live_YOUR_PRODUCTION_KEY
 STRIPE_WEBHOOK_SECRET=whsec_live_YOUR_PRODUCTION_SECRET
 STRIPE_PRICE_AI_CREDIT_PACK=price_YOUR_PRODUCTION_PRICE
 ```
 
-**AI & Third-Party (Production Keys)**
+#### AI & Third-Party (Production Keys)
 
-```
+```bash
 GOOGLE_GENERATIVE_AI_API_KEY=your_production_key
 AI_CREDIT_PACKS_ENABLED=true
 ```
@@ -272,7 +274,7 @@ pnpm exec prisma migrate deploy
 
 ## Summary
 
-```
+```bash
 LOCAL DEV                          PRODUCTION (RAILWAY)
 ├── .env.local                     ├── Railway Variables
 ├── pnpm dev:full                  ├── railway up / GitHub deploy

@@ -19,21 +19,25 @@ applyTo: "server/db.ts,server/auth.ts,prisma/**,customer-portal/**"
 Install PostgreSQL 16 or later:
 
 **macOS (via Homebrew):**
+
 ```bash
 brew install postgresql@16
 brew services start postgresql@16
 ```
 
 **Windows:**
+
 Download and install from [postgresql.org](https://www.postgresql.org/download/windows/)
 
 **Linux (Ubuntu/Debian):**
+
 ```bash
 sudo apt-get install postgresql postgresql-contrib
 sudo systemctl start postgresql
 ```
 
 Create a database:
+
 ```bash
 psql -U postgres -c "CREATE DATABASE ms_build;"
 ```

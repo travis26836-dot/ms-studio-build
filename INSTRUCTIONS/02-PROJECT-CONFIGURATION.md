@@ -88,21 +88,25 @@ pnpm format                # Format code
 Install PostgreSQL 16 or later on your system:
 
 **macOS (via Homebrew):**
+
 ```bash
 brew install postgresql@16
 brew services start postgresql@16
 ```
 
 **Windows:**
+
 Download and install from [postgresql.org](https://www.postgresql.org/download/windows/)
 
 **Linux (Ubuntu/Debian):**
+
 ```bash
 sudo apt-get install postgresql postgresql-contrib
 sudo systemctl start postgresql
 ```
 
 Then create a database for development:
+
 ```bash
 psql -U postgres -c "CREATE DATABASE ms_build;"
 ```

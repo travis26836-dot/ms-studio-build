@@ -868,7 +868,7 @@ export default function Editor({
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       {/* Top Toolbar */}
-      <div className="h-12 flex items-center gap-1 px-3 shrink-0 bg-[oklch(0.12_0.006_260)]" style={{ borderTop: '1px solid var(--amber)', borderBottom: '1px solid var(--toolbar-border)' }}>
+      <div className="h-12 flex items-center gap-1 px-3 shrink-0 bg-[oklch(0.12_0.006_260)]" style={{borderTop: '1px solid var(--amber)', borderBottom: '1px solid var(--toolbar-border)' }}>
         <Button
           variant="ghost"
           size="sm"
@@ -1003,7 +1003,7 @@ export default function Editor({
             <button
               onClick={() => setIsEditingName(true)}
               className="text-sm font-medium tracking-wide text-[oklch(0.82_0.007_75)] hover:text-[oklch(0.91_0.008_75)] rounded-sm px-3 py-1 hover:bg-[oklch(0.19_0.006_260)] transition-colors truncate max-w-xs"
-              style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}
+              style={{fontFamily: '"Space Grotesk", ui-sans-serif' }}
               title="Click to rename"
             >
               {projectName}
@@ -1040,7 +1040,7 @@ export default function Editor({
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Icon Sidebar */}
-        <div className="w-[52px] border-r bg-[oklch(0.12_0.006_260)] flex flex-col items-center py-3 gap-0.5 shrink-0" style={{ borderRightColor: 'var(--panel-border)' }}>
+        <div className="w-[52px] border-r bg-[oklch(0.12_0.006_260)] flex flex-col items-center py-3 gap-0.5 shrink-0" style={{borderRightColor: 'var(--panel-border)' }}>
           <SidebarIcon
             icon={LayoutTemplate}
             label="Templates"
@@ -1093,7 +1093,7 @@ export default function Editor({
 
         {/* Expandable Side Panel */}
         {activePanel && (
-          <div className="w-64 border-r bg-[oklch(0.14_0.006_260)] flex flex-col shrink-0 panel-glide" style={{ borderRightColor: 'var(--panel-border)' }}>
+          <div className="w-64 border-r bg-[oklch(0.14_0.006_260)] flex flex-col shrink-0 panel-glide" style={{borderRightColor: 'var(--panel-border)' }}>
             <SidePanel
               panel={activePanel}
               editor={editor}
@@ -1110,7 +1110,7 @@ export default function Editor({
         <div
           ref={canvasContainerRef}
           className="flex-1 overflow-auto relative"
-          style={{ background: "oklch(0.18 0.005 260)" }}
+          style={{background: "oklch(0.18 0.005 260)" }}
         >
           <div className="min-h-full min-w-full flex items-center justify-center p-10">
             {/* Outer div sizes to visual (zoomed) dimensions for layout and shadow */}
@@ -1263,7 +1263,7 @@ function SidePanel({
       <div className="p-3 border-b border-border">
         <h3
           className="text-xs font-semibold text-card-foreground mb-2 tracking-[0.08em] uppercase"
-          style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}
+          style={{fontFamily: '"Space Grotesk", ui-sans-serif' }}
         >
           {panelTitles[panel || ""]}
         </h3>
@@ -2227,7 +2227,7 @@ function ElementsPanel({
       {/* Category tabs */}
       <div
         className="flex gap-1 overflow-x-auto pb-1"
-        style={{ scrollbarWidth: "none" }}
+        style={{scrollbarWidth: "none" }}
       >
         {visibleCategories.map(cat => (
           <button
@@ -2305,7 +2305,7 @@ function ElementsPanel({
                 }
                 title={c}
                 className="w-7 h-7 rounded-md border border-border hover:scale-110 transition-transform"
-                style={{ background: c }}
+                style={{background: c }}
               />
             ))}
           </div>
@@ -2351,7 +2351,7 @@ function ElementsPanel({
                 }
                 title={`Gradient: ${c1} to ${c2}`}
                 className="aspect-square rounded-lg border border-border hover:scale-105 transition-transform"
-                style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
+                style={{background: `linear-gradient(135deg, ${c1}, ${c2})` }}
               />
             ))}
           </div>
@@ -2558,7 +2558,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
       >
         <p
           className="text-lg font-bold text-card-foreground"
-          style={{ fontFamily: "Montserrat" }}
+          style={{fontFamily: "Montserrat" }}
         >
           Add a heading
         </p>
@@ -2572,7 +2572,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
       >
         <p
           className="text-base font-semibold text-card-foreground"
-          style={{ fontFamily: "Poppins" }}
+          style={{fontFamily: "Poppins" }}
         >
           Add a subheading
         </p>
@@ -2586,7 +2586,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
       >
         <p
           className="text-sm text-card-foreground"
-          style={{ fontFamily: "Inter" }}
+          style={{fontFamily: "Inter" }}
         >
           Add body text
         </p>
@@ -2646,7 +2646,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
           >
             <p
               className="text-sm font-bold text-card-foreground"
-              style={{ fontFamily: combo.heading }}
+              style={{fontFamily: combo.heading }}
             >
               {combo.label}
             </p>
@@ -2702,7 +2702,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
           >
             <span
               className="text-xs"
-              style={{ color: preset.color, fontWeight: preset.weight }}
+              style={{color: preset.color, fontWeight: preset.weight }}
             >
               {preset.label}
             </span>
@@ -3033,7 +3033,7 @@ function BrandPanel({
               <button
                 title={c.name}
                 className="w-10 h-10 rounded-lg border border-border hover:scale-110 transition-transform"
-                style={{ background: c.hex }}
+                style={{background: c.hex }}
                 onClick={() => editor.updateActiveObject({ fill: c.hex })}
               />
               <p className="text-[9px] text-muted-foreground mt-0.5">
@@ -3090,7 +3090,7 @@ function BrandPanel({
             >
               <span
                 className="text-sm text-card-foreground"
-                style={{ fontFamily: font.name }}
+                style={{fontFamily: font.name }}
               >
                 {font.name}
               </span>
@@ -3684,7 +3684,7 @@ function PropertiesPanel({
                 onClick={() => editor.updateActiveObject({ fill: c })}
                 title={c}
                 className="w-5 h-5 rounded border border-border hover:scale-125 transition-transform"
-                style={{ background: c }}
+                style={{background: c }}
               />
             ))}
           </div>
@@ -3958,7 +3958,7 @@ function PropertiesPanel({
                   onClick={() => editor.setBackground(c)}
                   title={c}
                   className="w-5 h-5 rounded border border-border hover:scale-125 transition-transform"
-                  style={{ background: c }}
+                  style={{background: c }}
                 />
               ))}
             </div>
@@ -3990,3 +3990,5 @@ function PropertiesPanel({
     </ScrollArea>
   );
 }
+
+

@@ -26,6 +26,33 @@ function isValidAbsoluteUrl(raw) {
   }
 }
 
+function getRailwayEnvironmentLabel(hostname) {
+  const normalized = hostname.toLowerCase();
+  if (normalized.includes("staging")) return "staging";
+  if (normalized.includes("production")) return "production";
+  return null;
+}
+
+function isCompatibleWithCurrentPortalEnv(rawUrl) {
+  if (!isValidAbsoluteUrl(rawUrl) || typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    const currentEnv = getRailwayEnvironmentLabel(window.location.hostname);
+    const targetEnv = getRailwayEnvironmentLabel(new URL(rawUrl).hostname);
+
+    // If this portal URL is environment-tagged, don't allow crossing to another env.
+    if (currentEnv && targetEnv && currentEnv !== targetEnv) {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function getMainAppUrlFromQuery() {
   if (typeof window === "undefined") {
     return null;
@@ -34,7 +61,7 @@ function getMainAppUrlFromQuery() {
   const value = new URLSearchParams(window.location.search).get(
     MAIN_APP_URL_QUERY_PARAM
   );
-  if (!value || !isValidAbsoluteUrl(value)) {
+  if (!value || !isCompatibleWithCurrentPortalEnv(value)) {
     return null;
   }
 
@@ -46,7 +73,7 @@ function getMainAppUrlFromReferrer() {
     return null;
   }
 
-  if (!isValidAbsoluteUrl(document.referrer)) {
+  if (!isCompatibleWithCurrentPortalEnv(document.referrer)) {
     return null;
   }
 
@@ -60,7 +87,7 @@ function getMainAppUrlFromStorage() {
 
   try {
     const value = window.localStorage.getItem(MAIN_APP_URL_STORAGE_KEY);
-    if (!value || !isValidAbsoluteUrl(value)) {
+    if (!value || !isCompatibleWithCurrentPortalEnv(value)) {
       return null;
     }
 
@@ -75,7 +102,7 @@ function rememberMainAppUrl(value) {
     return;
   }
 
-  if (!value || !isValidAbsoluteUrl(value)) {
+  if (!value || !isCompatibleWithCurrentPortalEnv(value)) {
     return;
   }
 
@@ -318,6 +345,7 @@ export default function App() {
   const handleLogout = () => {
     try {
       window.localStorage.removeItem(PORTAL_IDENTITY_KEY);
+      window.localStorage.removeItem(MAIN_APP_URL_STORAGE_KEY);
     } catch {
       // Continue logout flow even if storage removal fails.
     }

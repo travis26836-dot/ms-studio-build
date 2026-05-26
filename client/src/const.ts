@@ -1,6 +1,6 @@
 /**
- * Dynamically resolve portal URL based on environment or runtime detection.
- * Falls back to checking common local dev ports if env var not set.
+ * Dynamically resolve portal URL based on environment variable.
+ * Uses VITE_PORTAL_URL which should be set in Railway environment.
  */
 function resolvePortalUrl(): string {
   const envUrl = (import.meta as { env?: { VITE_PORTAL_URL?: string } }).env
@@ -10,21 +10,12 @@ function resolvePortalUrl(): string {
     return envUrl;
   }
 
+  // Fallback for local development only
   if (typeof window === "undefined") {
     return "http://localhost:3000";
   }
 
-  // At runtime, derive portal from main app's location
-  // Portal typically runs on a different port: if main is 3002, portal is 3003, etc.
-  const mainPort = window.location.port;
-  if (!mainPort) {
-    return "http://localhost:3000"; // Fallback for non-port URLs
-  }
-
-  const mainPortNum = parseInt(mainPort, 10);
-  const portalPortNum = mainPortNum + 1; // Portal runs on next port
-
-  return `${window.location.protocol}//${window.location.hostname}:${portalPortNum}`;
+  return "http://localhost:3000"; // Default fallback
 }
 
 export function getLoginUrl() {
@@ -58,3 +49,4 @@ export function getPortalUrl(options?: {
     return baseUrl;
   }
 }
+

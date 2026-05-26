@@ -1,0 +1,30 @@
+sequenceDiagram
+  %% Canvas interaction flow draft
+  autonumber
+  participant U as User
+  participant T as Toolbar
+  participant E as Editor Component
+  participant H as useCanvasEditor Hook
+  participant F as Fabric Canvas
+
+  U->>T: Click Snap To Grid toggle
+  T->>E: toggleSnapToGrid()
+  E->>H: toggleSnapToGrid()
+  H->>H: Update snapToGrid state/ref
+
+  U->>F: Drag selected object
+  F->>H: object:moving event(target)
+  alt Snap enabled
+    H->>F: Round left/top to nearest 20px grid
+    H->>F: Apply snapped coordinates
+  else Snap disabled
+    H->>F: Keep free movement
+  end
+
+  U->>F: Release object
+  F->>H: object:modified
+  H->>H: saveHistory()
+
+  U->>T: Undo / Redo
+  T->>H: undo() / redo()
+  H->>F: loadFromJSON(snapshot)

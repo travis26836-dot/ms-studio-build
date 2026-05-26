@@ -14,6 +14,7 @@ import {
   getAiImageModelId,
   getAiTextModelId,
   getGeminiApiKey,
+  getGeminiApiKeySource,
   getGeminiImageModel,
   getGeminiTextModel,
 } from "./aiProvider.js";
@@ -197,7 +198,21 @@ function normalizeProviderError(error: unknown): {
   message: string;
 } {
   const raw = error instanceof Error ? error.message : String(error);
-  const lower = raw.toLowerCase();
+  const responseBody =
+    typeof error === "object" && error && "responseBody" in error
+      ? String((error as { responseBody?: unknown }).responseBody ?? "")
+      : "";
+  const combined = `${raw}\n${responseBody}`;
+  const lower = combined.toLowerCase();
+
+  if (lower.includes("api_key_invalid") || lower.includes("api key not valid")) {
+    return {
+      status: 503,
+      code: "provider_api_key_invalid",
+      message:
+        "Gemini API key is invalid. Use a valid GOOGLE_GENERATIVE_AI_API_KEY (or GEMINI_API_KEY/GOOGLE_API_KEY) with Generative Language API access.",
+    };
+  }
 
   if (
     lower.includes("api key") ||
@@ -557,6 +572,17 @@ function nearestGeminiAspectRatio(
 
 export function createAiRouter(options: CreateAiRouterOptions = {}): Router {
   const router = Router();
+
+  router.get("/health", (_req: Request, res: Response) => {
+    const keyConfigured = Boolean(getGeminiApiKey());
+    return res.json({
+      provider: AI_PROVIDER_NAME,
+      keyConfigured,
+      keySource: getGeminiApiKeySource(),
+      textModel: getAiTextModelId(),
+      imageModel: getAiImageModelId(),
+    });
+  });
 
   router.get("/credits/config", (_req: Request, res: Response) => {
     return res.json({

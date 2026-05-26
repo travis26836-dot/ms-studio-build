@@ -78,6 +78,40 @@ type StockAssetSearchInput = {
   recent?: boolean;
 };
 
+export type UnsplashPhoto = {
+  id: string;
+  url: string;
+  thumb: string;
+  alt: string;
+  source: "Unsplash";
+  sourceUrl: string;
+  downloadLocation: string;
+  photographer: string;
+  photographerUsername: string;
+  photographerUrl: string;
+  unsplashUrl: string;
+  license: string;
+  licenseUrl: string;
+  attributionRequired: boolean;
+  commercialUse: boolean;
+  orientation: "landscape" | "portrait" | "square";
+};
+
+type UnsplashSearchInput = {
+  query: string;
+  page?: number;
+  orientation?: string;
+  color?: string;
+};
+
+type UnsplashSearchResult = {
+  photos: UnsplashPhoto[];
+  total: number;
+  totalPages: number;
+  page: number;
+  perPage: number;
+};
+
 type LayoutSuggestion = {
   elements: Array<{
     type: "text" | "shape" | "image";
@@ -697,6 +731,32 @@ async function getPhotos(
   }
 }
 
+async function searchUnsplash(
+  input: UnsplashSearchInput
+): Promise<UnsplashSearchResult> {
+  const params = new URLSearchParams({ query: input.query || "nature" });
+  if (input.page) params.set("page", String(input.page));
+  if (input.orientation) params.set("orientation", input.orientation);
+  if (input.color) params.set("color", input.color);
+
+  const data = await apiRequest<UnsplashSearchResult>(
+    `/api/unsplash/search?${params.toString()}`
+  );
+  return data;
+}
+
+async function triggerUnsplashDownload(downloadLocation: string): Promise<void> {
+  try {
+    await apiRequest<{ ok: boolean }>("/api/unsplash/download-trigger", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ downloadLocation }),
+    });
+  } catch {
+    // Non-fatal — attribution still shown, just the tracking ping failed
+  }
+}
+
 function createAiImage(prompt: string, width = 1024, height = 1024) {
   const label = escapeXml(prompt.trim().slice(0, 48) || "AI Graphic");
   const backgroundA = "#0f172a";
@@ -1021,6 +1081,18 @@ export const trpc = {
         const key = useMemo(() => JSON.stringify(input ?? null), [input]);
         return useLocalQuery(() => getPhotos(input), [key], options);
       },
+    },
+    searchUnsplash: {
+      useQuery: (input: UnsplashSearchInput, options?: QueryOptions) => {
+        const key = useMemo(() => JSON.stringify(input), [input]);
+        return useLocalQuery(() => searchUnsplash(input), [key], options);
+      },
+    },
+    triggerUnsplashDownload: {
+      useMutation: () =>
+        useLocalMutation((downloadLocation: string) =>
+          triggerUnsplashDownload(downloadLocation)
+        ),
     },
   },
   ai: {

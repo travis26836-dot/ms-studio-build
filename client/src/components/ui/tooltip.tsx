@@ -1,20 +1,26 @@
 import React from "react";
-import { cn, renderWithOptionalSlot } from "@/lib/utils";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { cn } from "@/lib/utils";
 
 type TooltipSide = "top" | "bottom" | "left" | "right";
 type TooltipAlign = "start" | "center" | "end";
 
 export function TooltipProvider({
   children,
+  delayDuration = 150,
 }: {
   children: React.ReactNode;
   delayDuration?: number;
 }) {
-  return <>{children}</>;
+  return (
+    <TooltipPrimitive.Provider delayDuration={delayDuration}>
+      {children}
+    </TooltipPrimitive.Provider>
+  );
 }
 
 export function Tooltip({ children }: { children: React.ReactNode }) {
-  return <span className="group/tooltip relative inline-flex">{children}</span>;
+  return <TooltipPrimitive.Root>{children}</TooltipPrimitive.Root>;
 }
 
 export function TooltipTrigger({
@@ -24,10 +30,11 @@ export function TooltipTrigger({
   children: React.ReactNode;
   asChild?: boolean;
 }) {
-  if (asChild) {
-    return renderWithOptionalSlot(children, {});
-  }
-  return <>{children}</>;
+  return (
+    <TooltipPrimitive.Trigger asChild={asChild}>
+      {children}
+    </TooltipPrimitive.Trigger>
+  );
 }
 
 export function TooltipContent({
@@ -42,36 +49,19 @@ export function TooltipContent({
   className?: string;
   hidden?: boolean;
 }) {
-  const sideClasses: Record<TooltipSide, string> = {
-    top: "bottom-full mb-2 left-1/2 -translate-x-1/2",
-    bottom: "top-full mt-2 left-1/2 -translate-x-1/2",
-    left: "right-full mr-2 top-1/2 -translate-y-1/2",
-    right: "left-full ml-2 top-1/2 -translate-y-1/2",
-  };
-
-  const alignClasses: Record<TooltipAlign, string> = {
-    start:
-      side === "top" || side === "bottom"
-        ? "left-0 translate-x-0"
-        : "top-0 translate-y-0",
-    center: "",
-    end:
-      side === "top" || side === "bottom"
-        ? "left-auto right-0 translate-x-0"
-        : "top-auto bottom-0 translate-y-0",
-  };
-
   return (
-    <span
-      role="tooltip"
-      className={cn(
-        "pointer-events-none absolute z-50 rounded-md border border-border bg-popover px-2 py-1 text-popover-foreground opacity-0 shadow-md transition-opacity duration-100 group-hover/tooltip:opacity-100 group-focus-within/tooltip:opacity-100",
-        sideClasses[side],
-        alignClasses[align],
-        className ?? "text-xs"
-      )}
-    >
-      {children}
-    </span>
+    <TooltipPrimitive.Portal>
+      <TooltipPrimitive.Content
+        side={side}
+        align={align}
+        sideOffset={6}
+        className={cn(
+          "z-50 overflow-hidden rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md",
+          className
+        )}
+      >
+        {children}
+      </TooltipPrimitive.Content>
+    </TooltipPrimitive.Portal>
   );
 }

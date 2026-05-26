@@ -68,7 +68,6 @@ import {
   SlidersHorizontal,
   Bot,
   Code2,
-  Maximize2,
   Heart,
   Pentagon,
   Diamond,
@@ -83,6 +82,7 @@ import {
   RotateCcw,
   Eye,
   ExternalLink,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -101,6 +101,7 @@ type SidebarPanel =
   | "ai"
   | "brand"
   | "layers"
+  | "settings"
   | null;
 
 const FONT_OPTIONS = [
@@ -134,7 +135,11 @@ const RECENT_ELEMENT_SEARCHES_KEY = "ms-studio.recentElementSearches.v1";
 const RECENT_ELEMENT_AI_PROMPTS_KEY = "ms-studio.recentElementAiPrompts.v1";
 const RECENT_STOCK_ASSETS_KEY = "ms-studio.recentStockAssets.v1";
 const BRAND_KIT_STORAGE_KEY = "ms-studio.brandKit.v1";
+const EDITOR_LAYOUT_PREFS_KEY = "ms-studio.editorLayoutPrefs.v1";
 const MAX_RECENT_AI_ITEMS = 6;
+const LEFT_ICON_SIDEBAR_WIDTH = 52;
+const DEFAULT_LEFT_PANEL_WIDTH = 256;
+const DEFAULT_RIGHT_PANEL_WIDTH = 320;
 
 const AI_CREDIT_ESTIMATES = {
   chat: 1,
@@ -342,6 +347,75 @@ type AutosaveDraft = {
   updatedAt: number;
 };
 
+type EditorLayoutPrefs = {
+  resizablePanels: boolean;
+  leftPanelWidth: number;
+  rightPanelWidth: number;
+};
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function readEditorLayoutPrefs(): EditorLayoutPrefs {
+  if (typeof window === "undefined") {
+    return {
+      resizablePanels: false,
+      leftPanelWidth: DEFAULT_LEFT_PANEL_WIDTH,
+      rightPanelWidth: DEFAULT_RIGHT_PANEL_WIDTH,
+    };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(EDITOR_LAYOUT_PREFS_KEY);
+    if (!raw) {
+      return {
+        resizablePanels: false,
+        leftPanelWidth: DEFAULT_LEFT_PANEL_WIDTH,
+        rightPanelWidth: DEFAULT_RIGHT_PANEL_WIDTH,
+      };
+    }
+
+    const parsed = JSON.parse(raw) as Partial<EditorLayoutPrefs>;
+
+    return {
+      resizablePanels: Boolean(parsed.resizablePanels),
+      leftPanelWidth: clamp(
+        typeof parsed.leftPanelWidth === "number"
+          ? parsed.leftPanelWidth
+          : DEFAULT_LEFT_PANEL_WIDTH,
+        220,
+        520
+      ),
+      rightPanelWidth: clamp(
+        typeof parsed.rightPanelWidth === "number"
+          ? parsed.rightPanelWidth
+          : DEFAULT_RIGHT_PANEL_WIDTH,
+        260,
+        560
+      ),
+    };
+  } catch {
+    return {
+      resizablePanels: false,
+      leftPanelWidth: DEFAULT_LEFT_PANEL_WIDTH,
+      rightPanelWidth: DEFAULT_RIGHT_PANEL_WIDTH,
+    };
+  }
+}
+
+function writeEditorLayoutPrefs(prefs: EditorLayoutPrefs) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(EDITOR_LAYOUT_PREFS_KEY, JSON.stringify(prefs));
+  } catch {
+    // Layout preferences are non-critical UI convenience values.
+  }
+}
+
 function fingerprintText(value: string) {
   let hash = 5381;
   for (let i = 0; i < value.length; i += 1) {
@@ -461,6 +535,7 @@ export default function Editor({
   canvasHeight = 1080,
   initialProjectName,
 }: EditorProps) {
+  const editorLayoutRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const editor = useCanvasEditor(canvasRef, canvasWidth, canvasHeight);
@@ -494,6 +569,18 @@ export default function Editor({
   const remoteAutosaveInFlightRef = useRef(false);
   const hasCompletedInitialLoadRef = useRef(false);
   const [isCanvasReady, setIsCanvasReady] = useState(false);
+  const [resizablePanels, setResizablePanels] = useState(
+    () => readEditorLayoutPrefs().resizablePanels
+  );
+  const [leftPanelWidth, setLeftPanelWidth] = useState(
+    () => readEditorLayoutPrefs().leftPanelWidth
+  );
+  const [rightPanelWidth, setRightPanelWidth] = useState(
+    () => readEditorLayoutPrefs().rightPanelWidth
+  );
+  const [resizeTarget, setResizeTarget] = useState<"left" | "right" | null>(
+    null
+  );
   const [isEditingName, setIsEditingName] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const persistDraftOnUnmountRef = useRef<() => void>(() => {});
@@ -518,6 +605,88 @@ export default function Editor({
   const currentProjectIdRef = useRef(currentProjectId);
   currentProjectIdRef.current = currentProjectId;
 
+  const fitCanvasToViewport = useCallback(() => {
+    const container = canvasContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const padding = 32;
+    const scaleX = (container.clientWidth - padding) / canvasWidth;
+    const scaleY = (container.clientHeight - padding) / canvasHeight;
+    editorRef.current.setZoom(Math.min(scaleX, scaleY, 1));
+  }, [canvasWidth, canvasHeight]);
+
+  useEffect(() => {
+    const container = canvasContainerRef.current;
+    if (!container || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      fitCanvasToViewport();
+    });
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [fitCanvasToViewport]);
+
+  useEffect(() => {
+    fitCanvasToViewport();
+  }, [fitCanvasToViewport, activePanel, showChat]);
+
+  useEffect(() => {
+    writeEditorLayoutPrefs({
+      resizablePanels,
+      leftPanelWidth,
+      rightPanelWidth,
+    });
+  }, [leftPanelWidth, resizablePanels, rightPanelWidth]);
+
+  useEffect(() => {
+    if (!resizablePanels || !resizeTarget) {
+      return;
+    }
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const bounds = editorLayoutRef.current?.getBoundingClientRect();
+      if (!bounds) {
+        return;
+      }
+
+      if (resizeTarget === "left") {
+        const nextWidth = clamp(
+          event.clientX - bounds.left - LEFT_ICON_SIDEBAR_WIDTH,
+          220,
+          520
+        );
+        setLeftPanelWidth(nextWidth);
+        return;
+      }
+
+      const nextWidth = clamp(bounds.right - event.clientX, 260, 560);
+      setRightPanelWidth(nextWidth);
+    };
+
+    const handleMouseUp = () => {
+      setResizeTarget(null);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [resizablePanels, resizeTarget]);
+
   // Initialize canvas — run once on mount only
   useEffect(() => {
     let cancelled = false;
@@ -532,14 +701,7 @@ export default function Editor({
         return;
       }
 
-      const container = canvasContainerRef.current;
-      if (container) {
-        const padding = 80;
-        const scaleX = (container.clientWidth - padding) / canvasWidth;
-        const scaleY = (container.clientHeight - padding) / canvasHeight;
-        const zoom = Math.min(scaleX, scaleY, 1);
-        editorRef.current.setZoom(zoom);
-      }
+      fitCanvasToViewport();
 
       try {
         if (templateData) {
@@ -604,6 +766,18 @@ export default function Editor({
         e.preventDefault();
         editorRef.current.redo();
       }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "-" || e.key === "_")) {
+        e.preventDefault();
+        editorRef.current.setZoom(editorRef.current.editorState.zoom - 0.1);
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "=" || e.key === "+")) {
+        e.preventDefault();
+        editorRef.current.setZoom(editorRef.current.editorState.zoom + 0.1);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "0") {
+        e.preventDefault();
+        fitCanvasToViewport();
+      }
       if (e.key === "Delete" || e.key === "Backspace") {
         if (!(e.target instanceof HTMLInputElement)) {
           e.preventDefault();
@@ -621,7 +795,7 @@ export default function Editor({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [fitCanvasToViewport]);
 
   const persistLocalDraft = useCallback(
     (canvasData: string, name: string) => {
@@ -896,28 +1070,13 @@ export default function Editor({
 
         <ToolbarButton
           icon={ZoomOut}
-          tooltip="Zoom Out"
+          tooltip="Zoom Out (Ctrl+-)"
           onClick={() => editor.setZoom(editor.editorState.zoom - 0.1)}
         />
-        <span className="text-xs text-muted-foreground w-12 text-center">
-          {Math.round(editor.editorState.zoom * 100)}%
-        </span>
         <ToolbarButton
           icon={ZoomIn}
-          tooltip="Zoom In"
+          tooltip="Zoom In (Ctrl+=)"
           onClick={() => editor.setZoom(editor.editorState.zoom + 0.1)}
-        />
-        <ToolbarButton
-          icon={Maximize2}
-          tooltip="Fit to Screen"
-          onClick={() => {
-            const container = canvasContainerRef.current;
-            if (container) {
-              const scaleX = (container.clientWidth - 80) / canvasWidth;
-              const scaleY = (container.clientHeight - 80) / canvasHeight;
-              editor.setZoom(Math.min(scaleX, scaleY, 1));
-            }
-          }}
         />
 
         <Separator orientation="vertical" className="h-6 mx-1" />
@@ -1038,7 +1197,7 @@ export default function Editor({
         />
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div ref={editorLayoutRef} className="flex flex-1 overflow-hidden">
         {/* Left Icon Sidebar */}
         <div className="w-[52px] border-r bg-[oklch(0.12_0.006_260)] flex flex-col items-center py-3 gap-0.5 shrink-0" style={{borderRightColor: 'var(--panel-border)' }}>
           <SidebarIcon
@@ -1089,11 +1248,23 @@ export default function Editor({
             active={activePanel === "layers"}
             onClick={() => togglePanel("layers")}
           />
+
+          <div className="mt-auto pt-2">
+            <SidebarIcon
+              icon={Settings}
+              label="Settings"
+              active={activePanel === "settings"}
+              onClick={() => togglePanel("settings")}
+            />
+          </div>
         </div>
 
         {/* Expandable Side Panel */}
         {activePanel && (
-          <div className="w-64 border-r bg-[oklch(0.14_0.006_260)] flex flex-col shrink-0 panel-glide" style={{borderRightColor: 'var(--panel-border)' }}>
+          <div
+            className="border-r bg-[oklch(0.14_0.006_260)] flex flex-col shrink-0 panel-glide"
+            style={{borderRightColor: 'var(--panel-border)', width: leftPanelWidth }}
+          >
             <SidePanel
               panel={activePanel}
               editor={editor}
@@ -1101,8 +1272,19 @@ export default function Editor({
               setSearchQuery={setSearchQuery}
               canvasWidth={canvasWidth}
               canvasHeight={canvasHeight}
+              resizablePanels={resizablePanels}
+              setResizablePanels={setResizablePanels}
             />
           </div>
+        )}
+
+        {resizablePanels && activePanel && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-border/80 transition-colors"
+            onMouseDown={() => setResizeTarget("left")}
+          />
         )}
 
         {/* Canvas Area — zoom via CSS transform keeps Fabric canvas at native pixel dimensions,
@@ -1112,7 +1294,7 @@ export default function Editor({
           className="flex-1 overflow-auto relative"
           style={{background: "oklch(0.18 0.005 260)" }}
         >
-          <div className="min-h-full min-w-full flex items-center justify-center p-10">
+          <div className="min-h-full min-w-full flex items-center justify-center p-4">
             {/* Outer div sizes to visual (zoomed) dimensions for layout and shadow */}
             <div
               style={{
@@ -1142,7 +1324,16 @@ export default function Editor({
         {/* Right Properties Panel */}
         {/* Always render at fixed width to prevent canvas layout shift on selection */}
         {!showChat && (
-          <div className="w-64 border-l border-border bg-card shrink-0">
+          <>
+            {resizablePanels && (
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-border/80 transition-colors"
+                onMouseDown={() => setResizeTarget("right")}
+              />
+            )}
+            <div className="border-l border-border bg-card shrink-0" style={{ width: rightPanelWidth }}>
             {hasSelection ? (
               <PropertiesPanel
                 editor={editor}
@@ -1158,13 +1349,24 @@ export default function Editor({
               </div>
             )}
           </div>
+          </>
         )}
 
         {/* AI Chat Panel */}
         {showChat && (
-          <div className="w-80 border-l border-border shrink-0">
+          <>
+            {resizablePanels && (
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-border/80 transition-colors"
+                onMouseDown={() => setResizeTarget("right")}
+              />
+            )}
+            <div className="border-l border-border shrink-0" style={{ width: rightPanelWidth }}>
             <AIChatPanel onClose={() => setShowChat(false)} />
           </div>
+          </>
         )}
       </div>
     </div>
@@ -1234,6 +1436,8 @@ function SidePanel({
   setSearchQuery,
   canvasWidth,
   canvasHeight,
+  resizablePanels,
+  setResizablePanels,
 }: {
   panel: SidebarPanel;
   editor: ReturnType<typeof useCanvasEditor>;
@@ -1241,6 +1445,8 @@ function SidePanel({
   setSearchQuery: (q: string) => void;
   canvasWidth: number;
   canvasHeight: number;
+  resizablePanels: boolean;
+  setResizablePanels: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const panelTitles: Record<string, string> = {
     templates: "Templates",
@@ -1251,6 +1457,7 @@ function SidePanel({
     brand: "Brand Kit",
     ai: "AI Tools",
     layers: "Layers",
+    settings: "Settings",
   };
   const [aiSearchMode, setAiSearchMode] = useState<
     Partial<Record<"templates" | "elements", boolean>>
@@ -1267,7 +1474,7 @@ function SidePanel({
         >
           {panelTitles[panel || ""]}
         </h3>
-        {panel !== "layers" && panel !== "brand" && (
+        {panel !== "layers" && panel !== "brand" && panel !== "settings" && (
           <div className="flex gap-1.5">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
@@ -1338,9 +1545,47 @@ function SidePanel({
             />
           )}
           {panel === "layers" && <LayersPanel editor={editor} />}
+          {panel === "settings" && (
+            <EditorSettingsPanel
+              resizablePanels={resizablePanels}
+              setResizablePanels={setResizablePanels}
+            />
+          )}
         </div>
       </ScrollArea>
     </>
+  );
+}
+
+function EditorSettingsPanel({
+  resizablePanels,
+  setResizablePanels,
+}: {
+  resizablePanels: boolean;
+  setResizablePanels: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-border bg-secondary/40 p-3">
+        <p className="text-xs font-medium text-card-foreground">Editor Layout</p>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Enable adjustable panel widths and drag the divider bars between panels.
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          variant={resizablePanels ? "default" : "secondary"}
+          className="mt-3 w-full h-8 text-xs"
+          onClick={() => setResizablePanels(current => !current)}
+        >
+          {resizablePanels ? "Resizable Panels: On" : "Resizable Panels: Off"}
+        </Button>
+      </div>
+
+      <p className="text-[11px] text-muted-foreground px-1">
+        When enabled, drag either vertical divider to resize the left or right panel.
+      </p>
+    </div>
   );
 }
 

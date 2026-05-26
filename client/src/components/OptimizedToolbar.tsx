@@ -11,7 +11,6 @@ import {
   Redo2,
   ZoomOut,
   ZoomIn,
-  Maximize2,
   Copy,
   Trash2,
   ChevronsUp,
@@ -86,7 +85,6 @@ interface OptimizedEditorToolbarProps {
   onRedo: () => void;
   onZoomOut: () => void;
   onZoomIn: () => void;
-  onFitScreen: () => void;
   zoom: number;
   
   // Selection-dependent actions
@@ -117,7 +115,6 @@ export const OptimizedEditorToolbar: React.FC<OptimizedEditorToolbarProps> = ({
   onRedo,
   onZoomOut,
   onZoomIn,
-  onFitScreen,
   zoom,
   hasSelection,
   onDuplicate,
@@ -154,21 +151,13 @@ export const OptimizedEditorToolbar: React.FC<OptimizedEditorToolbarProps> = ({
       <ToolbarGroup>
         <CompactToolbarButton
           icon={ZoomOut}
-          tooltip="Zoom Out"
+          tooltip="Zoom Out (Ctrl+-)"
           onClick={onZoomOut}
         />
-        <div className="text-xs text-muted-foreground w-10 text-center px-1">
-          {Math.round(zoom * 100)}%
-        </div>
         <CompactToolbarButton
           icon={ZoomIn}
-          tooltip="Zoom In"
+          tooltip="Zoom In (Ctrl+=)"
           onClick={onZoomIn}
-        />
-        <CompactToolbarButton
-          icon={Maximize2}
-          tooltip="Fit to Screen"
-          onClick={onFitScreen}
         />
       </ToolbarGroup>
 

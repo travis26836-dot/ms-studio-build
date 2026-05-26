@@ -9,7 +9,7 @@ export default defineConfig({
     port: 3000,
     allowedHosts: [
       "localhost",
-      "customer-portal-production-d678.up.railway.app",
+      "customer-portal-production-b032.up.railway.app",
     ],
   },
 });

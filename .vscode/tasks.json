@@ -37,8 +37,8 @@
 			"problemMatcher": []
 		},
 		{
-			"type": "process",
-			"command": "markdownlint",
+			"type": "shell",
+			"command": "npx --yes markdownlint-cli2 \"**/*.md\" \"#node_modules\"",
 			"problemMatcher": [
 				"$tsc"
 			],

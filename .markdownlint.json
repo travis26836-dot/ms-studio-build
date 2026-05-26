@@ -3,15 +3,12 @@
   "MD013": {
     "line_length": 120,
     "heading_line_length": 120,
-    "headers": true,
     "code_blocks": true,
-    "code_languages": [],
     "tables": false,
     "stern": false
   },
   "MD024": {
-    "siblings_only": true,
-    "allow_different_nesting": false
+    "siblings_only": true
   },
   "MD060": false
 }

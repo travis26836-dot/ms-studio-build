@@ -1471,6 +1471,13 @@ async function startServer() {
     if (!downloadLocation) return res.json({ ok: false });
 
     try {
+      // Validate URL to prevent SSRF attacks - only allow Unsplash domains
+      const url = new URL(downloadLocation);
+      const allowedHosts = ["api.unsplash.com"];
+      if (!allowedHosts.includes(url.hostname)) {
+        return res.json({ ok: false });
+      }
+
       await fetch(downloadLocation, {
         headers: { Authorization: `Client-ID ${accessKey}` },
       });

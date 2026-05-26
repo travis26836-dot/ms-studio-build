@@ -445,10 +445,10 @@ export function useCanvasEditor(
         return nearest;
       };
 
-      if (xAffects) {
+      if (snapToEdgesRef.current && xAffects) {
         const leftGuide = nearestGuide(bounds.left, xGuides, EDGE_THRESHOLD);
         const rightGuide = nearestGuide(boundsRight, xGuides, EDGE_THRESHOLD);
-        const centerGuide = nearestGuide(center.x, xGuides, CENTER_THRESHOLD);
+        const centerGuide = snapToCenterRef.current ? nearestGuide(center.x, xGuides, CENTER_THRESHOLD) : null;
 
         if (leftGuide !== null && isLeftHandle) {
           const nextWidth = Math.max(4, boundsRight - leftGuide);
@@ -475,10 +475,10 @@ export function useCanvasEditor(
         }
       }
 
-      if (yAffects) {
+      if (snapToEdgesRef.current && yAffects) {
         const topGuide = nearestGuide(bounds.top, yGuides, EDGE_THRESHOLD);
         const bottomGuide = nearestGuide(boundsBottom, yGuides, EDGE_THRESHOLD);
-        const centerGuide = nearestGuide(center.y, yGuides, CENTER_THRESHOLD);
+        const centerGuide = snapToCenterRef.current ? nearestGuide(center.y, yGuides, CENTER_THRESHOLD) : null;
 
         if (topGuide !== null && isTopHandle) {
           const nextHeight = Math.max(4, boundsBottom - topGuide);

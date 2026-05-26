@@ -83,13 +83,28 @@ pnpm format                # Format code
 
 ## Database Setup
 
-### Docker
+### PostgreSQL Installation
 
+Install PostgreSQL 16 or later on your system:
+
+**macOS (via Homebrew):**
 ```bash
-docker run --name ms-build-postgres \
-  -e POSTGRES_PASSWORD=password \
-  -p 5432:5432 \
-  -d postgres:16
+brew install postgresql@16
+brew services start postgresql@16
+```
+
+**Windows:**
+Download and install from [postgresql.org](https://www.postgresql.org/download/windows/)
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt-get install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+Then create a database for development:
+```bash
+psql -U postgres -c "CREATE DATABASE ms_build;"
 ```
 
 ### Migrations

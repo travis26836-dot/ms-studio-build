@@ -14,13 +14,28 @@ applyTo: "server/db.ts,server/auth.ts,prisma/**,customer-portal/**"
 
 ## Local Development Database
 
-### Using Docker
+### PostgreSQL Installation
 
+Install PostgreSQL 16 or later:
+
+**macOS (via Homebrew):**
 ```bash
-docker run --name ms-build-postgres \
-  -e POSTGRES_PASSWORD=password \
-  -p 5432:5432 \
-  -d postgres:16
+brew install postgresql@16
+brew services start postgresql@16
+```
+
+**Windows:**
+Download and install from [postgresql.org](https://www.postgresql.org/download/windows/)
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt-get install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+Create a database:
+```bash
+psql -U postgres -c "CREATE DATABASE ms_build;"
 ```
 
 ### Update `.env.local`
@@ -234,14 +249,13 @@ railway run pnpm exec prisma migrate deploy
 **Fix (Local):**
 
 ```bash
-# Check Docker container
-docker ps | grep postgres
+# Check if PostgreSQL is running
+psql -U postgres -c "SELECT 1;"
 
 # If not running, start it
-docker run --name ms-build-postgres \
-  -e POSTGRES_PASSWORD=password \
-  -p 5432:5432 \
-  -d postgres:16
+# macOS: brew services start postgresql@16
+# Linux: sudo systemctl start postgresql
+# Windows: Check Services or pg_ctl start
 ```
 
 **Fix (Railway):**

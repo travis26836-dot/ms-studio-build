@@ -6,19 +6,19 @@ Complete step-by-step guide for all environments.
 
 ### Local Development (Your Computer)
 
-```
 .env.local → pnpm dev:full → local app + API
+
 - Database: localhost:5432
 - App UI: <http://localhost:3003>
 - API: <http://localhost:3010>
-```
 
 ### Railway Production (Railway Servers)
 
-```
 Railway Variables → build + start → Railway runtime
+
 - Database: Railway PostgreSQL (managed)
-- API: https://your-railway-domain.com
+- API: <https://your-railway-domain.com>
+
 ```
 
 ---
@@ -33,18 +33,27 @@ pnpm install
 
 ### Step 2: Set Up Local Database
 
-**Option A: Docker (Recommended)**
+Install PostgreSQL 16 or later on your system:
 
+**macOS (via Homebrew):**
 ```bash
-docker run --name ms-build-postgres \
-  -e POSTGRES_PASSWORD=password \
-  -p 5432:5432 \
-  -d postgres:16
+brew install postgresql@16
+brew services start postgresql@16
 ```
 
-**Option B: Local PostgreSQL Installation**
+**Windows:**
+Download and install from [postgresql.org](https://www.postgresql.org/download/windows/)
 
-Install PostgreSQL 16+ and create a database `ms_build`.
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt-get install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+Then create a database:
+```bash
+psql -U postgres -c "CREATE DATABASE ms_build;"
+```
 
 ### Step 3: Create `.env.local`
 
@@ -89,22 +98,6 @@ pnpm dev:full
 
 - App: <http://localhost:3003>
 - API: <http://localhost:3010>
-
----
-
-## Understanding: Local vs Production
-
-### Local Development
-
-```
-.env.local -> pnpm dev:full -> local app + API
-```
-
-### Railway Production
-
-```
-Railway Variables -> build + start -> Railway runtime
-```
 
 ---
 
@@ -229,13 +222,12 @@ pnpm dev:full
 
 ```bash
 # Check if PostgreSQL is running
-docker ps | grep postgres
+psql -U postgres -c "SELECT 1;"
 
-# If not, start it
-docker run --name ms-build-postgres \
-  -e POSTGRES_PASSWORD=password \
-  -p 5432:5432 \
-  -d postgres:16
+# If not running, start it
+# macOS: brew services start postgresql@16
+# Linux: sudo systemctl start postgresql
+# Windows: Check Services or use pg_ctl start
 
 # Check DATABASE_URL in .env.local
 echo $DATABASE_URL

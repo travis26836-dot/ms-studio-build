@@ -111,7 +111,7 @@ pnpm dev:full
 2. Open your project
 3. Click **New** → Select **Database** → **PostgreSQL**
 4. Railway creates a PostgreSQL service
-5. Railway provides `DATABASE_URL` (appears in Variables)
+5. Railway exposes `DATABASE_URL` in the PostgreSQL service's Variables tab
 
 ### Step 2: Deploy Your Application
 
@@ -132,21 +132,38 @@ railway up
 
 ### Step 3: Configure Railway Variables
 
-Set required environment variables in **Railway Dashboard** → Your Project → **Variables**.
+Set required environment variables in the correct Railway service. Variables
+belonging to PostgreSQL are not automatically injected into the API service.
 
-#### Database (Railway will provide this)
+#### Database (set on the application/API service)
 
-```bash
-DATABASE_URL=postgresql://username:password@host:5432/dbname
+Use **Add Reference Variable** and select `DATABASE_URL` from the PostgreSQL
+service:
+
+```dotenv
+DATABASE_URL=${{Postgres.DATABASE_URL}}
 ```
 
-#### Application
+`Postgres` above is the default service name; select the database service used
+by this environment.
 
-```bash
+#### Application/API Service
+
+```dotenv
 NODE_ENV=production
 API_PORT=3010
 PORT=3010
-VITE_API_URL=https://your-railway-domain.com
+CUSTOMER_PORTAL_URL=https://your-customer-portal-domain.com
+```
+
+#### Customer Portal Service
+
+These values are compiled into the portal frontend at build time, so redeploy
+the portal after changing them:
+
+```dotenv
+VITE_API_URL=https://your-api-domain.com
+VITE_MAIN_APP_URL=https://your-main-app-domain.com
 ```
 
 #### Authentication (Production Keys)
@@ -173,12 +190,27 @@ GOOGLE_GENERATIVE_AI_API_KEY=your_production_key
 AI_CREDIT_PACKS_ENABLED=true
 ```
 
-### Step 4: Verify Deployment
+### Step 4: Apply Database Migrations
+
+Configure this as the application/API service **Pre-deploy Command**:
+
+```bash
+pnpm exec prisma migrate deploy
+```
+
+Alternatively, run it from a terminal linked to that Railway service:
+
+```bash
+railway run pnpm exec prisma migrate deploy
+```
+
+### Step 5: Verify Deployment
 
 1. Check Railway Dashboard → **Deployments**
 2. Latest deployment should show **successful**
 3. Check **Logs** for startup without fatal errors
-4. Visit your production URL — app should load
+4. Visit `https://your-api-domain.com/api/health`; it should return JSON
+5. Visit the customer portal; saved designs should load
 
 ---
 
@@ -191,22 +223,23 @@ AI_CREDIT_PACKS_ENABLED=true
 
 **Railway:**
 
-- Railway IGNORES `.env` files (by design)
-- All environment variables come from Railway Dashboard
+- Railway service variables are the deployed source of truth
+- Environment files from a connected repository may be suggested for import,
+  but do not replace correctly scoped service/reference variables
 - This keeps secrets out of your repository
 
 ---
 
 ## Local Development vs Production Checklist
 
-| Item | Local (.env.local) | Production (Railway) |
-|------|---|---|
-| Database | `localhost:5432` | Railway PostgreSQL (auto) |
-| Clerk Keys | Test keys (pk_test_/sk_test_) | Production keys (pk_live_/sk_live_) |
-| Stripe Keys | Test keys (sk_test_/pk_test_) | Production keys (sk_live_/pk_live_) |
-| NODE_ENV | development | production |
-| VITE_API_URL | <http://localhost:3010> | <https://your-railway-domain.com> |
-| Where stored | `.env.local` file (git-ignored) | Railway Dashboard Variables |
+| Item         | Local (.env.local)              | Production (Railway)                          |
+| ------------ | ------------------------------- | --------------------------------------------- |
+| Database     | `localhost:5432`                | API reference to `${{Postgres.DATABASE_URL}}` |
+| Clerk Keys   | Test keys (pk*test*/sk*test*)   | Production keys (pk*live*/sk*live*)           |
+| Stripe Keys  | Test keys (sk*test*/pk*test*)   | Production keys (sk*live*/pk*live*)           |
+| NODE_ENV     | development                     | production                                    |
+| VITE_API_URL | <http://localhost:3010>         | Portal service -> public API domain           |
+| Where stored | `.env.local` file (git-ignored) | Railway Dashboard Variables                   |
 
 ---
 
@@ -241,9 +274,19 @@ pnpm exec prisma migrate deploy
 ### Railway database connection issues
 
 1. Ensure PostgreSQL service is added to Railway project
-2. Confirm `DATABASE_URL` exists in Railway Variables
-3. Check deployment logs for connection errors
-4. Railway PostgreSQL may take 30-60 seconds to start
+2. Confirm the application/API service references the PostgreSQL
+   `DATABASE_URL`
+3. Run `pnpm exec prisma migrate deploy` for the API service
+4. Check deployment logs for connection errors
+
+### Railway customer portal "Failed to fetch"
+
+1. Verify the portal service has
+   `VITE_API_URL=https://your-api-domain.com`, then redeploy it
+2. Verify the API service has
+   `CUSTOMER_PORTAL_URL=https://your-customer-portal-domain.com`
+3. Check `https://your-api-domain.com/api/health` for JSON before debugging
+   database errors
 
 ### Railway authentication issues
 
@@ -262,13 +305,13 @@ pnpm exec prisma migrate deploy
 
 ## File Reference
 
-| File | Purpose | Tracked? | Local/Production |
-|------|---------|---|---|
-| `.env.local` | Local development environment | No (git-ignored) | Local only |
-| `.env` | Shared defaults | Yes (optional) | Both |
-| `.env.example` | Template for developers | Yes | Reference |
-| `railway.toml` | Railway deployment config | Yes (optional) | Both |
-| `INSTRUCTIONS/` | Setup documentation | Yes | Reference |
+| File            | Purpose                       | Tracked?         | Local/Production |
+| --------------- | ----------------------------- | ---------------- | ---------------- |
+| `.env.local`    | Local development environment | No (git-ignored) | Local only       |
+| `.env`          | Shared defaults               | Yes (optional)   | Both             |
+| `.env.example`  | Template for developers       | Yes              | Reference        |
+| `railway.toml`  | Railway deployment config     | Yes (optional)   | Both             |
+| `INSTRUCTIONS/` | Setup documentation           | Yes              | Reference        |
 
 ---
 

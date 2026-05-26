@@ -87,16 +87,37 @@ pnpm exec prisma migrate reset
 1. Open <https://railway.app>
 2. Select your project
 3. Click **New** → Select **Database** → **PostgreSQL**
-4. Railway creates a PostgreSQL instance and generates `DATABASE_URL`
+4. Railway creates a PostgreSQL instance and exposes `DATABASE_URL` on that
+   database service
 
-### Step 2: Get DATABASE_URL
+### Step 2: Attach DATABASE_URL to the API Service
 
-1. Go to **Railway Dashboard** → Your Project → **PostgreSQL** service
-2. Click the **PostgreSQL** tab
-3. Copy the **Public URL** or use the Railway variables system
-4. Railway automatically sets `DATABASE_URL` in your environment
+1. Go to **Railway Dashboard** → Your Project → your **application/API** service
+2. Open the **Variables** tab
+3. Click **Add Reference Variable** and select `DATABASE_URL` from the
+   PostgreSQL service
+4. Confirm the API service now shows a variable equivalent to:
 
-### Step 3: Deploy Application
+```dotenv
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+```
+
+`Postgres` is the default service name; use the database service name shown in
+your project. Do not copy a credential string into the API service unless you
+have a specific external-database requirement.
+
+### Step 3: Connect the Customer Portal to the API
+
+If the customer portal is deployed as a separate Railway service:
+
+1. Set `VITE_API_URL=https://your-api-domain.com` on the **customer portal**
+   service.
+2. Set `CUSTOMER_PORTAL_URL=https://your-customer-portal-domain.com` on the
+   **application/API** service so its CORS middleware allows browser requests.
+3. Redeploy both changed services. `VITE_API_URL` is embedded at portal build
+   time.
+
+### Step 4: Deploy Application
 
 Push your code to GitHub. Railway will:
 
@@ -104,12 +125,14 @@ Push your code to GitHub. Railway will:
 2. Run `pnpm build`
 3. Run `pnpm start`
 
-### Step 4: Run Migrations on Railway
+### Step 5: Run Migrations on Railway
 
-If migrations don't run automatically, SSH into your Railway container and run:
+Railway does not infer Prisma migrations from this repository. Configure
+`pnpm exec prisma migrate deploy` as a pre-deploy command for the API service,
+or run it for that service after configuring `DATABASE_URL`:
 
 ```bash
-pnpm exec prisma migrate deploy
+railway run pnpm exec prisma migrate deploy
 ```
 
 ---
@@ -188,11 +211,11 @@ Example portal API route (`server/index.ts`):
 // Get current user subscriptions
 app.get("/api/portal/subscriptions", auth(), async (req, res) => {
   const userId = req.auth.userId;
-  
+
   const subscriptions = await prisma.subscription.findMany({
-    where: { customerId: userId }
+    where: { customerId: userId },
   });
-  
+
   res.json(subscriptions);
 });
 ```
@@ -201,12 +224,14 @@ app.get("/api/portal/subscriptions", auth(), async (req, res) => {
 
 ## Environment Variables Reference
 
-| Variable | Purpose | Local Example | Production |
-| -------- | ------- | ------------- | ---------- |
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:password@localhost:5432/ms_build` | `postgresql://user:pass@railway-host:5432/dbname` |
-| `NODE_ENV` | Environment mode | `development` | `production` |
-| `API_PORT` | Express server port | `3010` | `3010` |
-| `PORT` | Production port | (not needed local) | `3000` |
+| Variable              | Purpose                         | Local Example                                            | Production                                               |
+| --------------------- | ------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `DATABASE_URL`        | PostgreSQL connection string    | `postgresql://postgres:password@localhost:5432/ms_build` | `${{Postgres.DATABASE_URL}}` on API service              |
+| `NODE_ENV`            | Environment mode                | `development`                                            | `production`                                             |
+| `API_PORT`            | Express server port             | `3010`                                                   | `3010`                                                   |
+| `PORT`                | Production port                 | (not needed local)                                       | `3000`                                                   |
+| `CUSTOMER_PORTAL_URL` | Permitted portal browser origin | `http://localhost:3004`                                  | `https://your-customer-portal-domain.com` on API service |
+| `VITE_API_URL`        | API called by portal frontend   | `http://localhost:3010`                                  | `https://your-api-domain.com` on portal service          |
 
 ---
 
@@ -233,7 +258,8 @@ pnpm exec prisma migrate dev --name add_new_table
 
 ### Deploy Migration to Railway
 
-Migrations run automatically on Railway. If they fail:
+Run migrations as an API-service pre-deploy command or with `railway run`.
+If they fail:
 
 1. Check Railway logs
 2. Run manually:
@@ -265,8 +291,22 @@ psql -U postgres -c "SELECT 1;"
 **Fix (Railway):**
 
 - Verify PostgreSQL service is running in Railway Dashboard
-- Confirm `DATABASE_URL` is set in Railway Variables
-- Check it matches the PostgreSQL connection string
+- Confirm the **API service** has a `DATABASE_URL` reference to the PostgreSQL
+  service
+- Redeploy the API service after adding or changing the reference
+
+### Customer Portal Shows "Failed to fetch"
+
+A browser-level `Failed to fetch` happens before the frontend can read a normal
+API error response. Check the portal/API connection before changing PostgreSQL:
+
+- Confirm the portal service was built with
+  `VITE_API_URL=https://your-api-domain.com`
+- Confirm the API service has
+  `CUSTOMER_PORTAL_URL=https://your-customer-portal-domain.com`
+- Open `https://your-api-domain.com/api/health`; it should return JSON
+- Once the API is reachable, inspect API logs for Prisma connection or missing
+  migration errors
 
 ### Prisma Studio Won't Connect
 

@@ -5,6 +5,7 @@ Complete step-by-step guide for all environments.
 ## Understanding: Local vs Production
 
 ### Local Development (Your Computer)
+
 ```
 .env.local → pnpm dev:full → local app + API
 - Database: localhost:5432
@@ -13,6 +14,7 @@ Complete step-by-step guide for all environments.
 ```
 
 ### Railway Production (Railway Servers)
+
 ```
 Railway Variables → build + start → Railway runtime
 - Database: Railway PostgreSQL (managed)
@@ -84,19 +86,22 @@ pnpm dev:full
 ```
 
 **Done!** App is running:
-- App: http://localhost:3003
-- API: http://localhost:3010
+
+- App: <http://localhost:3003>
+- API: <http://localhost:3010>
 
 ---
 
 ## Understanding: Local vs Production
 
 ### Local Development
+
 ```
 .env.local -> pnpm dev:full -> local app + API
 ```
 
 ### Railway Production
+
 ```
 Railway Variables -> build + start -> Railway runtime
 ```
@@ -107,7 +112,7 @@ Railway Variables -> build + start -> Railway runtime
 
 ### Step 1: Create PostgreSQL in Railway
 
-1. Open https://railway.app
+1. Open <https://railway.app>
 2. Open your project
 3. Click **New** → Select **Database** → **PostgreSQL**
 4. Railway creates a PostgreSQL service
@@ -135,11 +140,13 @@ railway up
 Set required environment variables in **Railway Dashboard** → Your Project → **Variables**.
 
 **Database (Railway will provide this)**
+
 ```
 DATABASE_URL=postgresql://username:password@host:5432/dbname
 ```
 
 **Application**
+
 ```
 NODE_ENV=production
 API_PORT=3010
@@ -148,6 +155,7 @@ VITE_API_URL=https://your-railway-domain.com
 ```
 
 **Authentication (Production Keys)**
+
 ```
 CLERK_SECRET_KEY=sk_live_YOUR_PRODUCTION_KEY
 CLERK_PUBLISHABLE_KEY=pk_live_YOUR_PRODUCTION_KEY
@@ -155,6 +163,7 @@ VITE_CLERK_PUBLISHABLE_KEY=pk_live_YOUR_PRODUCTION_KEY
 ```
 
 **Stripe (Production Keys)**
+
 ```
 STRIPE_SECRET_KEY=sk_live_YOUR_PRODUCTION_KEY
 STRIPE_PUBLISHABLE_KEY=pk_live_YOUR_PRODUCTION_KEY
@@ -163,6 +172,7 @@ STRIPE_PRICE_AI_CREDIT_PACK=price_YOUR_PRODUCTION_PRICE
 ```
 
 **AI & Third-Party (Production Keys)**
+
 ```
 GOOGLE_GENERATIVE_AI_API_KEY=your_production_key
 AI_CREDIT_PACKS_ENABLED=true
@@ -180,10 +190,12 @@ AI_CREDIT_PACKS_ENABLED=true
 ## Important: .env File Handling
 
 **Local Development:**
+
 - Use `.env.local` (git-ignored) for local `pnpm` workflows
 - This is never pushed to Git
 
 **Railway:**
+
 - Railway IGNORES `.env` files (by design)
 - All environment variables come from Railway Dashboard
 - This keeps secrets out of your repository
@@ -198,7 +210,7 @@ AI_CREDIT_PACKS_ENABLED=true
 | Clerk Keys | Test keys (pk_test_/sk_test_) | Production keys (pk_live_/sk_live_) |
 | Stripe Keys | Test keys (sk_test_/pk_test_) | Production keys (sk_live_/pk_live_) |
 | NODE_ENV | development | production |
-| VITE_API_URL | http://localhost:3010 | https://your-railway-domain.com |
+| VITE_API_URL | <http://localhost:3010> | <https://your-railway-domain.com> |
 | Where stored | `.env.local` file (git-ignored) | Railway Dashboard Variables |
 
 ---
@@ -277,6 +289,7 @@ LOCAL DEV                          PRODUCTION (RAILWAY)
 ```
 
 For more detailed information on specific topics:
+
 - **02-PROJECT-CONFIGURATION.md** — Environment setup & build
 - **03-CLERK-AUTHENTICATION.md** — Auth configuration
 - **04-RAILWAY-DATABASE.md** — Database & Prisma setup

@@ -5,19 +5,19 @@ Complete step-by-step guide for all environments.
 ## Understanding: Local vs Production
 
 ### Local Development (Your Computer)
-```
+
 .env.local → pnpm dev:full → local app + API
+
 - Database: localhost:5432
 - App UI: <http://localhost:3003>
 - API: <http://localhost:3010>
-```
 
 ### Railway Production (Railway Servers)
-```
+
 Railway Variables → build + start → Railway runtime
+
 - Database: Railway PostgreSQL (managed)
-- API: https://your-railway-domain.com
-```
+- API: <https://your-railway-domain.com>
 
 ---
 
@@ -31,18 +31,31 @@ pnpm install
 
 ### Step 2: Set Up Local Database
 
-**Option A: Docker (Recommended)**
+Install PostgreSQL 16 or later on your system:
+
+**macOS (via Homebrew):**
 
 ```bash
-docker run --name ms-build-postgres \
-  -e POSTGRES_PASSWORD=password \
-  -p 5432:5432 \
-  -d postgres:16
+brew install postgresql@16
+brew services start postgresql@16
 ```
 
-**Option B: Local PostgreSQL Installation**
+**Windows:**
 
-Install PostgreSQL 16+ and create a database `ms_build`.
+Download and install from [postgresql.org](https://www.postgresql.org/download/windows/)
+
+**Linux (Ubuntu/Debian):**
+
+```bash
+sudo apt-get install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+Then create a database:
+
+```bash
+psql -U postgres -c "CREATE DATABASE ms_build;"
+```
 
 ### Step 3: Create `.env.local`
 
@@ -84,22 +97,9 @@ pnpm dev:full
 ```
 
 **Done!** App is running:
-- App: http://localhost:3003
-- API: http://localhost:3010
 
----
-
-## Understanding: Local vs Production
-
-### Local Development
-```
-.env.local -> pnpm dev:full -> local app + API
-```
-
-### Railway Production
-```
-Railway Variables -> build + start -> Railway runtime
-```
+- App: <http://localhost:3003>
+- API: <http://localhost:3010>
 
 ---
 
@@ -107,7 +107,7 @@ Railway Variables -> build + start -> Railway runtime
 
 ### Step 1: Create PostgreSQL in Railway
 
-1. Open https://railway.app
+1. Open <https://railway.app>
 2. Open your project
 3. Click **New** → Select **Database** → **PostgreSQL**
 4. Railway creates a PostgreSQL service
@@ -115,13 +115,13 @@ Railway Variables -> build + start -> Railway runtime
 
 ### Step 2: Deploy Your Application
 
-**Option A: GitHub Integration (Recommended)**
+#### Option A: GitHub Integration (Recommended)
 
 1. Push your code to GitHub
 2. In Railway Dashboard, connect GitHub repo
 3. Railway auto-deploys on push to `main`
 
-**Option B: Railway CLI**
+#### Option B: Railway CLI
 
 ```bash
 npm i -g @railway/cli
@@ -134,36 +134,41 @@ railway up
 
 Set required environment variables in **Railway Dashboard** → Your Project → **Variables**.
 
-**Database (Railway will provide this)**
-```
+#### Database (Railway will provide this)
+
+```bash
 DATABASE_URL=postgresql://username:password@host:5432/dbname
 ```
 
-**Application**
-```
+#### Application
+
+```bash
 NODE_ENV=production
 API_PORT=3010
 PORT=3010
 VITE_API_URL=https://your-railway-domain.com
 ```
 
-**Authentication (Production Keys)**
-```
+#### Authentication (Production Keys)
+
+```bash
 CLERK_SECRET_KEY=sk_live_YOUR_PRODUCTION_KEY
 CLERK_PUBLISHABLE_KEY=pk_live_YOUR_PRODUCTION_KEY
 VITE_CLERK_PUBLISHABLE_KEY=pk_live_YOUR_PRODUCTION_KEY
 ```
 
-**Stripe (Production Keys)**
-```
+#### Stripe (Production Keys)
+
+```bash
 STRIPE_SECRET_KEY=sk_live_YOUR_PRODUCTION_KEY
 STRIPE_PUBLISHABLE_KEY=pk_live_YOUR_PRODUCTION_KEY
 STRIPE_WEBHOOK_SECRET=whsec_live_YOUR_PRODUCTION_SECRET
 STRIPE_PRICE_AI_CREDIT_PACK=price_YOUR_PRODUCTION_PRICE
 ```
 
-**AI & Third-Party (Production Keys)**
-```
+#### AI & Third-Party (Production Keys)
+
+```bash
 GOOGLE_GENERATIVE_AI_API_KEY=your_production_key
 AI_CREDIT_PACKS_ENABLED=true
 ```
@@ -180,10 +185,12 @@ AI_CREDIT_PACKS_ENABLED=true
 ## Important: .env File Handling
 
 **Local Development:**
+
 - Use `.env.local` (git-ignored) for local `pnpm` workflows
 - This is never pushed to Git
 
 **Railway:**
+
 - Railway IGNORES `.env` files (by design)
 - All environment variables come from Railway Dashboard
 - This keeps secrets out of your repository
@@ -198,7 +205,7 @@ AI_CREDIT_PACKS_ENABLED=true
 | Clerk Keys | Test keys (pk_test_/sk_test_) | Production keys (pk_live_/sk_live_) |
 | Stripe Keys | Test keys (sk_test_/pk_test_) | Production keys (sk_live_/pk_live_) |
 | NODE_ENV | development | production |
-| VITE_API_URL | http://localhost:3010 | https://your-railway-domain.com |
+| VITE_API_URL | <http://localhost:3010> | <https://your-railway-domain.com> |
 | Where stored | `.env.local` file (git-ignored) | Railway Dashboard Variables |
 
 ---
@@ -217,13 +224,12 @@ pnpm dev:full
 
 ```bash
 # Check if PostgreSQL is running
-docker ps | grep postgres
+psql -U postgres -c "SELECT 1;"
 
-# If not, start it
-docker run --name ms-build-postgres \
-  -e POSTGRES_PASSWORD=password \
-  -p 5432:5432 \
-  -d postgres:16
+# If not running, start it
+# macOS: brew services start postgresql@16
+# Linux: sudo systemctl start postgresql
+# Windows: Check Services or use pg_ctl start
 
 # Check DATABASE_URL in .env.local
 echo $DATABASE_URL
@@ -268,7 +274,7 @@ pnpm exec prisma migrate deploy
 
 ## Summary
 
-```
+```bash
 LOCAL DEV                          PRODUCTION (RAILWAY)
 ├── .env.local                     ├── Railway Variables
 ├── pnpm dev:full                  ├── railway up / GitHub deploy
@@ -277,6 +283,7 @@ LOCAL DEV                          PRODUCTION (RAILWAY)
 ```
 
 For more detailed information on specific topics:
+
 - **02-PROJECT-CONFIGURATION.md** — Environment setup & build
 - **03-CLERK-AUTHENTICATION.md** — Auth configuration
 - **04-RAILWAY-DATABASE.md** — Database & Prisma setup

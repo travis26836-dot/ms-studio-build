@@ -25,7 +25,7 @@ const checks = [
   { name: ".env", type: "config", path: ".env" },
   { name: "package.json", type: "config", path: "package.json" },
   { name: "vite.config.ts", type: "config", path: "vite.config.ts" },
-  { name: ".github/instructions/project-configuration.instructions.md", type: "doc", path: ".github/instructions/project-configuration.instructions.md" },
+  { name: "INSTRUCTIONS/02-PROJECT-CONFIGURATION.md", type: "doc", path: "INSTRUCTIONS/02-PROJECT-CONFIGURATION.md" },
 ];
 
 let passed = 0;

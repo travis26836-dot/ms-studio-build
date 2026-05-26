@@ -1,11 +1,11 @@
 # Project Guidelines
 
-> **Getting Started?** Start with [`INSTRUCTIONS/02-PROJECT-CONFIGURATION.md`](../INSTRUCTIONS/02-PROJECT-CONFIGURATION.md) for setup. This file covers code style and architecture — use it as a reference while coding.
+> **Getting Started?** Start with INSTRUCTIONS/02-PROJECT-CONFIGURATION.md for setup. This file covers code style and architecture — use it as a reference while coding.
 
 > **Feature Setup?** After initial setup, refer to:
 >
-> - [04-RAILWAY-DATABASE.md](../INSTRUCTIONS/04-RAILWAY-DATABASE.md) — for database & auth
-> - [05-STRIPE-SETUP.md](../INSTRUCTIONS/05-STRIPE-SETUP.md) — for subscriptions
+> - INSTRUCTIONS/04-RAILWAY-DATABASE.md — for database & auth
+> - INSTRUCTIONS/05-STRIPE-SETUP.md — for subscriptions
 
 ## Code Style
 

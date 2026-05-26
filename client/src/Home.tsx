@@ -281,7 +281,7 @@ function SiteFooter() {
       <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
           <p
-            className="font-['Cinzel_Decorative'] text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
+            className="font-['Impact'] text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
           >
             ManuScript Studio
           </p>
@@ -362,6 +362,7 @@ function Dashboard({
   const [activeTab, setActiveTab] = useState("all");
   const [showAllPresets, setShowAllPresets] = useState(false);
   const [showAllTemplates, setShowAllTemplates] = useState(false);
+  const [isAiStartMode, setIsAiStartMode] = useState(false);
   const [pendingPreset, setPendingPreset] = useState<{
     width: number;
     height: number;
@@ -518,24 +519,40 @@ function Dashboard({
           </div>
 
           <div className="site-header-search">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <input
-                type="text"
-                placeholder="What are you trying to make?"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === "Enter" && searchQuery.trim()) {
-                    openCreateDialog({
-                      width: 1080,
-                      height: 1080,
-                      label: searchQuery.trim(),
-                    });
+            <div className="flex w-full gap-2">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder={
+                    isAiStartMode
+                      ? "WHAT CAN WE HELP YOU MAKE TODAY?"
+                      : "SEARCH FOR ANYTHING"
                   }
-                }}
-                className="w-full h-10 rounded-sm bg-secondary/70 border border-border pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[oklch(0.78_0.17_75)]/50 focus:bg-secondary transition-all"
-              />
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && searchQuery.trim()) {
+                      openCreateDialog({
+                        width: 1080,
+                        height: 1080,
+                        label: searchQuery.trim(),
+                      });
+                    }
+                  }}
+                  className="w-full h-10 rounded-sm bg-secondary/70 border border-border pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[oklch(0.78_0.17_75)]/50 focus:bg-secondary transition-all"
+                />
+              </div>
+              <Button
+                type="button"
+                variant={isAiStartMode ? "default" : "secondary"}
+                className="h-10 w-10 shrink-0"
+                aria-label={isAiStartMode ? "Switch to search mode" : "Switch to AI mode"}
+                aria-pressed={isAiStartMode}
+                onClick={() => setIsAiStartMode(current => !current)}
+              >
+                <Sparkles className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 

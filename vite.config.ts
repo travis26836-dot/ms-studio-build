@@ -47,7 +47,8 @@ export default defineConfig(({ command }) => {
       allowedHosts: [
         "localhost",
         "127.0.0.1",
-        "customer-portal-production-d678.up.railway.app",
+        "customer-portal-staging-245f.up.railway.app",
+        "customer-portal-production-b032.up.railway.app",
       ],
       fs: {
         strict: true,

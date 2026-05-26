@@ -6,7 +6,13 @@ import { fileURLToPath } from "url";
 import { clerkMiddleware } from "@clerk/express";
 import { getPrisma } from "./db.js";
 import { createAiRouter } from "./ai.js";
-import { listStockAssets } from "./stockAssets.js";
+import {
+  filterStockAssets,
+  getFallbackStockAssets,
+  getCustomAssetSource,
+  mapDbStockAsset,
+  renderGeneratedStockAssetSvg,
+} from "./stockAssets.js";
 
 process.on("unhandledRejection", reason => {
   console.error("Unhandled promise rejection", reason);
@@ -1257,7 +1263,22 @@ async function startServer() {
     return res.json({ plan: user.customer?.plan ?? "free", subscription: sub });
   });
 
-  app.get("/api/stock-assets", (req, res) => {
+  app.get("/api/generated-stock-assets/:assetId.svg", (req, res) => {
+    const assetId =
+      typeof req.params.assetId === "string" ? req.params.assetId : "";
+    const variant = req.query.variant === "thumb" ? "thumb" : "full";
+    const svg = renderGeneratedStockAssetSvg(assetId, variant);
+
+    if (!svg) {
+      return res.status(404).json({ error: "Generated asset not found." });
+    }
+
+    res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    return res.send(svg);
+  });
+
+  app.get("/api/stock-assets", async (req, res) => {
     const query =
       typeof req.query.query === "string" ? req.query.query : undefined;
     const category =
@@ -1273,18 +1294,197 @@ async function startServer() {
     const license =
       typeof req.query.license === "string" ? req.query.license : undefined;
     const recent = req.query.recent === "true";
+    const forwardedProto = req.header("x-forwarded-proto");
+    const protocol =
+      typeof forwardedProto === "string" && forwardedProto.trim()
+        ? forwardedProto.split(",")[0].trim()
+        : req.protocol;
+    const host = req.get("host");
+    const baseUrl = host ? `${protocol}://${host}` : undefined;
 
-    return res.json(
-      listStockAssets({
-        query,
-        category,
-        mediaType,
-        orientation,
-        color,
-        license,
-        recent,
-      })
-    );
+    try {
+      const prisma = await getPrisma();
+      const dbAssets = await prisma.stockAsset.findMany({
+        orderBy: { createdAt: "desc" },
+      });
+      const mappedDbAssets = dbAssets.map(
+        (asset: Parameters<typeof mapDbStockAsset>[0]) =>
+          mapDbStockAsset(asset, baseUrl)
+      );
+      const mappedAssets =
+        dbAssets.length > 0
+          ? [
+              ...mappedDbAssets,
+              ...getFallbackStockAssets(baseUrl).filter(
+                asset => asset.source !== getCustomAssetSource()
+              ),
+            ]
+          : getFallbackStockAssets(baseUrl);
+
+      return res.json(
+        filterStockAssets(mappedAssets, {
+          query,
+          category,
+          mediaType,
+          orientation,
+          color,
+          license,
+          recent,
+        })
+      );
+    } catch (error) {
+      console.error("Failed to load stock assets from the database", error);
+      return res.json(
+        filterStockAssets(getFallbackStockAssets(baseUrl), {
+          query,
+          category,
+          mediaType,
+          orientation,
+          color,
+          license,
+          recent,
+        })
+      );
+    }
+  });
+
+  // ── Unsplash API proxy ──────────────────────────────────────────────────────
+  // Proxies requests to api.unsplash.com so the access key stays server-side.
+  // Unsplash requires attribution: we forward photographer info to the client.
+  app.get("/api/unsplash/search", async (req, res) => {
+    const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+    if (!accessKey) {
+      return res.status(503).json({
+        error:
+          "Unsplash not configured. Set UNSPLASH_ACCESS_KEY in your environment.",
+      });
+    }
+
+    const query =
+      typeof req.query.query === "string" && req.query.query.trim()
+        ? req.query.query.trim()
+        : "nature";
+    const page =
+      typeof req.query.page === "string" ? parseInt(req.query.page, 10) || 1 : 1;
+    const perPage = 20;
+    const orientation =
+      typeof req.query.orientation === "string" && req.query.orientation
+        ? req.query.orientation
+        : undefined;
+    const color =
+      typeof req.query.color === "string" && req.query.color
+        ? req.query.color
+        : undefined;
+
+    const params = new URLSearchParams({
+      query,
+      page: String(page),
+      per_page: String(perPage),
+    });
+    if (orientation && ["landscape", "portrait", "squarish"].includes(orientation)) {
+      params.set("orientation", orientation === "square" ? "squarish" : orientation);
+    }
+    if (color) {
+      params.set("color", color);
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.unsplash.com/search/photos?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Client-ID ${accessKey}`,
+            "Accept-Version": "v1",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const body = await response.text();
+        console.error("Unsplash API error:", response.status, body);
+        return res.status(response.status).json({ error: "Unsplash API error" });
+      }
+
+      const data = (await response.json()) as {
+        total: number;
+        total_pages: number;
+        results: Array<{
+          id: string;
+          description?: string;
+          alt_description?: string;
+          urls: { regular: string; small: string; thumb: string };
+          links: { html: string; download_location: string };
+          user: {
+            name: string;
+            username: string;
+            links: { html: string };
+          };
+          width: number;
+          height: number;
+        }>;
+      };
+
+      const photos = data.results.map(photo => ({
+        id: photo.id,
+        url: photo.urls.regular,
+        thumb: photo.urls.small,
+        alt: photo.alt_description || photo.description || "Unsplash photo",
+        source: "Unsplash" as const,
+        sourceUrl: photo.links.html,
+        downloadLocation: photo.links.download_location,
+        photographer: photo.user.name,
+        photographerUsername: photo.user.username,
+        photographerUrl: `${photo.user.links.html}?utm_source=ms_studio&utm_medium=referral`,
+        unsplashUrl: `${photo.links.html}?utm_source=ms_studio&utm_medium=referral`,
+        license: "Unsplash License",
+        licenseUrl: "https://unsplash.com/license",
+        attributionRequired: false,
+        commercialUse: true,
+        orientation:
+          photo.width > photo.height
+            ? ("landscape" as const)
+            : photo.width < photo.height
+              ? ("portrait" as const)
+              : ("square" as const),
+      }));
+
+      return res.json({
+        photos,
+        total: data.total,
+        totalPages: data.total_pages,
+        page,
+        perPage,
+      });
+    } catch (err) {
+      console.error("Unsplash fetch error:", err);
+      return res.status(500).json({ error: "Failed to fetch from Unsplash" });
+    }
+  });
+
+  // Unsplash requires apps to trigger the download endpoint when a user
+  // "downloads" (uses) a photo. This endpoint proxies that trigger.
+  app.post("/api/unsplash/download-trigger", async (req, res) => {
+    const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+    if (!accessKey) return res.json({ ok: false });
+
+    const { downloadLocation } = req.body as { downloadLocation?: string };
+    if (!downloadLocation) return res.json({ ok: false });
+
+    try {
+      // Validate URL to prevent SSRF attacks - only allow Unsplash domains
+      const url = new URL(downloadLocation);
+      const allowedHosts = ["api.unsplash.com"];
+      if (!allowedHosts.includes(url.hostname)) {
+        return res.json({ ok: false });
+      }
+
+      await fetch(downloadLocation, {
+        headers: { Authorization: `Client-ID ${accessKey}` },
+      });
+      return res.json({ ok: true });
+    } catch {
+      return res.json({ ok: false });
+    }
   });
 
   app.get("/api/projects", async (req, res) => {

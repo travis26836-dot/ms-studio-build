@@ -1,0 +1,18 @@
+flowchart LR
+  %% Canvas UI shell layout draft
+  classDef shell fill:#0f172a,color:#f8fafc,stroke:#334155,stroke-width:1px;
+  classDef panel fill:#e2e8f0,color:#0f172a,stroke:#94a3b8,stroke-width:1px;
+  classDef workspace fill:#dbeafe,color:#0f172a,stroke:#60a5fa,stroke-width:1px;
+  classDef action fill:#fde68a,color:#111827,stroke:#f59e0b,stroke-width:1px;
+
+  A[Top Toolbar\nUndo/Redo, Zoom, Snap Toggle, Save, Portal]:::shell --> B[Main Workspace]:::workspace
+  B --> C[Left Icon Rail\nTemplates, Elements, Text, Uploads, Photos, AI, Brand, Layers]:::panel
+  B --> D[Context Side Panel\nSearch + Panel-specific Controls]:::panel
+  B --> E[Canvas Stage\nFabric.js Editor Surface]:::workspace
+  B --> F[Right Properties Panel\nSelection Properties]:::panel
+  B --> G[AI Chat Panel\nOptional Replace Right Panel]:::panel
+
+  E --> H[Selection Box + Handles]:::action
+  E --> I[Drag + Drop + Resize + Rotate]:::action
+  E --> J[Snap To Grid (Optional)]:::action
+  E --> K[Autosave Local + Remote]:::action

@@ -5,9 +5,10 @@ applyTo: "server/index.ts,server/**"
 
 # Stripe Integration Guide
 
-> **Prerequisites:** Follow **02-PROJECT-CONFIGURATION.md** and **04-RAILWAY-DATABASE.md** first to set up database and Prisma schema.
-
-> **Use this guide when:** Setting up Stripe subscriptions, configuring webhook handlers, implementing checkout, managing subscription tiers, or troubleshooting billing issues.
+> **Prerequisites:** Follow **02-PROJECT-CONFIGURATION.md** and
+> **04-RAILWAY-DATABASE.md** first to set up database and Prisma schema.
+> **Use this guide when:** Setting up Stripe subscriptions, configuring webhook handlers,
+> implementing checkout, managing subscription tiers, or troubleshooting billing issues.
 
 ---
 
@@ -26,11 +27,11 @@ This app uses **Stripe** for subscription billing. Key components:
 
 ### 1.1 Create a Stripe Account
 
-Go to https://stripe.com and sign up.
+Go to <https://stripe.com> and sign up.
 
 ### 1.2 Find Your API Keys
 
-1. Go to https://dashboard.stripe.com
+1. Go to <https://dashboard.stripe.com>
 2. Click **Developers** (top right)
 3. Click **API Keys**
 4. You'll see:
@@ -199,13 +200,11 @@ app.post("/api/webhooks/stripe", express.raw({type: 'application/json'}), async 
 
 ## Environment Variables Reference
 
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `STRIPE_SECRET_KEY` | Backend API key (keep secret!) | `sk_test_abc...` |
-| `STRIPE_PUBLISHABLE_KEY` | Frontend key (safe to expose) | `pk_test_xyz...` |
-| `STRIPE_WEBHOOK_SECRET` | Webhook signing secret | `whsec_test_123...` |
-| `STRIPE_PRICE_AI_CREDIT_PACK` | Price ID for subscription | `price_abc123xyz...` |
-| `AI_CREDIT_PACKS_ENABLED` | Enable credit pack feature | `true` or `false` |
+- `STRIPE_SECRET_KEY`: Backend API key (keep secret). Example: `sk_test_abc...`
+- `STRIPE_PUBLISHABLE_KEY`: Frontend key (safe to expose). Example: `pk_test_xyz...`
+- `STRIPE_WEBHOOK_SECRET`: Webhook signing secret. Example: `whsec_test_123...`
+- `STRIPE_PRICE_AI_CREDIT_PACK`: Price ID for subscription. Example: `price_abc123xyz...`
+- `AI_CREDIT_PACKS_ENABLED`: Enable credit pack feature. Example: `true` or `false`
 
 ---
 
@@ -221,7 +220,7 @@ app.post("/api/webhooks/stripe", express.raw({type: 'application/json'}), async 
 
 In **Railway Dashboard** → Your Project → **Variables**:
 
-```
+```dotenv
 STRIPE_SECRET_KEY=sk_live_YOUR_PRODUCTION_SECRET_KEY
 STRIPE_PUBLISHABLE_KEY=pk_live_YOUR_PRODUCTION_PUBLISHABLE_KEY
 STRIPE_WEBHOOK_SECRET=whsec_live_YOUR_PRODUCTION_WEBHOOK_SECRET
@@ -245,6 +244,7 @@ STRIPE_PRICE_AI_CREDIT_PACK=price_YOUR_PRODUCTION_PRICE_ID
 **Cause:** Wrong or incomplete Stripe keys
 
 **Fix:**
+
 1. Verify keys in `.env.local` are copied correctly
 2. Ensure you're using **test keys** locally (start with `_test_`)
 3. Restart dev server
@@ -254,6 +254,7 @@ STRIPE_PRICE_AI_CREDIT_PACK=price_YOUR_PRODUCTION_PRICE_ID
 **Cause:** Stripe CLI not running or webhook secret incorrect
 
 **Fix (Local):**
+
 ```bash
 stripe listen --forward-to localhost:3010/api/webhooks/stripe
 ```
@@ -261,6 +262,7 @@ stripe listen --forward-to localhost:3010/api/webhooks/stripe
 Copy the signing secret to `.env.local`.
 
 **Fix (Production):**
+
 - Verify webhook endpoint is configured in Stripe Dashboard
 - Check that signing secret matches in Railway Variables
 - Check Railway logs for webhook errors
@@ -270,6 +272,7 @@ Copy the signing secret to `.env.local`.
 **Cause:** Missing price ID
 
 **Fix:**
+
 1. Verify `STRIPE_PRICE_AI_CREDIT_PACK` is set in `.env.local`
 2. Price ID should start with `price_`
 3. Restart dev server

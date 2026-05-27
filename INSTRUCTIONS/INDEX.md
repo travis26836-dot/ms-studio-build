@@ -5,7 +5,7 @@ All setup and configuration documentation is organized here. **Start at the top 
 ## Quick Navigation
 
 | File | Purpose |
-|------|---------|
+| ------ | --------- |
 | **01-QUICK-START.md** | 🚀 Start here — 2-minute local setup |
 | **02-PROJECT-CONFIGURATION.md** | 📋 Environment variables & build pipeline |
 | **03-CLERK-AUTHENTICATION.md** | 🔐 Auth setup — required for app to load |

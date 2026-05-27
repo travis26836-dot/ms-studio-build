@@ -1733,9 +1733,10 @@ function SidePanel({
     settings: "Settings",
   };
   const [aiSearchMode, setAiSearchMode] = useState<
-    Partial<Record<"templates" | "elements", boolean>>
+    Partial<Record<"templates" | "elements" | "photos", boolean>>
   >({});
-  const supportsAiSearch = panel === "templates" || panel === "elements";
+  const supportsAiSearch =
+    panel === "templates" || panel === "elements" || panel === "photos";
   const isAiMode = supportsAiSearch ? !!aiSearchMode[panel] : false;
 
   return (
@@ -1747,7 +1748,7 @@ function SidePanel({
         >
           {panelTitles[panel || ""]}
         </h3>
-        {panel !== "layers" && panel !== "brand" && panel !== "settings" && panel !== "photos" && (
+        {panel !== "layers" && panel !== "brand" && panel !== "settings" && (
           <div className="flex gap-1.5">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
@@ -1810,7 +1811,12 @@ function SidePanel({
           )}
           {panel === "text" && <TextPanel editor={editor} />}
           {panel === "photos" && (
-            <PhotosPanel editor={editor} searchQuery={searchQuery} />
+            <PhotosPanel
+              editor={editor}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              aiMode={isAiMode}
+            />
           )}
           {panel === "uploads" && <UploadsPanel editor={editor} />}
           {panel === "brand" && <BrandPanel editor={editor} />}
@@ -3205,41 +3211,36 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
 function PhotosPanel({
   editor,
   searchQuery,
+  setSearchQuery,
+  aiMode,
 }: {
   editor: ReturnType<typeof useCanvasEditor>;
   searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  aiMode: boolean;
 }) {
-  const [query, setQuery] = useState(searchQuery || "");
-  const [committedQuery, setCommittedQuery] = useState(searchQuery || "nature");
+  const [committedQuery, setCommittedQuery] = useState(
+    searchQuery.trim() || "nature"
+  );
   const [orientation, setOrientation] = useState("");
   const [page, setPage] = useState(1);
   const [allPhotos, setAllPhotos] = useState<UnsplashPhoto[]>([]);
-  const [photoAiMode, setPhotoAiMode] = useState(false);
-  const [photoAiPrompt, setPhotoAiPrompt] = useState("");
   const generatePhotoMut = trpc.ai.generateImage.useMutation();
   const triggerDownload = trpc.assets.triggerUnsplashDownload.useMutation();
 
   const handleGeneratePhoto = async () => {
-    if (!photoAiPrompt.trim() || generatePhotoMut.isPending) return;
+    const prompt = searchQuery.trim();
+    if (!prompt || generatePhotoMut.isPending) return;
     toast.info(`Generating AI photo. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`);
     try {
-      const result = await generatePhotoMut.mutateAsync({ prompt: photoAiPrompt });
+      const result = await generatePhotoMut.mutateAsync({ prompt });
       if (result.url) {
         await editor.addImage(result.url);
         toast.success("AI photo added to canvas!");
-        setPhotoAiPrompt("");
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Photo generation failed.");
     }
-  };
-
-  // When the query input changes, reset to page 1 and clear accumulated photos
-  const handleSearch = () => {
-    const trimmed = query.trim() || "nature";
-    setCommittedQuery(trimmed);
-    setPage(1);
-    setAllPhotos([]);
   };
 
   const {
@@ -3247,7 +3248,7 @@ function PhotosPanel({
     isLoading,
   } = trpc.assets.searchUnsplash.useQuery(
     { query: committedQuery, page, orientation: orientation || undefined },
-    { enabled: !photoAiMode }
+    { enabled: !aiMode }
   );
 
   // Accumulate pages — reset when query/orientation changes (page resets to 1)
@@ -3260,15 +3261,16 @@ function PhotosPanel({
     }
   }, [unsplashResult, page]);
 
-  // Sync external searchQuery prop into our local query state
   useEffect(() => {
-    if (searchQuery && searchQuery !== committedQuery) {
-      setQuery(searchQuery);
-      setCommittedQuery(searchQuery);
+    if (aiMode) return;
+
+    const nextQuery = searchQuery.trim() || "nature";
+    if (nextQuery !== committedQuery) {
+      setCommittedQuery(nextQuery);
       setPage(1);
       setAllPhotos([]);
     }
-  }, [searchQuery]);
+  }, [aiMode, committedQuery, searchQuery]);
 
   const hasMore =
     unsplashResult != null && page < (unsplashResult.totalPages ?? 1);
@@ -3283,56 +3285,13 @@ function PhotosPanel({
 
   return (
     <div className="space-y-3">
-      {/* Combined search bar + AI toggle */}
-      <div className="flex gap-1.5">
-        {photoAiMode ? (
-          <Input
-            placeholder="Describe the photo you want to generate..."
-            value={photoAiPrompt}
-            onChange={e => setPhotoAiPrompt(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleGeneratePhoto()}
-            className="h-8 text-xs bg-secondary"
-          />
-        ) : (
-          <>
-            <Input
-              placeholder="Search millions of free photos..."
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSearch()}
-              className="h-8 text-xs bg-secondary"
-            />
-            <Button size="sm" className="h-8 px-2" onClick={handleSearch}>
-              <Search className="w-3.5 h-3.5" />
-            </Button>
-          </>
-        )}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              size="icon"
-              variant={photoAiMode ? "default" : "secondary"}
-              className="h-8 w-8 shrink-0"
-              onClick={() => setPhotoAiMode(v => !v)}
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">
-            {photoAiMode ? "Switch to Unsplash search" : "Switch to AI generation"}
-          </TooltipContent>
-        </Tooltip>
-      </div>
-
-      {/* AI generation mode — generate button */}
-      {photoAiMode && (
+      {aiMode && (
         <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/10 p-3">
           <p className="text-[10px] text-muted-foreground">{aiCreditLabel(AI_CREDIT_ESTIMATES.image)}</p>
           <Button
             size="sm"
             className="w-full h-8 text-xs"
-            disabled={!photoAiPrompt.trim() || generatePhotoMut.isPending}
+            disabled={!searchQuery.trim() || generatePhotoMut.isPending}
             onClick={handleGeneratePhoto}
           >
             {generatePhotoMut.isPending ? (
@@ -3345,7 +3304,7 @@ function PhotosPanel({
       )}
 
       {/* Unsplash search mode */}
-      {!photoAiMode && (
+      {!aiMode && (
         <>
           {/* Orientation filter */}
           <select
@@ -3370,10 +3329,7 @@ function PhotosPanel({
               <button
                 key={tag}
                 onClick={() => {
-                  setQuery(tag.toLowerCase());
-                  setCommittedQuery(tag.toLowerCase());
-                  setPage(1);
-                  setAllPhotos([]);
+                  setSearchQuery(tag.toLowerCase());
                 }}
                 className="px-2 py-0.5 rounded-full bg-secondary text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               >

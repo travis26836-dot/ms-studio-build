@@ -65,17 +65,22 @@ Replace:
 
 ## Step 3: Configure Clerk Dashboard (Development)
 
-### 3.1 Add Allowed URLs
+### 3.1 Configure User Redirects (If Needed)
 
-1. In Clerk Dashboard, go to **Settings** → **URLs**
-2. Add these for local development:
-   - **Allowed Origins:** `http://localhost:3003`
-   - **Allowed Redirect URLs:** `http://localhost:3003/*`
-   - **Allowed Logout Redirect URLs:** `http://localhost:3003`
+**Most setups work without manual configuration**, but if you see redirect issues:
 
-### 3.2 Save Settings
+1. In Clerk Dashboard, go to **Account Portal** → **User Redirects**
+2. You should see default settings (`$DEVHOST` for local development). ****This covers your development servers
+and you don 't have to worry about redirects for
+   development.****
 
-Click **Save** to apply changes.
+**Note:** Most Clerk setups (including the default) handle redirects automatically without manual configuration.
+
+### 3.2 Check API Keys Are Active
+
+1. In Clerk Dashboard, go to **API Keys** (left sidebar)
+2. Verify your keys are visible and not revoked
+3. Make sure you're using the correct environment (test vs. live keys)
 
 ---
 
@@ -100,7 +105,7 @@ pnpm dev:full
 
 - Check browser console for error messages
 - Verify all three Clerk env vars are set in `.env.local`
-- Ensure Clerk Dashboard URLs include `http://localhost:3003`
+- Ensure Clerk Dashboard URLs include $DEVHOST
 - Restart the dev server after making changes
 
 ---

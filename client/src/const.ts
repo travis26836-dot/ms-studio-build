@@ -2,6 +2,8 @@
  * Dynamically resolve portal URL based on environment variable.
  * Uses VITE_PORTAL_URL which should be set in Railway environment.
  */
+const LOCAL_PORTAL_URL = "http://127.0.0.1:3004";
+
 function resolvePortalUrl(): string {
   const envUrl = (import.meta as { env?: { VITE_PORTAL_URL?: string } }).env
     ?.VITE_PORTAL_URL;
@@ -12,10 +14,10 @@ function resolvePortalUrl(): string {
 
   // Fallback for local development only
   if (typeof window === "undefined") {
-    return "http://localhost:3000";
+    return LOCAL_PORTAL_URL;
   }
 
-  return "http://localhost:3000"; // Default fallback
+  return LOCAL_PORTAL_URL;
 }
 
 export function getLoginUrl() {

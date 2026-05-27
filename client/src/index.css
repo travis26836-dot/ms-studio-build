@@ -49,9 +49,9 @@
 
 :root {
   --radius: 0.5rem;
-  /* Neo-industrial electric amber primary */
-  --primary: oklch(0.78 0.17 75);
-  --primary-foreground: oklch(0.1 0.01 75);
+  /* Red and black default palette */
+  --primary: oklch(0.62 0.22 25);
+  --primary-foreground: oklch(0.98 0 0);
   /* Deep graphite backgrounds */
   --background: oklch(0.11 0.005 260);
   --foreground: oklch(0.91 0.008 75);
@@ -69,35 +69,35 @@
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.25 0.008 260);
   --input: oklch(0.22 0.008 260);
-  --ring: oklch(0.78 0.17 75);
+  --ring: oklch(0.62 0.22 25);
   --canvas: oklch(0.19 0.006 260);
   --canvas-foreground: oklch(0.91 0.008 75);
   --toolbar: oklch(0.12 0.006 260);
   --toolbar-foreground: oklch(0.82 0.007 75);
   --sidebar: oklch(0.12 0.006 260);
   --sidebar-foreground: oklch(0.82 0.007 75);
-  --sidebar-primary: oklch(0.78 0.17 75);
+  --sidebar-primary: oklch(0.62 0.22 25);
   --sidebar-primary-foreground: oklch(0.1 0.01 75);
   --sidebar-accent: oklch(0.22 0.01 260);
   --sidebar-accent-foreground: oklch(0.91 0.008 75);
   --sidebar-border: oklch(0.25 0.008 260);
-  --sidebar-ring: oklch(0.78 0.17 75);
-  --chart-1: oklch(0.78 0.17 75);
+  --sidebar-ring: oklch(0.62 0.22 25);
+  --chart-1: oklch(0.62 0.22 25);
   --chart-2: oklch(0.7 0.18 180);
   --chart-3: oklch(0.7 0.2 145);
   --chart-4: oklch(0.75 0.15 60);
   --chart-5: oklch(0.65 0.22 330);
   /* Neo-industrial design tokens */
-  --amber: oklch(0.78 0.17 75);
-  --amber-dim: oklch(0.65 0.14 75);
+  --amber: oklch(0.62 0.22 25);
+  --amber-dim: oklch(0.54 0.19 25);
   --graphite-100: oklch(0.24 0.008 260);
   --graphite-200: oklch(0.20 0.006 260);
   --bone-100: oklch(0.91 0.008 75);
   --bone-200: oklch(0.78 0.01 75);
-  --measurement-line: rgba(245, 200, 80, 0.18);
-  --chip-glow: rgba(245, 200, 80, 0.25);
-  --panel-border: rgba(245, 200, 80, 0.12);
-  --toolbar-border: rgba(245, 200, 80, 0.15);
+  --measurement-line: rgba(220, 38, 38, 0.18);
+  --chip-glow: rgba(220, 38, 38, 0.25);
+  --panel-border: rgba(220, 38, 38, 0.12);
+  --toolbar-border: rgba(220, 38, 38, 0.15);
 }
 
 @layer base {
@@ -125,11 +125,11 @@
     font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   }
 
-  /* Amber focus rings */
+  /* Red focus rings */
   input:focus-visible,
   textarea:focus-visible,
   button:focus-visible {
-    outline: 1.5px solid #f5c850;
+    outline: 1.5px solid #dc2626;
     outline-offset: 2px;
   }
 }
@@ -191,7 +191,7 @@
     align-items: center;
     gap: 6px;
     padding: 4px 12px;
-    border: 1px solid rgba(245, 200, 80, 0.4);
+    border: 1px solid rgba(220, 38, 38, 0.4);
     border-radius: 2px;
     font-family: var(--font-display);
     font-size: 11px;
@@ -199,11 +199,11 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--amber);
-    background: rgba(245, 200, 80, 0.06);
+    background: rgba(220, 38, 38, 0.06);
     transition: all 0.15s ease;
   }
   .action-chip:hover {
-    background: rgba(245, 200, 80, 0.12);
+    background: rgba(220, 38, 38, 0.12);
     box-shadow: 0 0 12px var(--chip-glow);
   }
 
@@ -248,5 +248,5 @@
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.38 0.06 75);
+  background: oklch(0.53 0.2 25);
 }

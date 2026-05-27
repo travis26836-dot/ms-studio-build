@@ -540,7 +540,7 @@ function Dashboard({
                       });
                     }
                   }}
-                  className="w-full h-10 rounded-sm bg-secondary/70 border border-border pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[oklch(0.78_0.17_75)]/50 focus:bg-secondary transition-all"
+                  className="w-full h-10 rounded-sm bg-secondary/70 border border-border pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[oklch(0.62_0.22_25)]/50 focus:bg-secondary transition-all"
                 />
               </div>
               <Button

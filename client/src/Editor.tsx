@@ -649,7 +649,7 @@ export default function Editor({
       return;
     }
 
-    const padding = 32;
+    const padding = 0;
     const scaleX = (container.clientWidth - padding) / canvasWidth;
     const scaleY = (container.clientHeight - padding) / canvasHeight;
     editorRef.current.setZoom(Math.min(scaleX, scaleY, 1));
@@ -1518,7 +1518,7 @@ export default function Editor({
           className="flex-1 overflow-auto relative"
           style={{background: "oklch(0.18 0.005 260)" }}
         >
-          <div className="min-h-full min-w-full flex items-center justify-center p-4">
+          <div className="min-h-full min-w-full flex items-center justify-center p-0">
             {/* Outer div sizes to visual (zoomed) dimensions for layout and shadow */}
             <div
               className={styles.canvasOuter}

@@ -1747,7 +1747,7 @@ function SidePanel({
         >
           {panelTitles[panel || ""]}
         </h3>
-        {panel !== "layers" && panel !== "brand" && panel !== "settings" && (
+        {panel !== "layers" && panel !== "brand" && panel !== "settings" && panel !== "photos" && (
           <div className="flex gap-1.5">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
@@ -3283,18 +3283,37 @@ function PhotosPanel({
 
   return (
     <div className="space-y-3">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] text-muted-foreground font-medium">
-          {photoAiMode ? "AI Generation" : "Free Photos · Unsplash"}
-        </span>
+      {/* Combined search bar + AI toggle */}
+      <div className="flex gap-1.5">
+        {photoAiMode ? (
+          <Input
+            placeholder="Describe the photo you want to generate..."
+            value={photoAiPrompt}
+            onChange={e => setPhotoAiPrompt(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleGeneratePhoto()}
+            className="h-8 text-xs bg-secondary"
+          />
+        ) : (
+          <>
+            <Input
+              placeholder="Search millions of free photos..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSearch()}
+              className="h-8 text-xs bg-secondary"
+            />
+            <Button size="sm" className="h-8 px-2" onClick={handleSearch}>
+              <Search className="w-3.5 h-3.5" />
+            </Button>
+          </>
+        )}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               type="button"
               size="icon"
               variant={photoAiMode ? "default" : "secondary"}
-              className="h-7 w-7"
+              className="h-8 w-8 shrink-0"
               onClick={() => setPhotoAiMode(v => !v)}
             >
               <Sparkles className="h-3.5 w-3.5" />
@@ -3306,16 +3325,10 @@ function PhotosPanel({
         </Tooltip>
       </div>
 
-      {/* AI generation mode */}
+      {/* AI generation mode — generate button */}
       {photoAiMode && (
         <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/10 p-3">
           <p className="text-[10px] text-muted-foreground">{aiCreditLabel(AI_CREDIT_ESTIMATES.image)}</p>
-          <textarea
-            value={photoAiPrompt}
-            onChange={e => setPhotoAiPrompt(e.target.value)}
-            placeholder="Describe the photo you want to generate..."
-            className="w-full h-16 text-xs bg-secondary rounded-md border border-border p-2 resize-none text-card-foreground placeholder:text-muted-foreground"
-          />
           <Button
             size="sm"
             className="w-full h-8 text-xs"
@@ -3334,20 +3347,6 @@ function PhotosPanel({
       {/* Unsplash search mode */}
       {!photoAiMode && (
         <>
-          {/* Search bar */}
-          <div className="flex gap-1.5">
-            <Input
-              placeholder="Search millions of free photos..."
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSearch()}
-              className="h-8 text-xs bg-secondary"
-            />
-            <Button size="sm" className="h-8 px-2" onClick={handleSearch}>
-              <Search className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-
           {/* Orientation filter */}
           <select
             title="Orientation"

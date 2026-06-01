@@ -1,0 +1,338 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1580" width="1440" height="1580" role="img" aria-labelledby="home-title home-desc">
+  <title id="home-title">ManuScript Studio – Home / Dashboard Layout</title>
+  <desc id="home-desc">Wireframe of the authenticated Dashboard (and unauthenticated LandingPage), showing header, design preset grid, template category tabs, template cards, recent-designs section, and footer. All measurements are CSS pixels at 1440px viewport.</desc>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       BACKGROUND
+  ═══════════════════════════════════════════════════════════════ -->
+  <rect width="1440" height="1580" fill="#0d0e12"/>
+
+  <!-- ─── Page title ─── -->
+  <text x="720" y="22" font-family="'Courier New', monospace" font-size="11" fill="#c4935c" text-anchor="middle" font-weight="700">MANUSCRIPT STUDIO — HOME / DASHBOARD  (1440 × 1580px wireframe)</text>
+  <text x="720" y="36" font-family="'Courier New', monospace" font-size="8" fill="#4b5563" text-anchor="middle">Authenticated view: Dashboard · Unauthenticated view: LandingPage (see separate SVG)</text>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HEADER  h=64px  y=48
+  ═══════════════════════════════════════════════════════════════ -->
+  <rect x="0" y="48" width="1440" height="64" fill="#111318"/>
+  <rect x="0" y="111" width="1440" height="1" fill="#2a2d38"/>
+  <!-- amber accent line on header top -->
+  <rect x="0" y="48" width="1440" height="2" fill="#c4935c" opacity="0.6"/>
+
+  <text x="720" y="43" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">SITE HEADER  h=64px  sticky top  bg=#111318</text>
+
+  <!-- Logo (left) -->
+  <rect x="24" y="60" width="36" height="36" rx="8" fill="#1a1d23" stroke="#2a2d38"/>
+  <rect x="30" y="66" width="24" height="24" rx="4" fill="none" stroke="#c4935c" stroke-width="1.5"/>
+  <path d="M36 72 l6 6 l6 -6" fill="none" stroke="#c4935c" stroke-width="1.5"/>
+  <text x="68" y="80" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#e2e3e8" font-weight="700" letter-spacing="1.5">MANUSCRIPT</text>
+  <text x="68" y="93" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#9ca3af" letter-spacing="3">STUDIO</text>
+
+  <!-- Search bar (center) -->
+  <rect x="488" y="62" width="400" height="40" rx="8" fill="#1a1d23" stroke="#2a2d38"/>
+  <!-- Search icon -->
+  <circle cx="508" cy="82" r="7" fill="none" stroke="#4b5563" stroke-width="1.5"/>
+  <line x1="513" y1="87" x2="517" y2="91" stroke="#4b5563" stroke-width="1.5"/>
+  <text x="524" y="86" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#4b5563">Search designs, templates...</text>
+  <!-- Sparkles AI toggle button (right of search) -->
+  <rect x="876" y="62" width="40" height="40" rx="8" fill="#1a1d23" stroke="#2a2d38"/>
+  <path d="M896 72 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2 z" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="896" y="112" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">AI mode</text>
+
+  <!-- AccountMenu trigger (right) -->
+  <g transform="translate(1340, 80)">
+    <circle cx="0" cy="0" r="14" fill="#2a2d38"/>
+    <text x="0" y="4" font-family="'Inter', system-ui, sans-serif" font-size="12" fill="#c4935c" text-anchor="middle" font-weight="700">A</text>
+  </g>
+  <text x="1362" y="73" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#e2e3e8" font-weight="500">Account</text>
+  <text x="1362" y="87" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#6b7280">user@example.com</text>
+  <path d="M1406 76 l4 4 l4 -4" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 1: CREATE A NEW DESIGN (presets)
+       y=112 → y=380
+  ═══════════════════════════════════════════════════════════════ -->
+  <rect x="0" y="112" width="1440" height="268" fill="#0d0e12"/>
+
+  <text x="32" y="142" font-family="'Inter', system-ui, sans-serif" font-size="18" fill="#e2e3e8" font-weight="600">Create a new design</text>
+  <text x="32" y="158" font-family="'Inter', system-ui, sans-serif" font-size="12" fill="#6b7280">Pick a preset size or start with a custom canvas</text>
+  <text x="720" y="107" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">PRESET SIZES SECTION  h=268px</text>
+
+  <!-- Preset cards row 1 (9 cards + custom + view more) -->
+  <!-- Card layout: ~112px wide × 144px tall, gap 12px, start x=32 -->
+  <!-- 10 cards in row: 10*112 + 9*12 = 1228px. centered in 1376px → x_offset=32+(1376-1228)/2=32+74=106 -->
+  <!-- Actually just start at x=32 to match the layout -->
+
+  <!-- Preset card 1: YouTube Thumbnail -->
+  <rect x="32" y="168" width="110" height="140" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="32" y="168" width="110" height="72" rx="6" fill="#1e2128"/>
+  <text x="87" y="205" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">16:9</text>
+  <text x="87" y="222" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">─────</text>
+  <text x="87" y="258" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#9ca3af" text-anchor="middle">YouTube Thumbnail</text>
+  <text x="87" y="272" font-family="'Courier New', monospace" font-size="7.5" fill="#6b7280" text-anchor="middle">1280 × 720</text>
+  <text x="87" y="286" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">px</text>
+  <rect x="40" y="298" width="94" height="4" rx="2" fill="#2a2d38"/>
+
+  <!-- Preset card 2: Instagram Square -->
+  <rect x="154" y="168" width="110" height="140" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="154" y="168" width="110" height="72" rx="6" fill="#1e2128"/>
+  <text x="209" y="205" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">1:1</text>
+  <text x="209" y="258" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#9ca3af" text-anchor="middle">Instagram Post</text>
+  <text x="209" y="272" font-family="'Courier New', monospace" font-size="7.5" fill="#6b7280" text-anchor="middle">1080 × 1080</text>
+
+  <!-- Preset card 3: Instagram Story -->
+  <rect x="276" y="168" width="110" height="140" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="276" y="168" width="110" height="72" rx="6" fill="#1e2128"/>
+  <text x="331" y="205" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">9:16</text>
+  <text x="331" y="258" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#9ca3af" text-anchor="middle">Instagram Story</text>
+  <text x="331" y="272" font-family="'Courier New', monospace" font-size="7.5" fill="#6b7280" text-anchor="middle">1080 × 1920</text>
+
+  <!-- Preset card 4: Twitter Post -->
+  <rect x="398" y="168" width="110" height="140" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="398" y="168" width="110" height="72" rx="6" fill="#1e2128"/>
+  <text x="453" y="205" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">16:9</text>
+  <text x="453" y="258" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#9ca3af" text-anchor="middle">Twitter Post</text>
+  <text x="453" y="272" font-family="'Courier New', monospace" font-size="7.5" fill="#6b7280" text-anchor="middle">1600 × 900</text>
+
+  <!-- Preset card 5: LinkedIn Post -->
+  <rect x="520" y="168" width="110" height="140" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="520" y="168" width="110" height="72" rx="6" fill="#1e2128"/>
+  <text x="575" y="205" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">2:1</text>
+  <text x="575" y="258" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#9ca3af" text-anchor="middle">LinkedIn Post</text>
+  <text x="575" y="272" font-family="'Courier New', monospace" font-size="7.5" fill="#6b7280" text-anchor="middle">1200 × 627</text>
+
+  <!-- Preset card 6: A4 Document -->
+  <rect x="642" y="168" width="110" height="140" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="642" y="168" width="110" height="72" rx="6" fill="#1e2128"/>
+  <text x="697" y="205" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">√2:1</text>
+  <text x="697" y="258" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#9ca3af" text-anchor="middle">A4 Document</text>
+  <text x="697" y="272" font-family="'Courier New', monospace" font-size="7.5" fill="#6b7280" text-anchor="middle">794 × 1123</text>
+
+  <!-- Preset card 7: Business Card -->
+  <rect x="764" y="168" width="110" height="140" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="764" y="168" width="110" height="72" rx="6" fill="#1e2128"/>
+  <text x="819" y="205" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">3.5:2</text>
+  <text x="819" y="258" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#9ca3af" text-anchor="middle">Business Card</text>
+  <text x="819" y="272" font-family="'Courier New', monospace" font-size="7.5" fill="#6b7280" text-anchor="middle">1050 × 600</text>
+
+  <!-- Preset card 8: Presentation -->
+  <rect x="886" y="168" width="110" height="140" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="886" y="168" width="110" height="72" rx="6" fill="#1e2128"/>
+  <text x="941" y="205" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">4:3</text>
+  <text x="941" y="258" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#9ca3af" text-anchor="middle">Presentation</text>
+  <text x="941" y="272" font-family="'Courier New', monospace" font-size="7.5" fill="#6b7280" text-anchor="middle">1024 × 768</text>
+
+  <!-- Custom size card -->
+  <rect x="1008" y="168" width="110" height="140" rx="6" fill="#141618" stroke="#c4935c" stroke-dasharray="4,3"/>
+  <rect x="1008" y="168" width="110" height="72" rx="6" fill="#1e2128"/>
+  <text x="1063" y="200" font-family="'Inter', system-ui, sans-serif" font-size="20" fill="#c4935c" text-anchor="middle">+</text>
+  <text x="1063" y="258" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#c4935c" text-anchor="middle">Custom Size</text>
+  <text x="1063" y="272" font-family="'Courier New', monospace" font-size="7.5" fill="#6b7280" text-anchor="middle">W × H input</text>
+
+  <!-- View more card -->
+  <rect x="1130" y="168" width="110" height="140" rx="6" fill="#141618" stroke="#2a2d38" stroke-dasharray="4,3"/>
+  <text x="1185" y="205" font-family="'Inter', system-ui, sans-serif" font-size="18" fill="#6b7280" text-anchor="middle">⋯</text>
+  <text x="1185" y="258" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#6b7280" text-anchor="middle">View More</text>
+  <text x="1185" y="272" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">14 presets total</text>
+
+  <!-- Section 1 count note -->
+  <text x="720" y="332" font-family="'Courier New', monospace" font-size="8" fill="#4b5563" text-anchor="middle">Presets: YouTube · Instagram Post · Instagram Story · Twitter · LinkedIn · A4 · Business Card · Presentation</text>
+  <text x="720" y="346" font-family="'Courier New', monospace" font-size="8" fill="#4b5563" text-anchor="middle">Facebook · TikTok · Newsletter · Logo · Menu · Flyer · Custom Size · [+6 more]</text>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 2: START FROM A TEMPLATE
+       y=380 → y=820
+  ═══════════════════════════════════════════════════════════════ -->
+  <rect x="0" y="380" width="1440" height="2" fill="#2a2d38"/>
+  <rect x="0" y="380" width="1440" height="440" fill="#0d0e12"/>
+
+  <text x="720" y="376" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">TEMPLATES SECTION  h=440px</text>
+  <text x="32" y="410" font-family="'Inter', system-ui, sans-serif" font-size="18" fill="#e2e3e8" font-weight="600">Start from a template</text>
+  <text x="32" y="428" font-family="'Inter', system-ui, sans-serif" font-size="12" fill="#6b7280">Browse our library of professionally designed templates</text>
+
+  <!-- Tab categories (ScrollArea horizontal) -->
+  <rect x="0" y="438" width="1440" height="48" fill="#111318"/>
+  <text x="720" y="435" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">ScrollArea tab bar — 14 category tabs</text>
+
+  <!-- Individual tabs -->
+  <rect x="32" y="447" width="44" height="30" rx="4" fill="#c4935c" fill-opacity="0.15"/>
+  <rect x="32" y="447" width="44" height="2" rx="1" fill="#c4935c"/>
+  <text x="54" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#c4935c" text-anchor="middle" font-weight="600">All</text>
+
+  <rect x="84" y="447" width="72" height="30" rx="4" fill="transparent"/>
+  <text x="120" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Social Media</text>
+
+  <rect x="164" y="447" width="52" height="30" rx="4"/>
+  <text x="190" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Menus</text>
+
+  <rect x="224" y="447" width="64" height="30" rx="4"/>
+  <text x="256" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Invitations</text>
+
+  <rect x="296" y="447" width="72" height="30" rx="4"/>
+  <text x="332" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Certificates</text>
+
+  <rect x="376" y="447" width="44" height="30" rx="4"/>
+  <text x="398" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Flyers</text>
+
+  <rect x="428" y="447" width="64" height="30" rx="4"/>
+  <text x="460" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Documents</text>
+
+  <rect x="500" y="447" width="84" height="30" rx="4"/>
+  <text x="542" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Presentations</text>
+
+  <rect x="592" y="447" width="76" height="30" rx="4"/>
+  <text x="630" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Promotional</text>
+
+  <rect x="676" y="447" width="44" height="30" rx="4"/>
+  <text x="698" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Logos</text>
+
+  <rect x="728" y="447" width="60" height="30" rx="4"/>
+  <text x="758" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Business</text>
+
+  <rect x="796" y="447" width="72" height="30" rx="4"/>
+  <text x="832" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Ecommerce</text>
+
+  <rect x="876" y="447" width="36" height="30" rx="4"/>
+  <text x="894" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Ads</text>
+
+  <rect x="920" y="447" width="40" height="30" rx="4"/>
+  <text x="940" y="466" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">Print</text>
+
+  <!-- Template cards grid: 4 columns, gap=16, padding=32 -->
+  <!-- Card w=(1440-64-3*16)/4 = (1376-48)/4 = 332px, h=332*0.75=249px... let's use h=240 -->
+  <!-- Row 1 y=496, row 2 y=752 -->
+
+  <rect x="32" y="496" width="332" height="240" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="32" y="496" width="332" height="182" rx="6" fill="#1e2128"/>
+  <text x="198" y="590" font-family="'Courier New', monospace" font-size="10" fill="#4b5563" text-anchor="middle">Template Preview Image</text>
+  <text x="198" y="606" font-family="'Courier New', monospace" font-size="8" fill="#3a3d48" text-anchor="middle">3:4 aspect ratio</text>
+  <text x="40" y="700" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#9ca3af">Template Name</text>
+  <text x="40" y="716" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">1080 × 1080  Social Media</text>
+  <rect x="290" y="706" width="66" height="22" rx="4" fill="#c4935c" fill-opacity="0.12" stroke="#c4935c" stroke-width="1"/>
+  <text x="323" y="721" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#c4935c" text-anchor="middle" font-weight="600">Use</text>
+
+  <rect x="380" y="496" width="332" height="240" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="380" y="496" width="332" height="182" rx="6" fill="#1e2128"/>
+  <text x="546" y="590" font-family="'Courier New', monospace" font-size="10" fill="#4b5563" text-anchor="middle">Template Preview Image</text>
+  <text x="388" y="700" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#9ca3af">Template Name</text>
+  <text x="388" y="716" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">1920 × 1080  Presentation</text>
+
+  <rect x="728" y="496" width="332" height="240" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="728" y="496" width="332" height="182" rx="6" fill="#1e2128"/>
+  <text x="894" y="590" font-family="'Courier New', monospace" font-size="10" fill="#4b5563" text-anchor="middle">Template Preview Image</text>
+  <text x="736" y="700" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#9ca3af">Template Name</text>
+  <text x="736" y="716" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">794 × 1123  Document</text>
+
+  <rect x="1076" y="496" width="332" height="240" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="1076" y="496" width="332" height="182" rx="6" fill="#1e2128"/>
+  <text x="1242" y="590" font-family="'Courier New', monospace" font-size="10" fill="#4b5563" text-anchor="middle">Template Preview Image</text>
+  <text x="1084" y="700" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#9ca3af">Template Name</text>
+  <text x="1084" y="716" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">1050 × 600  Business Card</text>
+
+  <!-- Row 2 (faded) -->
+  <rect x="32" y="752" width="332" height="240" rx="6" fill="#141618" stroke="#2a2d38" opacity="0.5"/>
+  <rect x="32" y="752" width="332" height="182" rx="6" fill="#1e2128" opacity="0.5"/>
+  <rect x="380" y="752" width="332" height="240" rx="6" fill="#141618" stroke="#2a2d38" opacity="0.5"/>
+  <rect x="380" y="752" width="332" height="182" rx="6" fill="#1e2128" opacity="0.5"/>
+  <rect x="728" y="752" width="332" height="240" rx="6" fill="#141618" stroke="#2a2d38" opacity="0.5"/>
+  <rect x="728" y="752" width="332" height="182" rx="6" fill="#1e2128" opacity="0.5"/>
+  <rect x="1076" y="752" width="332" height="240" rx="6" fill="#141618" stroke="#2a2d38" opacity="0.5"/>
+  <rect x="1076" y="752" width="332" height="182" rx="6" fill="#1e2128" opacity="0.5"/>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 3: RECENT DESIGNS
+       y=1010 → y=1340
+  ═══════════════════════════════════════════════════════════════ -->
+  <rect x="0" y="1010" width="1440" height="2" fill="#2a2d38"/>
+  <rect x="0" y="1010" width="1440" height="330" fill="#0d0e12"/>
+
+  <text x="720" y="1006" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">RECENT DESIGNS SECTION  h=330px</text>
+
+  <!-- Section header row -->
+  <text x="32" y="1042" font-family="'Inter', system-ui, sans-serif" font-size="18" fill="#e2e3e8" font-weight="600">Recent Designs</text>
+
+  <!-- Filter tabs + Customer Portal button (right) -->
+  <!-- Recent tab (active) -->
+  <rect x="32" y="1054" width="68" height="28" rx="4" fill="#1e2128" stroke="#2a2d38"/>
+  <text x="66" y="1072" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#e2e3e8" text-anchor="middle">Recent</text>
+
+  <!-- Starred tab -->
+  <rect x="108" y="1054" width="66" height="28" rx="4" fill="transparent" stroke="#2a2d38"/>
+  <text x="141" y="1072" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">Starred</text>
+
+  <!-- Customer Portal button (right) -->
+  <rect x="1260" y="1054" width="148" height="28" rx="4" fill="#c4935c" fill-opacity="0.1" stroke="#c4935c" stroke-width="1"/>
+  <circle cx="1278" cy="1068" r="6" fill="none" stroke="#c4935c" stroke-width="1.5"/>
+  <text x="1334" y="1072" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#c4935c" text-anchor="middle">Customer Portal</text>
+
+  <!-- Project cards: 4 columns, same grid as templates but 4:3 aspect (card w=332, h=248+60label=308) -->
+  <!-- Row y=1092 -->
+  <rect x="32" y="1092" width="332" height="250" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="32" y="1092" width="332" height="188" rx="6" fill="#1e2128"/>
+  <!-- thumbnail placeholder -->
+  <rect x="60" y="1120" width="276" height="132" rx="4" fill="#2a2d38" opacity="0.5"/>
+  <text x="198" y="1192" font-family="'Courier New', monospace" font-size="9" fill="#4b5563" text-anchor="middle">Project Thumbnail</text>
+  <text x="40" y="1302" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#9ca3af">My Design</text>
+  <text x="40" y="1316" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Edited 2 days ago  ·  1920 × 1080</text>
+  <!-- hover delete hint -->
+  <rect x="310" y="1094" width="48" height="24" rx="4" fill="#ef444480" opacity="0"/>
+  <text x="310" y="1092" font-family="'Courier New', monospace" font-size="7" fill="#6b7280">Delete on hover →</text>
+
+  <rect x="380" y="1092" width="332" height="250" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="380" y="1092" width="332" height="188" rx="6" fill="#1e2128"/>
+  <rect x="408" y="1120" width="276" height="132" rx="4" fill="#2a2d38" opacity="0.5"/>
+  <text x="546" y="1192" font-family="'Courier New', monospace" font-size="9" fill="#4b5563" text-anchor="middle">Project Thumbnail</text>
+  <text x="388" y="1302" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#9ca3af">My Design</text>
+  <text x="388" y="1316" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Edited 5 days ago  ·  1080 × 1080</text>
+
+  <rect x="728" y="1092" width="332" height="250" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="728" y="1092" width="332" height="188" rx="6" fill="#1e2128"/>
+  <rect x="756" y="1120" width="276" height="132" rx="4" fill="#2a2d38" opacity="0.5"/>
+  <text x="894" y="1192" font-family="'Courier New', monospace" font-size="9" fill="#4b5563" text-anchor="middle">Project Thumbnail</text>
+  <text x="736" y="1302" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#9ca3af">My Design</text>
+  <text x="736" y="1316" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Edited 1 week ago  ·  794 × 1123</text>
+
+  <rect x="1076" y="1092" width="332" height="250" rx="6" fill="#141618" stroke="#2a2d38"/>
+  <rect x="1076" y="1092" width="332" height="188" rx="6" fill="#1e2128"/>
+  <rect x="1104" y="1120" width="276" height="132" rx="4" fill="#2a2d38" opacity="0.5"/>
+  <text x="1242" y="1192" font-family="'Courier New', monospace" font-size="9" fill="#4b5563" text-anchor="middle">Project Thumbnail</text>
+  <text x="1084" y="1302" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#9ca3af">My Design</text>
+  <text x="1084" y="1316" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Edited 2 weeks ago  ·  1280 × 720</text>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       CREATE DIALOG (modal overlay)
+       Callout showing the "Create New Design" dialog
+  ═══════════════════════════════════════════════════════════════ -->
+  <rect x="0" y="1340" width="1440" height="2" fill="#2a2d38"/>
+  <rect x="0" y="1342" width="1440" height="60" fill="#111318"/>
+  <text x="720" y="1358" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">CREATE DIALOG (modal) — shown when clicking any preset size card</text>
+
+  <!-- Dialog mockup -->
+  <rect x="480" y="1360" width="480" height="152" rx="8" fill="#1a1d23" stroke="#3a3d48" stroke-width="1.5"/>
+  <text x="720" y="1382" font-family="'Inter', system-ui, sans-serif" font-size="14" fill="#e2e3e8" text-anchor="middle" font-weight="600">New Design</text>
+  <text x="720" y="1398" font-family="'Courier New', monospace" font-size="8" fill="#6b7280" text-anchor="middle">Dialog Title · Dialog Description</text>
+  <!-- Project name input -->
+  <text x="492" y="1418" font-family="'Courier New', monospace" font-size="8" fill="#9ca3af">Project Name</text>
+  <rect x="492" y="1424" width="428" height="28" rx="4" fill="#141618" stroke="#2a2d38"/>
+  <text x="506" y="1442" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#4b5563">My Design Project</text>
+  <!-- optional custom size inputs -->
+  <text x="492" y="1464" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Width</text>
+  <rect x="492" y="1470" width="80" height="22" rx="4" fill="#141618" stroke="#2a2d38"/>
+  <text x="580" y="1464" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Height</text>
+  <rect x="596" y="1470" width="80" height="22" rx="4" fill="#141618" stroke="#2a2d38"/>
+  <text x="686" y="1464" font-family="'Courier New', monospace" font-size="8" fill="#4b5563">(shown for Custom Size only)</text>
+  <!-- create button -->
+  <rect x="840" y="1468" width="72" height="28" rx="4" fill="#c4935c"/>
+  <text x="876" y="1486" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#111318" text-anchor="middle" font-weight="700">Create</text>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════════════════════════ -->
+  <rect x="0" y="1516" width="1440" height="2" fill="#2a2d38"/>
+  <rect x="0" y="1518" width="1440" height="62" fill="#0b0d10"/>
+  <text x="720" y="1512" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">SITE FOOTER  h=62px  bg=#0b0d10</text>
+  <text x="32" y="1548" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#4b5563">© ManuScript Studio</text>
+  <text x="720" y="1548" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#4b5563" text-anchor="middle">Privacy Policy  ·  Terms of Service  ·  Refund Policy  ·  Contact</text>
+  <text x="1408" y="1548" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#4b5563" text-anchor="end">v1.0</text>
+
+</svg>

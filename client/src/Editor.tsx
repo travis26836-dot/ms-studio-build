@@ -1008,8 +1008,6 @@ export default function Editor({
 
   const handleCanvasContextMenu = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
-      event.preventDefault();
-
       const canvas = editor.fabricRef.current;
       if (!canvas) {
         closeCanvasContextMenu();
@@ -1025,6 +1023,8 @@ export default function Editor({
         closeCanvasContextMenu();
         return;
       }
+
+      event.preventDefault();
 
       canvas.setActiveObject(target as never);
       canvas.renderAll();
@@ -1517,6 +1517,7 @@ export default function Editor({
           ref={canvasContainerRef}
           className="flex-1 overflow-auto relative"
           style={{background: "oklch(0.18 0.005 260)" }}
+          onContextMenu={handleCanvasContextMenu}
         >
           <div className="min-h-full min-w-full flex items-center justify-center p-0">
             {/* Outer div sizes to visual (zoomed) dimensions for layout and shadow */}
@@ -1566,7 +1567,7 @@ export default function Editor({
                 className="flex w-full items-center rounded-sm px-2 py-1.5 text-left text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground"
                 onClick={() => void handleMakeBackgroundFromContextMenu()}
               >
-                Make Image Background
+                Set as Background
               </button>
             </div>
           )}

@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900" role="img" aria-labelledby="cp-title cp-desc">
+  <title id="cp-title">ManuScript Studio – Customer Portal Layout</title>
+  <desc id="cp-desc">Wireframe of the standalone Customer Portal app (customer-portal/src/app.jsx): header with logo and account dropdown, main content area with workspace heading and action buttons, and the design cards grid.</desc>
+
+  <!-- Background -->
+  <rect width="1440" height="900" fill="#0d0e12"/>
+  <text x="720" y="18" font-family="'Courier New', monospace" font-size="11" fill="#c4935c" text-anchor="middle" font-weight="700">MANUSCRIPT STUDIO — CUSTOMER PORTAL  (1440 × 900px wireframe)</text>
+  <text x="720" y="32" font-family="'Courier New', monospace" font-size="8" fill="#4b5563" text-anchor="middle">Standalone app: customer-portal/src/app.jsx  ·  Separate Vite build</text>
+
+  <!-- ─── HEADER  h=64  y=40 ─── -->
+  <rect x="0" y="40" width="1440" height="64" fill="#111318"/>
+  <rect x="0" y="103" width="1440" height="1" fill="#2a2d38"/>
+  <rect x="0" y="40" width="1440" height="2" fill="#c4935c" opacity="0.5"/>
+  <text x="720" y="37" font-family="'Courier New', monospace" font-size="7.5" fill="#c4935c" text-anchor="middle">PORTAL HEADER  h=64px  bg=#111318  sticky top=0</text>
+
+  <!-- Logo left -->
+  <rect x="24" y="52" width="32" height="32" rx="7" fill="#1a1d23" stroke="#2a2d38"/>
+  <rect x="30" y="58" width="20" height="20" rx="3" fill="none" stroke="#c4935c" stroke-width="1.5"/>
+  <path d="M34 63 l5 5 l5 -5" fill="none" stroke="#c4935c" stroke-width="1.5"/>
+  <text x="64" y="66" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#e2e3e8" font-weight="700" letter-spacing="1.5">MANUSCRIPT</text>
+  <text x="64" y="79" font-family="'Inter', system-ui, sans-serif" font-size="7" fill="#9ca3af" letter-spacing="3">STUDIO</text>
+
+  <!-- "Customer Portal" label -->
+  <rect x="192" y="60" width="106" height="20" rx="3" fill="#c4935c" fill-opacity="0.12"/>
+  <text x="245" y="74" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#c4935c" text-anchor="middle">Customer Portal</text>
+
+  <!-- Account avatar button (right) -->
+  <circle cx="1400" cy="72" r="16" fill="#2a2d38" stroke="#c4935c" stroke-width="1"/>
+  <text x="1400" y="77" font-family="'Inter', system-ui, sans-serif" font-size="13" fill="#c4935c" text-anchor="middle" font-weight="700">A</text>
+  <text x="1382" y="67" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="end">Account ▾</text>
+
+  <!-- ─── ACCOUNT DROPDOWN (callout, shown on header) ─── -->
+  <rect x="1232" y="108" width="200" height="196" rx="8" fill="#1a1d23" stroke="#3a3d48" stroke-width="1.5"/>
+  <!-- triangle pointer -->
+  <path d="M1390 108 l8 -8 l8 8" fill="#1a1d23" stroke="#3a3d48" stroke-width="1.5"/>
+  <text x="1332" y="130" font-family="'Courier New', monospace" font-size="7" fill="#c4935c" text-anchor="middle">ACCOUNT DROPDOWN</text>
+  <rect x="1244" y="136" width="176" height="1" fill="#2a2d38"/>
+  <text x="1252" y="155" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#9ca3af">Account</text>
+  <rect x="1244" y="162" width="176" height="1" fill="#1e2128"/>
+  <text x="1252" y="178" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#9ca3af">Settings</text>
+  <rect x="1244" y="185" width="176" height="1" fill="#1e2128"/>
+  <text x="1252" y="201" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#9ca3af">Plans &amp; Pricing</text>
+  <rect x="1244" y="208" width="176" height="1" fill="#1e2128"/>
+  <text x="1252" y="224" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#9ca3af">Purchase History</text>
+  <rect x="1244" y="231" width="176" height="1" fill="#1e2128"/>
+  <text x="1252" y="247" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#9ca3af">Invoices</text>
+  <rect x="1244" y="254" width="176" height="1" fill="#2a2d38"/>
+  <text x="1252" y="272" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#ef4444">Logout</text>
+  <rect x="1244" y="279" width="176" height="1" fill="#2a2d38"/>
+
+  <!-- ─── MAIN CONTENT  y=104 ─── -->
+  <rect x="0" y="104" width="1440" height="796" fill="#0d0e12"/>
+  <text x="720" y="101" font-family="'Courier New', monospace" font-size="7.5" fill="#c4935c" text-anchor="middle">MAIN CONTENT AREA  bg=#0d0e12  max-w=1200px  centered</text>
+
+  <!-- max-width container indicator -->
+  <rect x="120" y="108" width="1200" height="788" rx="0" fill="none" stroke="#2a2d38" stroke-dasharray="2,4" opacity="0.4"/>
+  <text x="720" y="128" font-family="'Courier New', monospace" font-size="7" fill="#2a2d38" text-anchor="middle">max-width: 1200px  container</text>
+
+  <!-- Workspace heading + action buttons -->
+  <text x="120" y="162" font-family="'Inter', system-ui, sans-serif" font-size="26" fill="#e2e3e8" font-weight="700">Customer Workspace</text>
+  <text x="120" y="182" font-family="'Inter', system-ui, sans-serif" font-size="13" fill="#6b7280">Your designs, accessible anywhere</text>
+
+  <!-- Action buttons -->
+  <rect x="120" y="196" width="110" height="36" rx="6" fill="#1e2128" stroke="#2a2d38"/>
+  <!-- Refresh icon -->
+  <path d="M136 208 a8 8 0 1 1 8 -8" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <path d="M144 196 l0 4 l-4 0" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="166" y="218" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#9ca3af">Refresh</text>
+
+  <rect x="242" y="196" width="160" height="36" rx="6" fill="#c4935c" fill-opacity="0.1" stroke="#c4935c" stroke-width="1"/>
+  <!-- Globe icon -->
+  <circle cx="258" cy="214" r="7" fill="none" stroke="#c4935c" stroke-width="1.5"/>
+  <path d="M251 214 q7 -8 14 0 q-7 8 -14 0" fill="none" stroke="#c4935c" stroke-width="1"/>
+  <line x1="265" y1="207" x2="265" y2="221" stroke="#c4935c" stroke-width="1"/>
+  <text x="282" y="218" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#c4935c">Open Main App</text>
+
+  <!-- Section heading -->
+  <text x="120" y="268" font-family="'Inter', system-ui, sans-serif" font-size="16" fill="#e2e3e8" font-weight="600">Your Designs</text>
+  <text x="120" y="284" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#6b7280">Click to open a design in the main editor</text>
+
+  <!-- ─── DESIGN CARDS GRID  4-col  gap=20 ─── -->
+  <!-- col w=(1200-3*20)/4=285, start x=120 -->
+  <!-- Row 1  y=296  card h=300 -->
+
+  <rect x="120" y="296" width="285" height="300" rx="8" fill="#141618" stroke="#2a2d38"/>
+  <!-- thumbnail -->
+  <rect x="120" y="296" width="285" height="200" rx="8" fill="#1e2128"/>
+  <rect x="120" y="288" width="285" height="208" fill="#1e2128" opacity="0"/>
+  <text x="262" y="400" font-family="'Courier New', monospace" font-size="9" fill="#4b5563" text-anchor="middle">Thumbnail Image</text>
+  <text x="262" y="416" font-family="'Courier New', monospace" font-size="7" fill="#3a3d48" text-anchor="middle">object-fit: cover</text>
+  <!-- card footer -->
+  <text x="132" y="518" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#e2e3e8" font-weight="500">Design Name</text>
+  <text x="132" y="534" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">1920 × 1080  ·  2 days ago</text>
+  <!-- action buttons -->
+  <rect x="132" y="546" width="64" height="26" rx="4" fill="#c4935c" fill-opacity="0.1" stroke="#c4935c" stroke-width="0.8"/>
+  <text x="164" y="563" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#c4935c" text-anchor="middle">Open</text>
+  <rect x="206" y="546" width="64" height="26" rx="4" fill="#ef4444" fill-opacity="0.1" stroke="#ef4444" stroke-width="0.8"/>
+  <text x="238" y="563" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#ef4444" text-anchor="middle">Delete</text>
+  <!-- dimension -->
+  <rect x="316" y="296" width="89" height="20" rx="3" fill="#141618" stroke="#2a2d38" opacity="0.8"/>
+  <text x="360" y="309" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">w=285</text>
+
+  <rect x="425" y="296" width="285" height="300" rx="8" fill="#141618" stroke="#2a2d38"/>
+  <rect x="425" y="296" width="285" height="200" rx="8" fill="#1e2128"/>
+  <text x="567" y="400" font-family="'Courier New', monospace" font-size="9" fill="#4b5563" text-anchor="middle">Thumbnail Image</text>
+  <text x="437" y="518" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#e2e3e8" font-weight="500">Design Name</text>
+  <text x="437" y="534" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">1080 × 1080  ·  5 days ago</text>
+  <rect x="437" y="546" width="64" height="26" rx="4" fill="#c4935c" fill-opacity="0.1" stroke="#c4935c" stroke-width="0.8"/>
+  <text x="469" y="563" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#c4935c" text-anchor="middle">Open</text>
+  <rect x="511" y="546" width="64" height="26" rx="4" fill="#ef4444" fill-opacity="0.1" stroke="#ef4444" stroke-width="0.8"/>
+  <text x="543" y="563" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#ef4444" text-anchor="middle">Delete</text>
+
+  <rect x="730" y="296" width="285" height="300" rx="8" fill="#141618" stroke="#2a2d38"/>
+  <rect x="730" y="296" width="285" height="200" rx="8" fill="#1e2128"/>
+  <text x="872" y="400" font-family="'Courier New', monospace" font-size="9" fill="#4b5563" text-anchor="middle">Thumbnail Image</text>
+  <text x="742" y="518" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#e2e3e8" font-weight="500">Design Name</text>
+  <text x="742" y="534" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">794 × 1123  ·  1 week ago</text>
+  <rect x="742" y="546" width="64" height="26" rx="4" fill="#c4935c" fill-opacity="0.1" stroke="#c4935c" stroke-width="0.8"/>
+  <text x="774" y="563" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#c4935c" text-anchor="middle">Open</text>
+  <rect x="816" y="546" width="64" height="26" rx="4" fill="#ef4444" fill-opacity="0.1" stroke="#ef4444" stroke-width="0.8"/>
+  <text x="848" y="563" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#ef4444" text-anchor="middle">Delete</text>
+
+  <rect x="1035" y="296" width="285" height="300" rx="8" fill="#141618" stroke="#2a2d38"/>
+  <rect x="1035" y="296" width="285" height="200" rx="8" fill="#1e2128"/>
+  <text x="1177" y="400" font-family="'Courier New', monospace" font-size="9" fill="#4b5563" text-anchor="middle">Thumbnail Image</text>
+  <text x="1047" y="518" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#e2e3e8" font-weight="500">Design Name</text>
+  <text x="1047" y="534" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">1280 × 720  ·  2 weeks ago</text>
+  <rect x="1047" y="546" width="64" height="26" rx="4" fill="#c4935c" fill-opacity="0.1" stroke="#c4935c" stroke-width="0.8"/>
+  <text x="1079" y="563" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#c4935c" text-anchor="middle">Open</text>
+  <rect x="1121" y="546" width="64" height="26" rx="4" fill="#ef4444" fill-opacity="0.1" stroke="#ef4444" stroke-width="0.8"/>
+  <text x="1153" y="563" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#ef4444" text-anchor="middle">Delete</text>
+
+  <!-- Row 2 (faded) -->
+  <rect x="120" y="616" width="285" height="300" rx="8" fill="#141618" stroke="#2a2d38" opacity="0.4"/>
+  <rect x="120" y="616" width="285" height="200" rx="8" fill="#1e2128" opacity="0.4"/>
+  <rect x="425" y="616" width="285" height="300" rx="8" fill="#141618" stroke="#2a2d38" opacity="0.4"/>
+  <rect x="425" y="616" width="285" height="200" rx="8" fill="#1e2128" opacity="0.4"/>
+  <rect x="730" y="616" width="285" height="300" rx="8" fill="#141618" stroke="#2a2d38" opacity="0.4"/>
+  <rect x="730" y="616" width="285" height="200" rx="8" fill="#1e2128" opacity="0.4"/>
+  <rect x="1035" y="616" width="285" height="300" rx="8" fill="#141618" stroke="#2a2d38" opacity="0.4"/>
+  <rect x="1035" y="616" width="285" height="200" rx="8" fill="#1e2128" opacity="0.4"/>
+  <text x="720" y="766" font-family="'Courier New', monospace" font-size="8" fill="#3a3d48" text-anchor="middle">Row 2 (faded) — repeating pattern</text>
+
+  <!-- Annotations -->
+  <text x="720" y="892" font-family="'Courier New', monospace" font-size="8" fill="#4b5563" text-anchor="middle">Card layout: w=285px  h=300px  gap=20px  ·  4 columns  ·  Thumbnail 200px  ·  Footer: name + dimensions + date + Open + Delete</text>
+
+</svg>

@@ -1,0 +1,56 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./*"],
+      "@shared/*": ["./*"],
+      "streamdown": ["./lib/streamdown"]
+    }
+  },
+  "include": [
+    "src",
+    "components",
+    "contexts",
+    "hooks",
+    "lib",
+    "pages",
+    "_core",
+    "App.tsx",
+    "AIChatPanel.tsx",
+    "ApiDocs.tsx",
+    "Editor.tsx",
+    "EditorPage.tsx",
+    "ExportDialog.tsx",
+    "Home.tsx",
+    "NewProjectDialog.tsx",
+    "designTypes.ts",
+    "const.ts",
+    "vite-env.d.ts"
+  ],
+  "exclude": [
+    "auth.logout.test.ts",
+    "db.ts",
+    "designStudio.test.ts",
+    "index.ts",
+    "routers.ts",
+    "schema.ts",
+    "seed*.mjs",
+    "trpc.ts",
+    "useCanvasEditor.ts"
+  ],
+  "references": []
+}

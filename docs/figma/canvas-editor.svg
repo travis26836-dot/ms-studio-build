@@ -1,0 +1,434 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 920" width="1440" height="920" role="img" aria-labelledby="ed-title ed-desc">
+  <title id="ed-title">ManuScript Studio – Canvas Editor Layout</title>
+  <desc id="ed-desc">Wireframe layout of the canvas editor with toolbar, left icon rail, expandable side panel, canvas workspace, and right properties/AI chat panel. All measurements are in CSS pixels.</desc>
+
+  <defs>
+    <pattern id="grid-dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="0" cy="0" r="0.8" fill="#2a2d38" opacity="0.9"/>
+    </pattern>
+    <filter id="canvas-shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+    <filter id="panel-glow">
+      <feDropShadow dx="2" dy="0" stdDeviation="4" flood-color="#c4935c" flood-opacity="0.08"/>
+    </filter>
+    <marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#c4935c"/>
+    </marker>
+  </defs>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       BACKGROUND
+  ═══════════════════════════════════════════════════════════════ -->
+  <rect width="1440" height="920" fill="#0d0e12"/>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TOP TOOLBAR  h=48px
+  ═══════════════════════════════════════════════════════════════ -->
+  <rect x="0" y="0" width="1440" height="48" fill="#111318"/>
+  <!-- Amber top border -->
+  <rect x="0" y="0" width="1440" height="2" fill="#c4935c" opacity="0.7"/>
+  <!-- Toolbar bottom border -->
+  <rect x="0" y="47" width="1440" height="1" fill="#2a2d38"/>
+
+  <!-- Toolbar label -->
+  <text x="720" y="-14" font-family="'Courier New', monospace" font-size="9" fill="#c4935c" text-anchor="middle">TOP TOOLBAR  h=48px  bg=#111318</text>
+
+  <!-- ── Back navigation ── -->
+  <rect x="8" y="8" width="128" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1"/>
+  <!-- Back arrow icon -->
+  <path d="M20 24 L14 24 M14 24 L18 20 M14 24 L18 28" stroke="#9ca3af" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <text x="30" y="28" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#9ca3af" font-weight="500">ManuScript Studio</text>
+
+  <!-- Separator -->
+  <line x1="142" y1="12" x2="142" y2="36" stroke="#2a2d38" stroke-width="1"/>
+
+  <!-- ── Undo / Redo ── -->
+  <rect x="150" y="8" width="32" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1"/>
+  <path d="M160 28 a 6 6 0 0 1 5 -10 l 0 -4 l 4 4 l -4 4 l 0 -3 a 4 4 0 0 0 -3 7z" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="166" y="38" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">Undo</text>
+
+  <rect x="186" y="8" width="32" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1"/>
+  <path d="M198 28 a 6 6 0 0 0 -5 -10 l 0 -4 l -4 4 l 4 4 l 0 -3 a 4 4 0 0 1 3 7z" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="202" y="38" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">Redo</text>
+
+  <!-- Separator -->
+  <line x1="224" y1="12" x2="224" y2="36" stroke="#2a2d38" stroke-width="1"/>
+
+  <!-- ── Zoom Out / Zoom In / Snap-Grid ── -->
+  <rect x="232" y="8" width="32" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1"/>
+  <text x="248" y="29" font-family="'Inter', system-ui, sans-serif" font-size="16" fill="#6b7280" text-anchor="middle">−</text>
+  <text x="248" y="38" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">Zoom−</text>
+
+  <rect x="268" y="8" width="32" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1"/>
+  <text x="284" y="29" font-family="'Inter', system-ui, sans-serif" font-size="16" fill="#6b7280" text-anchor="middle">+</text>
+  <text x="284" y="38" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">Zoom+</text>
+
+  <rect x="304" y="8" width="38" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1"/>
+  <rect x="309" y="14" width="6" height="6" fill="none" stroke="#6b7280" stroke-width="1"/>
+  <rect x="321" y="14" width="6" height="6" fill="none" stroke="#6b7280" stroke-width="1"/>
+  <rect x="309" y="26" width="6" height="6" fill="none" stroke="#6b7280" stroke-width="1"/>
+  <rect x="321" y="26" width="6" height="6" fill="none" stroke="#6b7280" stroke-width="1"/>
+  <path d="M333 22 l 3 2 l -3 2" fill="none" stroke="#6b7280" stroke-width="1"/>
+  <text x="322" y="38" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">Grid▾</text>
+
+  <!-- Separator -->
+  <line x1="348" y1="12" x2="348" y2="36" stroke="#2a2d38" stroke-width="1"/>
+
+  <!-- ── Selection-conditional buttons (shown faded) ── -->
+  <rect x="356" y="8" width="32" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1" opacity="0.45"/>
+  <text x="372" y="28" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">Copy</text>
+  <text x="372" y="38" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">[sel]</text>
+
+  <rect x="392" y="8" width="32" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1" opacity="0.45"/>
+  <text x="408" y="28" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">Del</text>
+  <text x="408" y="38" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">[sel]</text>
+
+  <!-- Separator -->
+  <line x1="430" y1="12" x2="430" y2="36" stroke="#2a2d38" stroke-width="1" opacity="0.45"/>
+
+  <!-- Z-order buttons -->
+  <rect x="438" y="8" width="32" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1" opacity="0.45"/>
+  <text x="454" y="25" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">Front</text>
+  <text x="454" y="35" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">↑</text>
+  <rect x="474" y="8" width="32" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1" opacity="0.45"/>
+  <text x="490" y="25" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">Fwd</text>
+  <text x="490" y="35" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">↑</text>
+  <rect x="510" y="8" width="32" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1" opacity="0.45"/>
+  <text x="526" y="25" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">Bck</text>
+  <text x="526" y="35" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">↓</text>
+  <rect x="546" y="8" width="32" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1" opacity="0.45"/>
+  <text x="562" y="25" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">Back</text>
+  <text x="562" y="35" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">↓</text>
+
+  <!-- Separator -->
+  <line x1="584" y1="12" x2="584" y2="36" stroke="#2a2d38" stroke-width="1" opacity="0.45"/>
+
+  <!-- Group / Lock -->
+  <rect x="592" y="8" width="32" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1" opacity="0.45"/>
+  <text x="608" y="28" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">Grp</text>
+  <rect x="628" y="8" width="32" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1" opacity="0.45"/>
+  <text x="644" y="28" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">Lock</text>
+
+  <!-- ── Center: Project Name ── -->
+  <rect x="660" y="10" width="180" height="28" rx="4" fill="#1a1d23" stroke="#3a3d48" stroke-width="1"/>
+  <text x="750" y="28" font-family="'Inter', system-ui, sans-serif" font-size="12" fill="#e2e3e8" text-anchor="middle" font-style="italic">Untitled Project</text>
+  <!-- Pencil icon hint -->
+  <path d="M832 14 l3 3 l-8 8 l-3 0 l0 -3 z" fill="none" stroke="#6b7280" stroke-width="1"/>
+
+  <!-- ── Right: AI Chat, Save, Portal, Download ── -->
+  <rect x="870" y="8" width="38" height="32" rx="4" fill="#1e2128" stroke="#3a3d48" stroke-width="1"/>
+  <!-- Sparkles icon -->
+  <path d="M882 18 l2 4 l4 2 l-4 2 l-2 4 l-2 -4 l-4 -2 l4 -2 z" fill="none" stroke="#9ca3af" stroke-width="1"/>
+  <text x="896" y="38" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">AI Chat</text>
+
+  <rect x="916" y="8" width="56" height="32" rx="4" fill="#1e2128" stroke="#3a3d48" stroke-width="1"/>
+  <path d="M926 23 l2 -2 l6 0 l0 10 l-10 0 l0 -6 z M929 21 l0 4" fill="none" stroke="#c4935c" stroke-width="1.5"/>
+  <text x="938" y="28" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#c4935c" font-weight="600">Save</text>
+
+  <rect x="980" y="8" width="72" height="32" rx="4" fill="#1e2128" stroke="#3a3d48" stroke-width="1"/>
+  <circle cx="992" cy="24" r="6" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="1000" y="28" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#9ca3af">Portal</text>
+
+  <rect x="1060" y="8" width="76" height="32" rx="4" fill="#c4935c" stroke="none" rx="4"/>
+  <path d="M1072 24 l0 6 l12 0 l0 -6 M1075 24 l0 -5 a3 3 0 0 1 6 0 l0 5" fill="none" stroke="#111318" stroke-width="1.5"/>
+  <text x="1088" y="28" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#111318" font-weight="700">Download</text>
+  <path d="M1128 22 l3 3 l3 -3" fill="none" stroke="#111318" stroke-width="1.5"/>
+
+  <!-- ─ Toolbar annotations ─ -->
+  <text x="184" y="52" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">← Navigation</text>
+  <text x="284" y="52" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">History</text>
+  <text x="315" y="52" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">Zoom / Grid</text>
+  <text x="497" y="52" font-family="'Courier New', monospace" font-size="8" fill="#6b7280" text-anchor="middle">← Conditional on selection →</text>
+  <text x="750" y="52" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">Editable Project Name</text>
+  <text x="1000" y="52" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">← Actions →</text>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       EDITOR BODY  y=48, h=872
+  ═══════════════════════════════════════════════════════════════ -->
+
+  <!-- ── Left Icon Rail  w=52px ── -->
+  <rect x="0" y="48" width="52" height="872" fill="#111318"/>
+  <rect x="51" y="48" width="1" height="872" fill="#2a2d38"/>
+
+  <!-- Sidebar dimension annotation -->
+  <line x1="56" y1="64" x2="56" y2="912" stroke="#c4935c" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.5"/>
+  <text x="62" y="496" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" transform="rotate(-90, 62, 496)">w=52px  LEFT ICON RAIL</text>
+
+  <!-- Sidebar icons (44×44 buttons, centered in 52px rail) -->
+  <!-- Templates -->
+  <rect x="4" y="56" width="44" height="44" rx="4" fill="#c4935c" fill-opacity="0.12"/>
+  <rect x="14" y="66" width="24" height="6" rx="1" fill="#c4935c"/>
+  <rect x="14" y="75" width="18" height="4" rx="1" fill="#c4935c" opacity="0.6"/>
+  <rect x="14" y="82" width="20" height="4" rx="1" fill="#c4935c" opacity="0.6"/>
+  <text x="26" y="108" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#c4935c" text-anchor="middle">Tmpl</text>
+
+  <!-- Elements -->
+  <rect x="4" y="108" width="44" height="44" rx="4" fill="none"/>
+  <rect x="16" y="118" width="10" height="10" rx="1" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <circle cx="32" cy="128" r="5" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <path d="M18 134 l6 0 l-3 -6 z" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="26" y="160" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#6b7280" text-anchor="middle">Elem</text>
+
+  <!-- Text -->
+  <rect x="4" y="160" width="44" height="44" rx="4" fill="none"/>
+  <text x="26" y="186" font-family="'Inter', system-ui, sans-serif" font-size="20" fill="#6b7280" text-anchor="middle" font-weight="700">T</text>
+  <text x="26" y="212" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#6b7280" text-anchor="middle">Text</text>
+
+  <!-- Photos -->
+  <rect x="4" y="212" width="44" height="44" rx="4" fill="none"/>
+  <rect x="14" y="220" width="24" height="18" rx="2" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <circle cx="21" cy="226" r="3" fill="none" stroke="#6b7280" stroke-width="1"/>
+  <path d="M14 234 l6 -5 l5 3 l5 -6 l8 8 l-24 0 z" fill="none" stroke="#6b7280" stroke-width="1"/>
+  <text x="26" y="264" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#6b7280" text-anchor="middle">Photos</text>
+
+  <!-- Uploads -->
+  <rect x="4" y="264" width="44" height="44" rx="4" fill="none"/>
+  <path d="M26 272 l0 12" stroke="#6b7280" stroke-width="1.5"/>
+  <path d="M21 277 l5 -5 l5 5" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <path d="M16 286 l0 6 l20 0 l0 -6" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="26" y="316" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#6b7280" text-anchor="middle">Uplds</text>
+
+  <!-- Brand -->
+  <rect x="4" y="316" width="44" height="44" rx="4" fill="none"/>
+  <circle cx="22" cy="336" r="6" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <circle cx="32" cy="336" r="6" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="26" y="368" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#6b7280" text-anchor="middle">Brand</text>
+
+  <!-- Layers -->
+  <rect x="4" y="368" width="44" height="44" rx="4" fill="none"/>
+  <rect x="14" y="376" width="20" height="4" rx="1" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <rect x="16" y="383" width="16" height="4" rx="1" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <rect x="12" y="390" width="24" height="4" rx="1" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="26" y="420" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#6b7280" text-anchor="middle">Layers</text>
+
+  <!-- AI Tools -->
+  <rect x="4" y="420" width="44" height="44" rx="4" fill="none"/>
+  <path d="M26 428 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2 z" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="26" y="472" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#6b7280" text-anchor="middle">AI</text>
+
+  <!-- ── Settings at bottom ── -->
+  <rect x="4" y="864" width="44" height="44" rx="4" fill="none"/>
+  <circle cx="26" cy="886" r="6" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+  <circle cx="26" cy="886" r="2" fill="#6b7280"/>
+  <!-- gear teeth hints -->
+  <line x1="26" y1="877" x2="26" y2="880" stroke="#6b7280" stroke-width="2"/>
+  <line x1="26" y1="892" x2="26" y2="895" stroke="#6b7280" stroke-width="2"/>
+  <line x1="17" y1="886" x2="20" y2="886" stroke="#6b7280" stroke-width="2"/>
+  <line x1="32" y1="886" x2="35" y2="886" stroke="#6b7280" stroke-width="2"/>
+  <text x="26" y="914" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#6b7280" text-anchor="middle">Sttgs</text>
+
+  <!-- Active state indicator on Templates -->
+  <rect x="0" y="56" width="3" height="44" fill="#c4935c" rx="1"/>
+
+  <!-- ── Left Expandable Panel  x=52, w=256 ── -->
+  <rect x="52" y="48" width="256" height="872" fill="#141618"/>
+  <rect x="307" y="48" width="1" height="872" fill="#2a2d38"/>
+
+  <!-- Panel dimension annotation -->
+  <line x1="62" y1="64" x2="62" y2="912" stroke="#c4935c" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.4"/>
+  <text x="180" y="58" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">LEFT EXPANDABLE PANEL  w=256px (220–520 range)</text>
+
+  <!-- Panel header -->
+  <rect x="52" y="48" width="256" height="76" fill="#141618"/>
+  <rect x="52" y="123" width="256" height="1" fill="#2a2d38"/>
+  <text x="64" y="68" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#c4935c" letter-spacing="1" font-weight="600">TEMPLATES</text>
+
+  <!-- Search input in panel -->
+  <rect x="64" y="76" width="196" height="30" rx="4" fill="#1a1d23" stroke="#2a2d38" stroke-width="1"/>
+  <circle cx="78" cy="91" r="5" fill="none" stroke="#4b5563" stroke-width="1.5"/>
+  <line x1="81.5" y1="94.5" x2="84" y2="97" stroke="#4b5563" stroke-width="1.5"/>
+  <text x="92" y="95" font-family="'Courier New', monospace" font-size="8" fill="#4b5563">SEARCH FOR ANYTHING</text>
+  <!-- AI toggle button in panel header -->
+  <rect x="266" y="76" width="30" height="30" rx="4" fill="#1a1d23" stroke="#2a2d38" stroke-width="1"/>
+  <path d="M275 85 l2 5 l5 1 l-5 1 l-2 5 l-2 -5 l-5 -1 l5 -1 z" fill="none" stroke="#4b5563" stroke-width="1"/>
+
+  <!-- Panel content area placeholder -->
+  <text x="180" y="144" font-family="'Courier New', monospace" font-size="8" fill="#4b5563" text-anchor="middle">ScrollArea (flex-1)</text>
+
+  <!-- Template cards in panel (small) -->
+  <rect x="64" y="148" width="106" height="90" rx="4" fill="#1a1d23" stroke="#2a2d38" stroke-width="1"/>
+  <rect x="64" y="148" width="106" height="58" rx="4" fill="#2a2d38"/>
+  <text x="117" y="183" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#9ca3af" text-anchor="middle">Preview</text>
+  <text x="117" y="210" font-family="'Courier New', monospace" font-size="7.5" fill="#9ca3af" text-anchor="middle">Template Name</text>
+  <text x="117" y="225" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">1920 × 1080</text>
+
+  <rect x="180" y="148" width="106" height="90" rx="4" fill="#1a1d23" stroke="#2a2d38" stroke-width="1"/>
+  <rect x="180" y="148" width="106" height="58" rx="4" fill="#2a2d38"/>
+  <text x="233" y="183" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#9ca3af" text-anchor="middle">Preview</text>
+  <text x="233" y="210" font-family="'Courier New', monospace" font-size="7.5" fill="#9ca3af" text-anchor="middle">Template Name</text>
+  <text x="233" y="225" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">1920 × 1080</text>
+
+  <rect x="64" y="248" width="106" height="90" rx="4" fill="#1a1d23" stroke="#2a2d38" stroke-width="1"/>
+  <rect x="64" y="248" width="106" height="58" rx="4" fill="#2a2d38"/>
+  <text x="117" y="283" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#9ca3af" text-anchor="middle">Preview</text>
+  <text x="117" y="310" font-family="'Courier New', monospace" font-size="7.5" fill="#9ca3af" text-anchor="middle">Template Name</text>
+  <text x="117" y="325" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">800 × 600</text>
+
+  <rect x="180" y="248" width="106" height="90" rx="4" fill="#1a1d23" stroke="#2a2d38" stroke-width="1"/>
+  <rect x="180" y="248" width="106" height="58" rx="4" fill="#2a2d38"/>
+  <text x="233" y="283" font-family="'Inter', system-ui, sans-serif" font-size="8" fill="#9ca3af" text-anchor="middle">Preview</text>
+  <text x="233" y="310" font-family="'Courier New', monospace" font-size="7.5" fill="#9ca3af" text-anchor="middle">Template Name</text>
+  <text x="233" y="325" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">1080 × 1080</text>
+
+  <!-- More template cards (faded) -->
+  <rect x="64" y="348" width="106" height="90" rx="4" fill="#1a1d23" stroke="#2a2d38" stroke-width="1" opacity="0.5"/>
+  <rect x="180" y="348" width="106" height="90" rx="4" fill="#1a1d23" stroke="#2a2d38" stroke-width="1" opacity="0.5"/>
+  <rect x="64" y="448" width="106" height="90" rx="4" fill="#1a1d23" stroke="#2a2d38" stroke-width="1" opacity="0.3"/>
+  <rect x="180" y="448" width="106" height="90" rx="4" fill="#1a1d23" stroke="#2a2d38" stroke-width="1" opacity="0.3"/>
+
+  <!-- Resize handle between panels -->
+  <rect x="307" y="48" width="6" height="872" fill="transparent"/>
+  <line x1="308" y1="456" x2="308" y2="465" stroke="#2a2d38" stroke-width="2" stroke-linecap="round"/>
+  <text x="311" y="464" font-family="'Courier New', monospace" font-size="7" fill="#3a3d48">⟺</text>
+
+  <!-- ── Canvas Workspace  x=308, w=812 ── -->
+  <rect x="308" y="48" width="812" height="872" fill="url(#grid-dots)"/>
+  <rect x="308" y="48" width="812" height="872" fill="#191c22" fill-opacity="0.85"/>
+
+  <!-- Canvas area label -->
+  <text x="714" y="66" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">CANVAS WORKSPACE  flex-1 (~812px at 1440 viewport)  bg=#191c22</text>
+
+  <!-- Grid overlay hint -->
+  <g opacity="0.06">
+    <line x1="308" y1="96" x2="1120" y2="96" stroke="#c4935c" stroke-width="0.5"/>
+    <line x1="308" y1="120" x2="1120" y2="120" stroke="#c4935c" stroke-width="0.5"/>
+    <line x1="308" y1="144" x2="1120" y2="144" stroke="#c4935c" stroke-width="0.5"/>
+    <line x1="380" y1="48" x2="380" y2="920" stroke="#c4935c" stroke-width="0.5"/>
+    <line x1="404" y1="48" x2="404" y2="920" stroke="#c4935c" stroke-width="0.5"/>
+  </g>
+
+  <!-- Fabric.js Canvas (white sheet, centered, with shadow) -->
+  <rect x="424" y="128" width="580" height="660" fill="white" filter="url(#canvas-shadow)" rx="1"/>
+  <!-- Grid overlay on canvas -->
+  <g opacity="0.08">
+    <line x1="424" y1="176" x2="1004" y2="176" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="424" y1="224" x2="1004" y2="224" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="424" y1="272" x2="1004" y2="272" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="424" y1="320" x2="1004" y2="320" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="424" y1="368" x2="1004" y2="368" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="424" y1="416" x2="1004" y2="416" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="424" y1="464" x2="1004" y2="464" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="424" y1="512" x2="1004" y2="512" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="424" y1="560" x2="1004" y2="560" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="424" y1="608" x2="1004" y2="608" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="472" y1="128" x2="472" y2="788" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="520" y1="128" x2="520" y2="788" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="568" y1="128" x2="568" y2="788" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="616" y1="128" x2="616" y2="788" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="664" y1="128" x2="664" y2="788" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="712" y1="128" x2="712" y2="788" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="760" y1="128" x2="760" y2="788" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="808" y1="128" x2="808" y2="788" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="856" y1="128" x2="856" y2="788" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="904" y1="128" x2="904" y2="788" stroke="#6b7280" stroke-width="0.5"/>
+    <line x1="952" y1="128" x2="952" y2="788" stroke="#6b7280" stroke-width="0.5"/>
+  </g>
+
+  <!-- Canvas label -->
+  <text x="714" y="460" font-family="'Courier New', monospace" font-size="10" fill="#9ca3af" text-anchor="middle" opacity="0.7">Fabric.js Canvas</text>
+  <text x="714" y="476" font-family="'Courier New', monospace" font-size="9" fill="#6b7280" text-anchor="middle" opacity="0.7">CSS zoom-scaled · grid overlay optional</text>
+
+  <!-- Canvas size annotation -->
+  <line x1="424" y1="800" x2="1004" y2="800" stroke="#c4935c" stroke-width="0.5" opacity="0.6"/>
+  <line x1="424" y1="795" x2="424" y2="805" stroke="#c4935c" stroke-width="1" opacity="0.6"/>
+  <line x1="1004" y1="795" x2="1004" y2="805" stroke="#c4935c" stroke-width="1" opacity="0.6"/>
+  <text x="714" y="816" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">Canvas sheet  580px × 660px (scaled per zoom)</text>
+
+  <!-- Context menu hint (floating) -->
+  <rect x="650" y="300" width="160" height="28" rx="4" fill="#1e2128" stroke="#3a3d48" stroke-width="1" opacity="0.75"/>
+  <text x="730" y="318" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#9ca3af" text-anchor="middle">Make Image Background</text>
+  <text x="810" y="294" font-family="'Courier New', monospace" font-size="7" fill="#6b7280">Right-click ctx menu</text>
+  <line x1="804" y1="296" x2="800" y2="310" stroke="#6b7280" stroke-width="0.7" stroke-dasharray="2,2"/>
+
+  <!-- Resize handle (canvas → right panel) -->
+  <rect x="1119" y="48" width="6" height="872" fill="transparent"/>
+  <line x1="1120" y1="456" x2="1120" y2="465" stroke="#2a2d38" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- ── Right Properties Panel  x=1120, w=320 ── -->
+  <rect x="1120" y="48" width="320" height="872" fill="#141618"/>
+  <rect x="1120" y="48" width="1" height="872" fill="#2a2d38"/>
+
+  <!-- Right panel label -->
+  <text x="1280" y="66" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle">RIGHT PANEL  w=320px (260–560 range)</text>
+  <text x="1280" y="78" font-family="'Courier New', monospace" font-size="7.5" fill="#6b7280" text-anchor="middle">Properties Panel OR AI Chat Panel (mutually exclusive)</text>
+
+  <!-- Empty state (no selection) -->
+  <!-- Shapes icon -->
+  <g transform="translate(1264, 420)">
+    <rect x="-16" y="-16" width="32" height="32" rx="3" fill="none" stroke="#2a2d38" stroke-width="2"/>
+    <circle cx="6" cy="-4" r="4" fill="none" stroke="#2a2d38" stroke-width="2"/>
+    <path d="-10,8 l8,0 l-4,-7 z" fill="none" stroke="#2a2d38" stroke-width="2"/>
+  </g>
+  <!-- Shapes icon simplified -->
+  <rect x="1249" y="390" width="60" height="60" rx="6" fill="#1a1d23" stroke="#2a2d38" stroke-width="1.5" opacity="0.5"/>
+  <circle cx="1279" cy="408" r="8" fill="none" stroke="#2a2d38" stroke-width="2"/>
+  <rect x="1255" y="422" width="48" height="20" rx="3" fill="none" stroke="#2a2d38" stroke-width="2"/>
+  <text x="1280" y="476" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#4b5563" text-anchor="middle">Select an element</text>
+  <text x="1280" y="492" font-family="'Inter', system-ui, sans-serif" font-size="11" fill="#4b5563" text-anchor="middle">to edit properties</text>
+
+  <!-- Properties panel hint (right side callout) -->
+  <rect x="1132" y="530" width="276" height="240" rx="6" fill="#1a1d23" stroke="#2a2d38" stroke-width="1" opacity="0.6"/>
+  <text x="1270" y="550" font-family="'Courier New', monospace" font-size="7.5" fill="#c4935c" text-anchor="middle">WHEN OBJECT SELECTED: PropertiesPanel</text>
+  <text x="1270" y="563" font-family="'Courier New', monospace" font-size="7" fill="#6b7280" text-anchor="middle">─────────────────────────────────</text>
+  <!-- Mock properties rows -->
+  <text x="1144" y="580" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Position X</text>
+  <rect x="1210" y="572" width="60" height="14" rx="2" fill="#1e2128" stroke="#2a2d38" stroke-width="1"/>
+  <text x="1282" y="583" font-family="'Courier New', monospace" font-size="8" fill="#4b5563">px</text>
+  <text x="1300" y="580" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Y</text>
+  <rect x="1310" y="572" width="60" height="14" rx="2" fill="#1e2128" stroke="#2a2d38" stroke-width="1"/>
+
+  <text x="1144" y="600" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Width</text>
+  <rect x="1210" y="592" width="60" height="14" rx="2" fill="#1e2128" stroke="#2a2d38" stroke-width="1"/>
+  <text x="1300" y="600" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Height</text>
+  <rect x="1310" y="592" width="60" height="14" rx="2" fill="#1e2128" stroke="#2a2d38" stroke-width="1"/>
+
+  <text x="1144" y="620" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Opacity</text>
+  <rect x="1144" y="624" width="224" height="6" rx="3" fill="#2a2d38"/>
+  <rect x="1144" y="624" width="140" height="6" rx="3" fill="#c4935c" opacity="0.7"/>
+
+  <text x="1144" y="648" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Fill Color</text>
+  <rect x="1210" y="640" width="20" height="14" rx="2" fill="#6366f1"/>
+  <rect x="1236" y="640" width="96" height="14" rx="2" fill="#1e2128" stroke="#2a2d38" stroke-width="1"/>
+
+  <text x="1144" y="668" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Stroke Color</text>
+  <rect x="1210" y="660" width="20" height="14" rx="2" fill="#1e2128" stroke="#2a2d38"/>
+  <rect x="1236" y="660" width="60" height="14" rx="2" fill="#1e2128" stroke="#2a2d38" stroke-width="1"/>
+  <text x="1300" y="671" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">px</text>
+
+  <text x="1144" y="688" font-family="'Courier New', monospace" font-size="8" fill="#6b7280">Font Family</text>
+  <rect x="1144" y="691" width="224" height="14" rx="2" fill="#1e2128" stroke="#2a2d38" stroke-width="1"/>
+
+  <text x="1270" y="720" font-family="'Courier New', monospace" font-size="7" fill="#4b5563" text-anchor="middle">... more properties ...</text>
+  <text x="1270" y="760" font-family="'Courier New', monospace" font-size="7.5" fill="#6b7280" text-anchor="middle">─────────────────────────────────</text>
+  <text x="1270" y="772" font-family="'Courier New', monospace" font-size="7.5" fill="#c4935c" text-anchor="middle">OR: AIChatPanel (when AI Chat toggled on)</text>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       DIMENSION ANNOTATIONS (bottom ruler)
+  ═══════════════════════════════════════════════════════════════ -->
+
+  <!-- Total width annotation -->
+  <line x1="0" y1="906" x2="1440" y2="906" stroke="#c4935c" stroke-width="0.5" opacity="0.4"/>
+  <line x1="0" y1="902" x2="0" y2="910" stroke="#c4935c" stroke-width="1" opacity="0.4"/>
+  <line x1="1440" y1="902" x2="1440" y2="910" stroke="#c4935c" stroke-width="1" opacity="0.4"/>
+  <text x="720" y="919" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" text-anchor="middle" opacity="0.7">Total viewport width: 1440px</text>
+
+  <!-- Zone width rulers -->
+  <!-- Rail -->
+  <line x1="0" y1="895" x2="52" y2="895" stroke="#c4935c" stroke-width="0.5" opacity="0.3"/>
+  <text x="26" y="890" font-family="'Courier New', monospace" font-size="7" fill="#c4935c" text-anchor="middle" opacity="0.7">52px</text>
+  <!-- Panel -->
+  <line x1="52" y1="895" x2="308" y2="895" stroke="#c4935c" stroke-width="0.5" opacity="0.3"/>
+  <text x="180" y="890" font-family="'Courier New', monospace" font-size="7" fill="#c4935c" text-anchor="middle" opacity="0.7">256px</text>
+  <!-- Canvas -->
+  <line x1="308" y1="895" x2="1120" y2="895" stroke="#c4935c" stroke-width="0.5" opacity="0.3"/>
+  <text x="714" y="890" font-family="'Courier New', monospace" font-size="7" fill="#c4935c" text-anchor="middle" opacity="0.7">flex-1 ~812px</text>
+  <!-- Right panel -->
+  <line x1="1120" y1="895" x2="1440" y2="895" stroke="#c4935c" stroke-width="0.5" opacity="0.3"/>
+  <text x="1280" y="890" font-family="'Courier New', monospace" font-size="7" fill="#c4935c" text-anchor="middle" opacity="0.7">320px</text>
+
+  <!-- Height annotation -->
+  <line x1="1432" y1="48" x2="1432" y2="920" stroke="#c4935c" stroke-width="0.5" opacity="0.4"/>
+  <text x="1436" y="484" font-family="'Courier New', monospace" font-size="8" fill="#c4935c" transform="rotate(90, 1436, 484)" text-anchor="middle" opacity="0.7">Body height: 872px (100vh − 48px toolbar)</text>
+
+</svg>

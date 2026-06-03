@@ -903,7 +903,7 @@ function Dashboard({
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : filteredProjects && filteredProjects.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,280px))] justify-center gap-4">
               {filteredProjects.map((project: any) => (
                 <div key={project.id} className="group relative">
                   <button

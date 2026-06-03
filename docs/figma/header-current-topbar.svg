@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1273 64" width="1273" height="64" role="img" aria-labelledby="title desc">
+  <title id="title">ManuScript Studio Header - Current Top Bar</title>
+  <desc id="desc">Exact header-only frame with logo, wordmark, and Get Started button for Figma import.</desc>
+
+  <!-- Header background -->
+  <rect x="0" y="0" width="1273" height="64" fill="oklch(0.11 0.005 260)" fill-opacity="0.95"/>
+  <rect x="0" y="63" width="1273" height="1" fill="rgba(220,38,38,0.18)"/>
+
+  <!-- Left cluster -->
+  <g transform="translate(24,14)">
+    <rect x="0" y="0" width="36" height="36" rx="8" fill="#000000"/>
+    <rect x="1" y="1" width="34" height="34" rx="7" fill="none" stroke="oklch(0.78 0.17 75)" stroke-opacity="0.5" stroke-width="2"/>
+
+    <!-- Simple vector stand-in for app icon -->
+    <circle cx="18" cy="18" r="8.5" fill="none" stroke="oklch(0.78 0.17 75)" stroke-opacity="0.85" stroke-width="1.2"/>
+    <path d="M13 18h10" stroke="oklch(0.78 0.17 75)" stroke-opacity="0.85" stroke-width="1.1"/>
+    <path d="M18 13v10" stroke="oklch(0.78 0.17 75)" stroke-opacity="0.85" stroke-width="1.1"/>
+
+    <text x="48" y="22" font-family="Source Sans 3, Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="600" letter-spacing="3.24" text-transform="uppercase" fill="oklch(0.91 0.008 75)">MANUSCRIPT STUDIO</text>
+  </g>
+
+  <!-- Right CTA -->
+  <g transform="translate(1131,18)">
+    <rect x="0" y="0" width="118" height="28" fill="none" stroke="rgba(220,38,38,0.35)"/>
+    <text x="59" y="18" text-anchor="middle" font-family="Source Sans 3, Inter, Segoe UI, Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1.9" text-transform="uppercase" fill="rgba(220,38,38,0.95)">GET STARTED</text>
+  </g>
+</svg>

@@ -1,0 +1,204 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1400" width="1600" height="1400" role="img" aria-labelledby="hdr-title hdr-desc">
+  <title id="hdr-title">ManuScript Studio - Header Redesign Diagram</title>
+  <desc id="hdr-desc">Figma-ready diagram showing current header and proposed redesigns, component measurements, spacing system, and interaction states for desktop and mobile.</desc>
+
+  <defs>
+    <style>
+      .mono { font-family: 'Courier New', monospace; }
+      .sans { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; }
+      .title { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; fill: #d6a56c; }
+      .label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; fill: #d6a56c; }
+      .body { font-size: 12px; fill: #e7e8ec; }
+      .note { font-size: 10px; fill: #a7acb7; }
+      .muted { font-size: 10px; fill: #7f8694; }
+      .token { font-size: 11px; fill: #d9dde6; }
+      .bg { fill: #0c0d11; }
+      .panel { fill: #12141a; stroke: #2a2f3a; }
+      .panelSoft { fill: #0f1117; stroke: #222733; }
+      .line { stroke: #2a2f3a; }
+      .accentLine { stroke: #d6a56c; }
+      .accentFill { fill: #d6a56c; }
+      .chip { fill: #181b24; stroke: #394150; }
+      .chipAccent { fill: #1a110b; stroke: #7b4c27; }
+      .measure { stroke: #d6a56c; stroke-width: 1; stroke-dasharray: 4 3; }
+      .arrow { fill: none; stroke: #d6a56c; stroke-width: 1.2; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1600" height="1400" />
+  <text x="800" y="22" class="mono title" text-anchor="middle">MANUSCRIPT STUDIO - HEADER REDESIGN DIAGRAM (FIGMA IMPORT) - DESKTOP + MOBILE</text>
+
+  <!-- Section 1: Current header -->
+  <rect x="40" y="44" width="1520" height="250" class="panel" rx="10" />
+  <text x="64" y="70" class="mono label">1) CURRENT HEADER (AS-BUILT)</text>
+
+  <rect x="64" y="92" width="1472" height="64" fill="#0f1117" stroke="#d44b4b" stroke-opacity="0.4" />
+  <rect x="64" y="92" width="1472" height="1" fill="#6d2b2b" />
+  <rect x="64" y="155" width="1472" height="1" fill="#6d2b2b" />
+
+  <rect x="88" y="108" width="36" height="36" rx="8" fill="#11141c" stroke="#d6a56c" stroke-opacity="0.6" />
+  <rect x="95" y="115" width="22" height="22" rx="4" fill="none" stroke="#d6a56c" stroke-width="1.2" />
+  <text x="138" y="131" class="sans body" font-size="13" font-weight="700" letter-spacing="0.14em">MANUSCRIPT STUDIO</text>
+
+  <rect x="1380" y="108" width="132" height="32" class="chipAccent" rx="4" />
+  <text x="1446" y="128" class="sans body" text-anchor="middle" font-size="11" font-weight="700" letter-spacing="0.12em">GET STARTED</text>
+
+  <text x="64" y="186" class="sans note">Pain points captured from current visual:</text>
+  <text x="84" y="206" class="sans muted">- Action button competes with wordmark because both sit in strong accent colors.</text>
+  <text x="84" y="222" class="sans muted">- Left cluster lacks flexible nav zone, causing sparse center with no information hierarchy.</text>
+  <text x="84" y="238" class="sans muted">- Header feels rigid on wider screens and crowded on narrow screens.</text>
+  <text x="84" y="254" class="sans muted">- Border and glow language is inconsistent with softer card surfaces below.</text>
+
+  <!-- Section 2: Proposed desktop -->
+  <rect x="40" y="314" width="1520" height="470" class="panel" rx="10" />
+  <text x="64" y="340" class="mono label">2) PROPOSED DESKTOP HEADER (PRIMARY RECOMMENDATION)</text>
+
+  <rect x="64" y="364" width="1472" height="72" fill="#11141b" stroke="#273040" />
+  <rect x="64" y="364" width="1472" height="2" fill="#d6a56c" fill-opacity="0.45" />
+  <rect x="64" y="435" width="1472" height="1" fill="#273040" />
+
+  <!-- Left brand block -->
+  <rect x="88" y="381" width="264" height="38" class="panelSoft" rx="8" />
+  <rect x="100" y="387" width="26" height="26" rx="6" fill="#0f1219" stroke="#d6a56c" stroke-opacity="0.7" />
+  <path d="M106 400 l7 -7 l7 7" fill="none" stroke="#d6a56c" stroke-width="1.2" />
+  <text x="136" y="398" class="sans body" font-size="11" font-weight="700" letter-spacing="0.08em">MANUSCRIPT</text>
+  <text x="136" y="410" class="sans note" font-size="10" letter-spacing="0.16em">STUDIO</text>
+
+  <!-- Center nav -->
+  <rect x="514" y="381" width="566" height="38" class="panelSoft" rx="8" />
+  <rect x="528" y="389" width="104" height="22" class="chip" rx="11" />
+  <rect x="640" y="389" width="128" height="22" class="chip" rx="11" />
+  <rect x="776" y="389" width="122" height="22" class="chip" rx="11" />
+  <rect x="906" y="389" width="160" height="22" class="chip" rx="11" />
+  <text x="580" y="404" class="sans note" text-anchor="middle">Templates</text>
+  <text x="704" y="404" class="sans note" text-anchor="middle">Use Cases</text>
+  <text x="837" y="404" class="sans note" text-anchor="middle">Pricing</text>
+  <text x="986" y="404" class="sans note" text-anchor="middle">Developer API</text>
+
+  <!-- Right actions -->
+  <rect x="1168" y="381" width="344" height="38" class="panelSoft" rx="8" />
+  <rect x="1182" y="389" width="78" height="22" class="chip" rx="11" />
+  <text x="1221" y="404" class="sans note" text-anchor="middle">Sign In</text>
+  <rect x="1268" y="389" width="110" height="22" class="chipAccent" rx="11" />
+  <text x="1323" y="404" class="sans body" text-anchor="middle" font-size="11" font-weight="700">Start Free</text>
+  <rect x="1386" y="389" width="112" height="22" fill="#163320" stroke="#2f7f4d" rx="11" />
+  <text x="1442" y="404" class="sans body" text-anchor="middle" font-size="11" font-weight="700" fill="#ccf3d9">Open App</text>
+
+  <!-- Measurements -->
+  <line x1="64" y1="454" x2="1536" y2="454" class="measure" />
+  <path d="M64 450 l0 8 M1536 450 l0 8" class="arrow" />
+  <text x="800" y="468" class="mono note" text-anchor="middle">Container width 1472px (24px side gutters on 1520 panel)</text>
+
+  <line x1="88" y1="486" x2="352" y2="486" class="measure" />
+  <text x="220" y="500" class="mono note" text-anchor="middle">Brand block 264</text>
+  <line x1="514" y1="486" x2="1080" y2="486" class="measure" />
+  <text x="797" y="500" class="mono note" text-anchor="middle">Nav block 566</text>
+  <line x1="1168" y1="486" x2="1512" y2="486" class="measure" />
+  <text x="1340" y="500" class="mono note" text-anchor="middle">Action block 344</text>
+
+  <!-- State row -->
+  <text x="64" y="536" class="sans note">Interaction states:</text>
+  <rect x="64" y="550" width="460" height="208" class="panelSoft" rx="8" />
+  <text x="84" y="574" class="mono note">A) BASE STATE</text>
+  <rect x="84" y="586" width="420" height="54" fill="#11141b" stroke="#273040" />
+  <rect x="96" y="603" width="86" height="20" class="chip" rx="10" />
+  <rect x="378" y="603" width="114" height="20" class="chipAccent" rx="10" />
+  <text x="139" y="617" class="sans note" text-anchor="middle">Sign In</text>
+  <text x="435" y="617" class="sans body" text-anchor="middle" font-size="10" font-weight="700">Start Free</text>
+  <text x="84" y="662" class="sans muted">Border weight: 1px</text>
+  <text x="84" y="678" class="sans muted">Backdrop blur: 8px</text>
+  <text x="84" y="694" class="sans muted">Logo ring opacity: 55%</text>
+
+  <rect x="550" y="550" width="460" height="208" class="panelSoft" rx="8" />
+  <text x="570" y="574" class="mono note">B) SCROLLED STATE (after 40px)</text>
+  <rect x="570" y="586" width="420" height="54" fill="#10131a" stroke="#334055" />
+  <rect x="570" y="586" width="420" height="2" fill="#d6a56c" fill-opacity="0.7" />
+  <rect x="862" y="603" width="116" height="20" fill="#2a1a10" stroke="#9b6237" rx="10" />
+  <text x="920" y="617" class="sans body" text-anchor="middle" font-size="10" font-weight="700">Start Free</text>
+  <text x="570" y="662" class="sans muted">Header opacity: 0.98</text>
+  <text x="570" y="678" class="sans muted">Shadow: 0 8 28 rgba(0,0,0,0.32)</text>
+  <text x="570" y="694" class="sans muted">Top accent line opacity: +20%</text>
+
+  <rect x="1036" y="550" width="500" height="208" class="panelSoft" rx="8" />
+  <text x="1056" y="574" class="mono note">C) HOVER / FOCUS STYLE (all chips)</text>
+  <rect x="1056" y="586" width="460" height="54" fill="#11141b" stroke="#273040" />
+  <rect x="1070" y="603" width="110" height="20" fill="#1c2130" stroke="#55617a" rx="10" />
+  <rect x="1190" y="603" width="126" height="20" fill="#2a1a10" stroke="#b06f3f" rx="10" />
+  <rect x="1324" y="603" width="176" height="20" fill="#1a3a27" stroke="#3ca368" rx="10" />
+  <text x="1125" y="617" class="sans note" text-anchor="middle">Secondary</text>
+  <text x="1253" y="617" class="sans note" text-anchor="middle">Primary</text>
+  <text x="1412" y="617" class="sans note" text-anchor="middle">App Entry</text>
+  <text x="1056" y="662" class="sans muted">Use 120ms ease-out transitions</text>
+  <text x="1056" y="678" class="sans muted">Focus ring: 2px #d6a56c @ 40%</text>
+  <text x="1056" y="694" class="sans muted">Hover bg shift: +6% luminance</text>
+
+  <!-- Section 3: Mobile -->
+  <rect x="40" y="804" width="1520" height="556" class="panel" rx="10" />
+  <text x="64" y="830" class="mono label">3) MOBILE / TABLET ADAPTIVE HEADER (FOR CLEAN BREAKPOINT FLOW)</text>
+
+  <rect x="64" y="856" width="486" height="456" class="panelSoft" rx="8" />
+  <text x="84" y="882" class="mono note">MOBILE 390x844 - COLLAPSED</text>
+  <rect x="84" y="896" width="446" height="64" fill="#11141b" stroke="#273040" />
+  <rect x="98" y="912" width="34" height="34" rx="8" fill="#0f1219" stroke="#d6a56c" stroke-opacity="0.6" />
+  <text x="146" y="932" class="sans body" font-size="11" font-weight="700" letter-spacing="0.08em">MANUSCRIPT</text>
+  <rect x="418" y="914" width="98" height="26" class="chipAccent" rx="13" />
+  <text x="467" y="931" class="sans body" text-anchor="middle" font-size="10" font-weight="700">Start Free</text>
+
+  <text x="84" y="986" class="sans note">Recommended mobile behavior:</text>
+  <text x="96" y="1004" class="sans muted">- Keep wordmark single-line or icon-only below 360px.</text>
+  <text x="96" y="1020" class="sans muted">- Use one primary CTA, move rest into drawer menu.</text>
+  <text x="96" y="1036" class="sans muted">- Header remains 64px with 16px side padding.</text>
+
+  <rect x="84" y="1062" width="446" height="232" fill="#0f131a" stroke="#263041" rx="8" />
+  <text x="104" y="1084" class="mono note">MOBILE MENU DRAWER (opened)</text>
+  <rect x="104" y="1100" width="406" height="34" class="chip" rx="8" />
+  <rect x="104" y="1142" width="406" height="34" class="chip" rx="8" />
+  <rect x="104" y="1184" width="406" height="34" class="chip" rx="8" />
+  <rect x="104" y="1226" width="406" height="44" class="chipAccent" rx="10" />
+  <text x="124" y="1122" class="sans note">Templates</text>
+  <text x="124" y="1164" class="sans note">Pricing</text>
+  <text x="124" y="1206" class="sans note">Developer API</text>
+  <text x="307" y="1253" class="sans body" text-anchor="middle" font-size="11" font-weight="700">Open App</text>
+
+  <rect x="578" y="856" width="958" height="456" class="panelSoft" rx="8" />
+  <text x="598" y="882" class="mono note">TOKEN AND COMPONENT SPECS (copy into Figma variables)</text>
+
+  <rect x="598" y="900" width="918" height="392" fill="#0f131a" stroke="#283244" rx="8" />
+
+  <!-- token table -->
+  <text x="620" y="926" class="sans token" font-weight="700">Color tokens</text>
+  <text x="620" y="946" class="mono muted">hdr.bg = #11141B @ 95%</text>
+  <text x="620" y="962" class="mono muted">hdr.border = #273040</text>
+  <text x="620" y="978" class="mono muted">hdr.accent = #D6A56C</text>
+  <text x="620" y="994" class="mono muted">cta.primary.bg = #2A1A10</text>
+  <text x="620" y="1010" class="mono muted">cta.primary.border = #B06F3F</text>
+  <text x="620" y="1026" class="mono muted">cta.app.bg = #1A3A27</text>
+
+  <text x="930" y="926" class="sans token" font-weight="700">Typography</text>
+  <text x="930" y="946" class="mono muted">wordmark = 11/700, +8% tracking</text>
+  <text x="930" y="962" class="mono muted">chip label = 10/500</text>
+  <text x="930" y="978" class="mono muted">primary CTA = 11/700</text>
+  <text x="930" y="994" class="mono muted">section labels = 10 mono</text>
+
+  <text x="1210" y="926" class="sans token" font-weight="700">Spacing and size</text>
+  <text x="1210" y="946" class="mono muted">header height = 72 desktop</text>
+  <text x="1210" y="962" class="mono muted">header height = 64 mobile</text>
+  <text x="1210" y="978" class="mono muted">side padding = 24 desktop</text>
+  <text x="1210" y="994" class="mono muted">side padding = 16 mobile</text>
+  <text x="1210" y="1010" class="mono muted">inter-group gap = 16</text>
+
+  <text x="620" y="1060" class="sans token" font-weight="700">Component structure</text>
+  <text x="620" y="1080" class="mono muted">Header / Container / BrandBlock / NavBlock / ActionBlock</text>
+  <text x="620" y="1096" class="mono muted">NavChip variants: Default, Hover, Active</text>
+  <text x="620" y="1112" class="mono muted">CTA variants: Secondary, Primary, AppEntry</text>
+  <text x="620" y="1128" class="mono muted">Sticky behavior: Default -> Scrolled after 40px</text>
+
+  <text x="620" y="1164" class="sans token" font-weight="700">Engineering handoff notes</text>
+  <text x="620" y="1184" class="mono muted">- Keep existing sticky top:0 and z-index:50.</text>
+  <text x="620" y="1200" class="mono muted">- Add nav block only for unauthenticated marketing header.</text>
+  <text x="620" y="1216" class="mono muted">- Reuse action-chip class for CTA variants with modifier classes.</text>
+  <text x="620" y="1232" class="mono muted">- Preserve current logo asset and accessibility labels.</text>
+  <text x="620" y="1248" class="mono muted">- Maintain keyboard focus rings for all clickable chips.</text>
+
+  <text x="64" y="1340" class="mono note">Import tip: Drag this SVG into a Figma page, then use Ungroup twice to edit each block as individual vectors/text.</text>
+</svg>

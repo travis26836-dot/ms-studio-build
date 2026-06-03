@@ -46,7 +46,7 @@ import {
 } from "@/components/PageLoadAnimator";
 import { ParallaxScroll, RevealOnScroll } from "@/components/ParallaxScroll";
 import { useLocation } from "wouter";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -402,7 +402,7 @@ function Dashboard({
   }, [dbTemplates, activeTab, q]);
 
   const visiblePresets = useMemo(() => {
-    const base = showAllPresets ? DESIGN_PRESETS : DESIGN_PRESETS.slice(0, 10);
+    const base = showAllPresets ? DESIGN_PRESETS : DESIGN_PRESETS.slice(0, 9);
     if (!q) return base;
     return DESIGN_PRESETS.filter(p => p.label.toLowerCase().includes(q));
   }, [showAllPresets, q]);
@@ -422,11 +422,21 @@ function Dashboard({
   }, [activeTab, showAllTemplates, q]);
 
   const visibleDbTemplates = useMemo(
-    () =>
-      showAllTemplates
-        ? filteredTemplates.slice(0, 10)
-        : filteredTemplates.slice(0, 6),
-    [filteredTemplates, showAllTemplates]
+    () => {
+      if (showAllTemplates) {
+        return filteredTemplates.slice(0, 10);
+      }
+
+      // Keep desktop grid clean: 7 template cards + See All card = 2 rows of 4.
+      const compactTemplateSlots = 7;
+      const remainingDbSlots = Math.max(
+        compactTemplateSlots - visibleCuratedTemplates.length,
+        0
+      );
+
+      return filteredTemplates.slice(0, remainingDbSlots);
+    },
+    [filteredTemplates, showAllTemplates, visibleCuratedTemplates.length]
   );
 
   const filteredProjects = useMemo(() => {
@@ -572,82 +582,113 @@ function Dashboard({
               marketing canvas sizes.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+
+          {!q && (
+            <div className="mx-auto mb-3 w-full max-w-3xl">
+              <div className="mb-1 h-px bg-[var(--measurement-line)]/80" />
+              <button
+                onClick={() =>
+                  openCreateDialog({
+                    width: 1080,
+                    height: 1080,
+                    label: "Custom Design",
+                    isCustomSize: true,
+                  })
+                }
+                className="group relative mx-auto flex h-24 w-full max-w-2xl items-center justify-center gap-4 rounded-md border border-border bg-[linear-gradient(145deg,rgba(255,255,255,0.02),rgba(255,255,255,0.07))] px-6 text-left shadow-[0_6px_0_0_rgba(0,0,0,0.3),0_10px_24px_rgba(0,0,0,0.26)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[oklch(0.78_0.17_75)]/55 hover:bg-[linear-gradient(145deg,rgba(255,255,255,0.05),rgba(255,255,255,0.1))] hover:shadow-[0_8px_0_0_rgba(0,0,0,0.34),0_14px_28px_rgba(0,0,0,0.32)]"
+              >
+                <span className="pointer-events-none absolute inset-[5px] rounded-[5px] border border-border/70" />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border border-border bg-secondary/80 transition-all group-hover:border-[oklch(0.78_0.17_75)]/60">
+                  <Plus className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-[oklch(0.78_0.17_75)]" />
+                </div>
+                <div className="relative z-10">
+                  <span className="font-display block text-sm font-semibold uppercase tracking-[0.12em] text-foreground">
+                    Custom Size
+                  </span>
+                  <span className="mt-1 block text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    Set width and height manually
+                  </span>
+                </div>
+              </button>
+              <div className="mt-1 h-px bg-[var(--measurement-line)]/80" />
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
             {visiblePresets.length === 0 && q ? (
               <div className="col-span-full py-6 text-sm text-muted-foreground">
                 No sizes match "{searchQuery}"
               </div>
             ) : (
-              visiblePresets.map(preset => (
-                <button
-                  key={preset.key}
-                  onClick={() =>
-                    openCreateDialog({
-                      width: preset.width,
-                      height: preset.height,
-                      label: preset.label,
-                    })
-                  }
-                  className="group flex flex-col items-center gap-3 rounded-sm border border-border bg-card/80 p-4 text-center transition-all duration-150 hover:border-[oklch(0.78_0.17_75)]/50 hover:bg-[oklch(0.78_0.17_75)]/5"
-                >
-                  <div className="flex h-20 w-20 items-center justify-center rounded-sm border border-border bg-secondary transition-all group-hover:border-[oklch(0.78_0.17_75)]/40">
-                    <Plus className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-[oklch(0.78_0.17_75)]" />
-                  </div>
-                  <div>
-                    <span className="font-display block text-xs font-medium text-foreground">
-                      {preset.label}
-                    </span>
-                    <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      {preset.width}×{preset.height}
-                    </span>
-                  </div>
-                </button>
+              visiblePresets.map((preset, index) => (
+                <Fragment key={preset.key}>
+                  <button
+                    onClick={() =>
+                      openCreateDialog({
+                        width: preset.width,
+                        height: preset.height,
+                        label: preset.label,
+                      })
+                    }
+                    className="group flex flex-col items-center gap-3 rounded-sm border border-border bg-card/80 p-4 text-center transition-all duration-150 hover:border-[oklch(0.78_0.17_75)]/50 hover:bg-[oklch(0.78_0.17_75)]/5"
+                  >
+                    <div className="flex h-20 w-20 items-center justify-center rounded-sm border border-border bg-secondary transition-all group-hover:border-[oklch(0.78_0.17_75)]/40">
+                      <Plus className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-[oklch(0.78_0.17_75)]" />
+                    </div>
+                    <div>
+                      <span className="font-display block text-xs font-medium text-foreground">
+                        {preset.label}
+                      </span>
+                      <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {preset.width}×{preset.height}
+                      </span>
+                    </div>
+                  </button>
+                </Fragment>
               ))
             )}
 
             {!q && (
               <>
-                <button
-                  onClick={() =>
-                    openCreateDialog({
-                      width: 1080,
-                      height: 1080,
-                      label: "Custom Design",
-                      isCustomSize: true,
-                    })
-                  }
-                  className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card/40 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
-                >
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-dashed border-border transition-all group-hover:border-primary/50">
-                    <Plus className="h-6 w-6 text-muted-foreground group-hover:text-primary" />
-                  </div>
-                  <div>
-                    <span className="block text-xs font-medium text-foreground">
-                      Custom Size
-                    </span>
-                    <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      Open editor
-                    </span>
-                  </div>
-                </button>
+                {!showAllPresets && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllPresets(current => !current)}
+                    className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card/60 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
+                  >
+                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                      <LayoutTemplate className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <span className="block text-xs font-medium text-foreground">
+                        View More
+                      </span>
+                      <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                        More preset sizes
+                      </span>
+                    </div>
+                  </button>
+                )}
 
-                <button
-                  type="button"
-                  onClick={() => setShowAllPresets(current => !current)}
-                  className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card/60 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
-                >
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <LayoutTemplate className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <span className="block text-xs font-medium text-foreground">
-                      {showAllPresets ? "Show Fewer" : "View More"}
-                    </span>
-                    <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      More preset sizes
-                    </span>
-                  </div>
-                </button>
+                {showAllPresets && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllPresets(current => !current)}
+                    className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card/60 p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
+                  >
+                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                      <LayoutTemplate className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <span className="block text-xs font-medium text-foreground">
+                        Show Fewer
+                      </span>
+                      <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                        Collapse preset sizes
+                      </span>
+                    </div>
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -696,7 +737,7 @@ function Dashboard({
                 </div>
               ) : visibleDbTemplates.length > 0 ||
                 visibleCuratedTemplates.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4 text-left sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 text-left sm:grid-cols-2 md:grid-cols-4">
                   {visibleDbTemplates.map((template: any, index: number) => (
                     (() => {
                       const theme =

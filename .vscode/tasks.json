@@ -15,7 +15,7 @@
 			"command": "sh",
 			"args": [
 				"-lc",
-				"npm run build:server && PORT=3010 NODE_ENV=development node --env-file=.env dist/index.js"
+				"pnpm build:server && PORT=3010 NODE_ENV=development node --env-file=.env dist/index.js"
 			],
 			"isBackground": true,
 			"problemMatcher": []
@@ -24,15 +24,15 @@
 			"label": "dev:main-only",
 			"type": "shell",
 			"command": "sh",
-			"args": ["-lc", "npx vite --host --port 3003 --strictPort"],
+			"args": ["-lc", "pnpm exec vite --host --port 3003 --strictPort"],
 			"isBackground": true,
 			"problemMatcher": []
 		},
 		{
 			"label": "dev:full",
 			"type": "shell",
-			"command": "npm",
-			"args": ["run", "dev:full"],
+			"command": "pnpm",
+			"args": ["dev:full"],
 			"isBackground": true,
 			"problemMatcher": []
 		},

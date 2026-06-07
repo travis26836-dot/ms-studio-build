@@ -5,8 +5,8 @@ Start here for setup and configuration.
 ## Quick Start
 
 ```bash
-npm install
-npm run dev:full
+pnpm install
+pnpm dev:full
 ```
 
 App runs at <http://localhost:3003>
@@ -65,18 +65,18 @@ See individual guide files for where to obtain each key:
 **Development:**
 
 ```bash
-npm run dev:full              # All servers
-npm run dev                   # Main app only
-npm run dev:api               # API only
+pnpm dev:full              # All servers
+pnpm dev                   # Main app only
+pnpm dev:api               # API only
 ```
 
 **Production:**
 
 ```bash
-npm run build                 # Build
-npm run start                 # Start
-npm run check                 # TypeScript check
-npm run format                # Format code
+pnpm build                 # Build
+pnpm start                 # Start
+pnpm check                 # TypeScript check
+pnpm format                # Format code
 ```
 
 ---
@@ -114,7 +114,7 @@ psql -U postgres -c "CREATE DATABASE ms_build;"
 ### Migrations
 
 ```bash
-npx prisma migrate deploy
+pnpm exec prisma migrate deploy
 ```
 
 ---
@@ -134,15 +134,15 @@ npx prisma migrate deploy
 Clear cache and reinstall:
 
 ```bash
-rm -rf node_modules package-lock.json pnpm-lock.yaml
-npm install
-npm run check
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
+pnpm check
 ```
 
 Kill dev ports:
 
 ```bash
-npm run kill:dev-ports
+pnpm run kill:dev-ports
 ```
 
 ---

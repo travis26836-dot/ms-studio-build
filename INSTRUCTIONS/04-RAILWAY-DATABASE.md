@@ -51,7 +51,7 @@ DATABASE_URL=postgresql://postgres:password@localhost:5432/ms_build
 ### Run Prisma Migrations
 
 ```bash
-npx prisma migrate deploy
+pnpm exec prisma migrate deploy
 ```
 
 ---
@@ -66,16 +66,16 @@ npx prisma migrate deploy
 
 ```bash
 # View current schema state
-npx prisma studio
+pnpm exec prisma studio
 
 # Run pending migrations
-npx prisma migrate deploy
+pnpm exec prisma migrate deploy
 
 # Create a new migration (after editing schema.prisma)
-npx prisma migrate dev --name your_migration_name
+pnpm exec prisma migrate dev --name your_migration_name
 
 # Reset database (local only!)
-npx prisma migrate reset
+pnpm exec prisma migrate reset
 ```
 
 ---
@@ -122,17 +122,17 @@ If the customer portal is deployed as a separate Railway service:
 Push your code to GitHub. Railway will:
 
 1. Build your app
-2. Run `npm run build`
-3. Run `npm run start`
+2. Run `pnpm build`
+3. Run `pnpm start`
 
 ### Step 5: Run Migrations on Railway
 
 Railway does not infer Prisma migrations from this repository. Configure
-`npx prisma migrate deploy` as a pre-deploy command for the API service,
+`pnpm exec prisma migrate deploy` as a pre-deploy command for the API service,
 or run it for that service after configuring `DATABASE_URL`:
 
 ```bash
-railway run npx prisma migrate deploy
+railway run pnpm exec prisma migrate deploy
 ```
 
 ---
@@ -251,7 +251,7 @@ model NewTable {
 1. Create migration:
 
 ```bash
-npx prisma migrate dev --name add_new_table
+pnpm exec prisma migrate dev --name add_new_table
 ```
 
 1. Push to git
@@ -265,7 +265,7 @@ If they fail:
 2. Run manually:
 
 ```bash
-railway run npx prisma migrate deploy
+railway run pnpm exec prisma migrate deploy
 ```
 
 ---
@@ -315,20 +315,20 @@ API error response. Check the portal/API connection before changing PostgreSQL:
 echo $DATABASE_URL
 
 # If empty, add it
-npx prisma studio
+pnpm exec prisma studio
 ```
 
 ### Migration Fails
 
 ```bash
 # Check for syntax errors
-npx prisma validate
+pnpm exec prisma validate
 
 # Reset database (local only!)
-npx prisma migrate reset
+pnpm exec prisma migrate reset
 
 # Deploy again
-npx prisma migrate deploy
+pnpm exec prisma migrate deploy
 ```
 
 ---

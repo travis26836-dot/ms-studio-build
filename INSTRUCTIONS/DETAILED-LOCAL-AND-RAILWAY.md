@@ -6,7 +6,7 @@ Complete step-by-step guide for all environments.
 
 ### Local Development (Your Computer)
 
-.env.local → npm run dev:full → local app + API
+.env.local → pnpm dev:full → local app + API
 
 - Database: localhost:5432
 - App UI: <http://localhost:3003>
@@ -26,7 +26,7 @@ Railway Variables → build + start → Railway runtime
 ### Step 1: Install Dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Step 2: Set Up Local Database
@@ -87,13 +87,13 @@ STRIPE_PRICE_AI_CREDIT_PACK=price_test_YOUR_PRICE_ID
 ### Step 4: Run Migrations
 
 ```bash
-npx prisma migrate deploy
+pnpm exec prisma migrate deploy
 ```
 
 ### Step 5: Start Local Dev
 
 ```bash
-npm run dev:full
+pnpm dev:full
 ```
 
 **Done!** App is running:
@@ -195,13 +195,13 @@ AI_CREDIT_PACKS_ENABLED=true
 Configure this as the application/API service **Pre-deploy Command**:
 
 ```bash
-npx prisma migrate deploy
+pnpm exec prisma migrate deploy
 ```
 
 Alternatively, run it from a terminal linked to that Railway service:
 
 ```bash
-railway run npx prisma migrate deploy
+railway run pnpm exec prisma migrate deploy
 ```
 
 ### Step 5: Verify Deployment
@@ -218,8 +218,7 @@ railway run npx prisma migrate deploy
 
 **Local Development:**
 
-- Use `.env.local` (git-ignored) for local `npm` workflows
-- Use `.env.local` (git-ignored) for local `npm` workflows
+- Use `.env.local` (git-ignored) for local `pnpm` workflows
 - This is never pushed to Git
 
 **Railway:**
@@ -249,9 +248,9 @@ railway run npx prisma migrate deploy
 ### Local startup issues
 
 ```bash
-npm install
-npm run check
-npm run dev:full
+pnpm install
+pnpm check
+pnpm dev:full
 ```
 
 ### Local database issues
@@ -269,7 +268,7 @@ psql -U postgres -c "SELECT 1;"
 echo $DATABASE_URL
 
 # Run migrations
-npx prisma migrate deploy
+pnpm exec prisma migrate deploy
 ```
 
 ### Railway database connection issues
@@ -277,7 +276,7 @@ npx prisma migrate deploy
 1. Ensure PostgreSQL service is added to Railway project
 2. Confirm the application/API service references the PostgreSQL
    `DATABASE_URL`
-3. Run `npx prisma migrate deploy` for the API service
+3. Run `pnpm exec prisma migrate deploy` for the API service
 4. Check deployment logs for connection errors
 
 ### Railway customer portal "Failed to fetch"
@@ -298,7 +297,7 @@ npx prisma migrate deploy
 ### Railway build failures
 
 1. Check Railway **Logs** tab for build errors
-2. Ensure `npm run build` succeeds locally
+2. Ensure `pnpm build` succeeds locally
 3. Verify all required env vars are set
 4. Check for missing dependencies
 
@@ -321,7 +320,7 @@ npx prisma migrate deploy
 ```bash
 LOCAL DEV                          PRODUCTION (RAILWAY)
 ├── .env.local                     ├── Railway Variables
-├── npm run dev:full               ├── railway up / GitHub deploy
+├── pnpm dev:full                  ├── railway up / GitHub deploy
 ├── http://localhost:3003          ├── Railway domain
 └── http://localhost:3010          └── Managed PostgreSQL
 ```

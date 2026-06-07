@@ -54,8 +54,8 @@ if (failed === 0) {
   console.log("✨ SUCCESS - All required files are in place!\n");
   console.log("🚀 READY TO TEST LOCALLY\n");
   console.log("Next commands to run:");
-  console.log("  1. npm install             (install dependencies)");
-  console.log("  2. npm run dev:full        (start all dev servers)");
+  console.log("  1. pnpm install            (install dependencies)");
+  console.log("  2. pnpm dev:full           (start all dev servers)");
   console.log("  3. http://localhost:3003   (main app)");
   console.log("  4. http://localhost:3004   (customer portal)");
   console.log("  5. http://localhost:3010   (API server)\n");

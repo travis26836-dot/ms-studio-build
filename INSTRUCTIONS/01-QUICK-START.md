@@ -3,13 +3,13 @@
 ## Step 1: Install Dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ## Step 2: Start Everything
 
 ```bash
-npm run dev:full
+pnpm dev:full
 ```
 
 This starts the local development workflow for the main app and API.
@@ -26,14 +26,14 @@ Both servers are running. The app should load and be ready to develop.
 
 ### Stop Everything
 
-Press `Ctrl+C` in the terminal running `npm run dev:full`.
+Press `Ctrl+C` in the terminal running `pnpm dev:full`.
 
 ---
 
 ## Health Check
 
 ```bash
-npm run check
+pnpm check
 ```
 
 This validates TypeScript and configuration.

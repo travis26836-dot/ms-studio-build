@@ -8,7 +8,7 @@ const env = {
   NODE_ENV: process.env.NODE_ENV ?? "development",
 };
 
-execSync("pnpm build:server", { stdio: "inherit" });
+execSync("npm run build:server", { stdio: "inherit" });
 
 const server = spawn(
   "node --env-file-if-exists=.env --env-file-if-exists=.env.local dist/index.js",

@@ -90,7 +90,7 @@ and you don 't have to worry about redirects for
 # Stop current dev server (Ctrl+C)
 
 # Restart
-pnpm dev:full
+npm run dev:full
 ```
 
 ---
@@ -149,7 +149,7 @@ Replace `your-railway-domain.com` with your actual Railway domain.
 
 1. Verify `.env.local` has all three Clerk variables set
 2. Verify keys are copied correctly from Clerk Dashboard
-3. Restart dev server: `pnpm dev:full`
+3. Restart dev server: `npm run dev:full`
 
 ### 404 on `https://clerk.example.com/...`
 

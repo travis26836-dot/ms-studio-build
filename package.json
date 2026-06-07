@@ -10,9 +10,9 @@
     "check:ai": "node scripts/validate-ai.mjs",
     "prisma:generate": "prisma generate",
     "seed:stock-assets": "tsx scripts/seed-stock-assets.ts",
-    "build": "vite build && pnpm build:server",
-    "build:server": "pnpm prisma:generate && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "pnpm prisma:generate && NODE_ENV=production node dist/index.js",
+    "build": "vite build && npm run build:server",
+    "build:server": "npm run prisma:generate && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "start": "npm run prisma:generate && NODE_ENV=production node dist/index.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
     "format": "prettier --write ."
@@ -96,7 +96,6 @@
     "add": "^2.0.6",
     "autoprefixer": "^10.5.0",
     "esbuild": "^0.25.12",
-    "pnpm": "^10.33.4",
     "postcss": "^8.5.14",
     "prettier": "^3.8.3",
     "tailwindcss": "^4.3.0",
@@ -106,28 +105,8 @@
     "vite": "^7.3.3",
     "vitest": "^2.1.9"
   },
-  "packageManager": "pnpm@10.4.1+sha512.c753b6c3ad7afa13af388fa6d808035a008e30ea9993f58c6663e2bc5ff21679aa834db094987129aa4d488b86df57f7b634981b2f827cdcacc698cc0cfb88af",
-  "pnpm": {
-    "overrides": {
-      "tailwindcss>nanoid": "3.3.7"
-    },
-    "ignoredBuiltDependencies": [
-      "@clerk/shared",
-      "@prisma/engines",
-      "@tailwindcss/oxide",
-      "canvas",
-      "esbuild",
-      "prisma",
-      "protobufjs"
-    ],
-    "onlyBuiltDependencies": [
-      "@clerk/shared",
-      "@google/genai",
-      "@prisma/engines",
-      "@tailwindcss/oxide",
-      "canvas",
-      "esbuild",
-      "prisma"
-    ]
+  "packageManager": "npm@10.9.8",
+  "overrides": {
+    "nanoid": "3.3.7"
   }
 }

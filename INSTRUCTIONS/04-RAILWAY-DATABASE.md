@@ -122,8 +122,8 @@ If the customer portal is deployed as a separate Railway service:
 Push your code to GitHub. Railway will:
 
 1. Build your app
-2. Run `pnpm build`
-3. Run `pnpm start`
+2. Run `pnpm run build`
+3. Run `pnpm run start`
 
 ### Step 5: Run Migrations on Railway
 

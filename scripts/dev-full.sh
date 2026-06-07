@@ -37,7 +37,7 @@ kill_port "$MAIN_PORT"
 kill_port "$PORTAL_PORT"
 
 echo "Starting API on :$API_PORT"
-PORT="$API_PORT" NODE_ENV=development pnpm dev:api &
+PORT="$API_PORT" NODE_ENV=development pnpm run dev:api &
 PIDS+=("$!")
 
 echo "Starting main app on :$MAIN_PORT"
@@ -45,7 +45,7 @@ pnpm exec vite --host --port "$MAIN_PORT" --strictPort &
 PIDS+=("$!")
 
 echo "Starting customer portal on :$PORTAL_PORT"
-pnpm -C customer-portal exec vite --host --port "$PORTAL_PORT" --strictPort &
+pnpm --dir customer-portal dev -- --host --port "$PORTAL_PORT" --strictPort &
 PIDS+=("$!")
 
 echo "All servers starting..."

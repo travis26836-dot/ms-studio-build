@@ -1776,7 +1776,7 @@ async function startServer() {
         .status(200)
         .type("text/plain")
         .send(
-          "API server is running. Frontend build not found (dist/public/index.html). Run `pnpm dev` for Vite or `pnpm build` to generate static assets."
+          "API server is running. Frontend build not found (dist/public/index.html). Run `pnpm run dev` for Vite or `pnpm run build` to generate static assets."
         );
       return;
     }

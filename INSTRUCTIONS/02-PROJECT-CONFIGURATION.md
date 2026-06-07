@@ -6,7 +6,7 @@ Start here for setup and configuration.
 
 ```bash
 pnpm install
-pnpm dev:full
+pnpm run dev:full
 ```
 
 App runs at <http://localhost:3003>
@@ -65,18 +65,18 @@ See individual guide files for where to obtain each key:
 **Development:**
 
 ```bash
-pnpm dev:full              # All servers
-pnpm dev                   # Main app only
-pnpm dev:api               # API only
+pnpm run dev:full             # All servers
+pnpm run dev                  # Main app only
+pnpm run dev:api              # API only
 ```
 
 **Production:**
 
 ```bash
-pnpm build                 # Build
-pnpm start                 # Start
-pnpm check                 # TypeScript check
-pnpm format                # Format code
+pnpm run build                # Build
+pnpm run start                # Start
+pnpm run check                # TypeScript check
+pnpm run format               # Format code
 ```
 
 ---
@@ -134,9 +134,9 @@ pnpm exec prisma migrate deploy
 Clear cache and reinstall:
 
 ```bash
-rm -rf node_modules pnpm-lock.yaml
+rm -rf node_modules package-lock.json pnpm-lock.yaml
 pnpm install
-pnpm check
+pnpm run check
 ```
 
 Kill dev ports:

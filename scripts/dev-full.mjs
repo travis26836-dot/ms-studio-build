@@ -105,7 +105,7 @@ freePort(API_PORT);
 freePort(MAIN_PORT);
 freePort(PORTAL_PORT);
 
-startProcess(`API on :${API_PORT}`, "pnpm dev:api", {
+startProcess(`API on :${API_PORT}`, "pnpm run dev:api", {
   PORT: API_PORT,
   NODE_ENV: "development",
 });
@@ -113,7 +113,7 @@ startProcess(`API on :${API_PORT}`, "pnpm dev:api", {
 startProcess(`main app on :${MAIN_PORT}`, `pnpm exec vite --host --port ${MAIN_PORT} --strictPort`);
 startProcess(
   `customer portal on :${PORTAL_PORT}`,
-  `pnpm -C customer-portal exec vite --host --port ${PORTAL_PORT} --strictPort`,
+  `pnpm --dir customer-portal dev -- --host --port ${PORTAL_PORT} --strictPort`,
 );
 
 console.log("All servers starting...");

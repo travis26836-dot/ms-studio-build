@@ -9,7 +9,7 @@ pnpm install
 ## Step 2: Start Everything
 
 ```bash
-pnpm dev:full
+pnpm run dev:full
 ```
 
 This starts the local development workflow for the main app and API.
@@ -26,14 +26,14 @@ Both servers are running. The app should load and be ready to develop.
 
 ### Stop Everything
 
-Press `Ctrl+C` in the terminal running `pnpm dev:full`.
+Press `Ctrl+C` in the terminal running `pnpm run dev:full`.
 
 ---
 
 ## Health Check
 
 ```bash
-pnpm check
+pnpm run check
 ```
 
 This validates TypeScript and configuration.

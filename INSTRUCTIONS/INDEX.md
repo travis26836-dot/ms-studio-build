@@ -28,7 +28,7 @@ All setup and configuration documentation is organized here. **Start at the top 
 ```bash
 # Local development
 pnpm install
-pnpm dev:full
+pnpm run dev:full
 
 # Production deployment
 railway login

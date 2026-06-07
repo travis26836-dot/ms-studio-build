@@ -32,14 +32,14 @@
 
 - Use `pnpm` at repo root.
 - Main app commands (repo root):
-  - `pnpm dev:full` - run all dev servers (API + main app + customer portal) — recommended for local dev
-  - `pnpm dev` - run Vite dev server only (no API)
-  - `pnpm dev:api` - run Express API server only (port 3010, NODE_ENV=development)
-  - `pnpm build` - build client and bundle `server/index.ts` to `dist/`
-  - `pnpm start` - run production server from `dist/index.js`
-  - `pnpm check` - run TypeScript checks (`tsc --noEmit`)
-  - `pnpm format` - run Prettier across repo
-- Secondary app commands (`customer-portal/`): `pnpm dev`, `pnpm build`, `pnpm start`.
+  - `pnpm run dev:full` - run all dev servers (API + main app + customer portal) — recommended for local dev
+  - `pnpm run dev` - run Vite dev server only (no API)
+  - `pnpm run dev:api` - run Express API server only (port 3010, NODE_ENV=development)
+  - `pnpm run build` - build client and bundle `server/index.ts` to `dist/`
+  - `pnpm run start` - run production server from `dist/index.js`
+  - `pnpm run check` - run TypeScript checks (`tsc --noEmit`)
+  - `pnpm run format` - run Prettier across repo
+- Secondary app commands (`customer-portal/`): `pnpm --dir customer-portal dev`, `pnpm --dir customer-portal build`, `pnpm --dir customer-portal start`.
 
 ## Conventions
 
@@ -49,7 +49,7 @@
   - Wouter routing in `client/src/App.tsx`
   - Fabric.js editor/state handling in `client/src/hooks/useCanvasEditor.ts`
 - Keep design updates aligned with direction in `ideas.md` and current priorities in `todo.md`.
-- No established unit/integration test suite is currently configured. When adding significant logic, favor at least `pnpm check` and note any untested areas.
+- No established unit/integration test suite is currently configured. When adding significant logic, favor at least `pnpm run check` and note any untested areas.
 - Be careful when changing routing dependencies: repository includes a local patch at `patches/wouter@3.7.1.patch` configured in root `package.json`.
 
 ## References

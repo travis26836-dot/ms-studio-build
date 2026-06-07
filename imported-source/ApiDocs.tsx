@@ -296,7 +296,7 @@ export default function ApiDocs() {
                       CLI Tool
                     </h4>
                     <CodeBlock
-                      code={`# Install the CLI globally\nnpm install -g @manus/design-cli\n\n# Export a project\nmanus-cli export --project 42 --format png --output ./assets\n\n# Generate CSS variables from a brand kit\nmanus-cli brand-kit --id 1 --output ./src/styles/brand.css\n\n# Batch export all projects\nmanus-cli export-all --format png --output ./assets/designs`}
+                      code={`# Install the CLI globally\npnpm add -g @manus/design-cli\n\n# Export a project\nmanus-cli export --project 42 --format png --output ./assets\n\n# Generate CSS variables from a brand kit\nmanus-cli brand-kit --id 1 --output ./src/styles/brand.css\n\n# Batch export all projects\nmanus-cli export-all --format png --output ./assets/designs`}
                     />
                   </div>
                 </CardContent>

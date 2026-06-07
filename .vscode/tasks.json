@@ -15,7 +15,7 @@
 			"command": "sh",
 			"args": [
 				"-lc",
-				"pnpm build:server && PORT=3010 NODE_ENV=development node --env-file=.env dist/index.js"
+				"pnpm run build:server && PORT=3010 NODE_ENV=development node --env-file=.env dist/index.js"
 			],
 			"isBackground": true,
 			"problemMatcher": []
@@ -32,13 +32,13 @@
 			"label": "dev:full",
 			"type": "shell",
 			"command": "pnpm",
-			"args": ["dev:full"],
+			"args": ["run", "dev:full"],
 			"isBackground": true,
 			"problemMatcher": []
 		},
 		{
 			"type": "shell",
-			"command": "npx --yes markdownlint-cli2 \"**/*.md\" \"#node_modules\"",
+			"command": "pnpm dlx markdownlint-cli2 \"**/*.md\" \"#node_modules\"",
 			"problemMatcher": [
 				"$tsc"
 			],

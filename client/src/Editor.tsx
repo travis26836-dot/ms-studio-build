@@ -87,13 +87,17 @@ import {
   Settings,
   ChevronDown,
   Camera,
+  Maximize2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc, type UnsplashPhoto } from "@/lib/trpc";
 import { CANVAS_PRESETS } from "@shared/designTypes";
 import AIChatPanel from "@/components/AIChatPanel";
 import DownloadMenu from "@/components/DownloadMenu";
+import { ResizePanel } from "@/features/resize/ResizePanel";
+import type { BrandProfile, ReflowResult } from "@/features/resize/types";
 import { getPortalUrl } from "@/const";
 import styles from "./Editor.module.css";
 
@@ -108,6 +112,8 @@ type SidebarPanel =
   | "layers"
   | "settings"
   | null;
+
+type RightPanelMode = "properties" | "resize";
 
 const FONT_OPTIONS = [
   "Inter",
@@ -283,8 +289,91 @@ function rememberRecentItem(key: string, value: string): string[] {
 type BrandKitSnapshot = {
   colors: Array<{ name: string; hex: string }>;
   fonts: string[];
+  logos: BrandLogoAsset[];
   logoCount: number;
 };
+
+type BrandLogoAsset = {
+  id: string;
+  name: string;
+  url: string;
+  source: "upload" | "ai";
+  createdAt: number;
+};
+
+function createBrandLogoAsset(
+  name: string,
+  url: string,
+  source: BrandLogoAsset["source"]
+): BrandLogoAsset {
+  return {
+    id: `logo-${Date.now().toString(36)}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`,
+    name,
+    url,
+    source,
+    createdAt: Date.now(),
+  };
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = event => {
+      const result = event.target?.result;
+      if (typeof result === "string") {
+        resolve(result);
+        return;
+      }
+      reject(new Error("Logo upload failed."));
+    };
+    reader.onerror = () => reject(new Error("Logo upload failed."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImageForBrandLogo(url: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new window.Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Logo preview could not be saved."));
+    image.src = url;
+  });
+}
+
+async function createPersistableLogoDataUrl(file: File) {
+  const originalDataUrl = await readFileAsDataUrl(file);
+
+  if (!file.type.startsWith("image/") || file.type === "image/svg+xml") {
+    return originalDataUrl;
+  }
+
+  const image = await loadImageForBrandLogo(originalDataUrl);
+  const maxDimension = 512;
+  const scale = Math.min(
+    maxDimension / Math.max(image.naturalWidth || 1, image.naturalHeight || 1),
+    1
+  );
+
+  if (scale >= 1 && originalDataUrl.length < 750_000) {
+    return originalDataUrl;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round((image.naturalWidth || 1) * scale));
+  canvas.height = Math.max(1, Math.round((image.naturalHeight || 1) * scale));
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return originalDataUrl;
+  }
+
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const webpDataUrl = canvas.toDataURL("image/webp", 0.88);
+  return webpDataUrl.startsWith("data:image/webp")
+    ? webpDataUrl
+    : canvas.toDataURL("image/png");
+}
 
 function readBrandKitSnapshot(): BrandKitSnapshot | null {
   if (typeof window === "undefined") {
@@ -305,18 +394,36 @@ function readBrandKitSnapshot(): BrandKitSnapshot | null {
     const fonts = Array.isArray(parsed.fonts)
       ? parsed.fonts.filter((item): item is string => typeof item === "string")
       : [];
+    const logos = Array.isArray(parsed.logos)
+      ? parsed.logos.filter(
+          (item): item is BrandLogoAsset =>
+            typeof item?.id === "string" &&
+            typeof item?.name === "string" &&
+            typeof item?.url === "string" &&
+            (item?.source === "upload" || item?.source === "ai") &&
+            typeof item?.createdAt === "number"
+        )
+      : [];
 
-    if (colors.length === 0 && fonts.length === 0 && !parsed.logoCount) {
+    if (
+      colors.length === 0 &&
+      fonts.length === 0 &&
+      logos.length === 0 &&
+      !parsed.logoCount
+    ) {
       return null;
     }
+
+    const legacyLogoCount =
+      typeof parsed.logoCount === "number" && parsed.logoCount > 0
+        ? parsed.logoCount
+        : 0;
 
     return {
       colors,
       fonts,
-      logoCount:
-        typeof parsed.logoCount === "number" && parsed.logoCount > 0
-          ? parsed.logoCount
-          : 0,
+      logos,
+      logoCount: Math.max(logos.length, legacyLogoCount),
     };
   } catch {
     return null;
@@ -325,14 +432,32 @@ function readBrandKitSnapshot(): BrandKitSnapshot | null {
 
 function writeBrandKitSnapshot(snapshot: BrandKitSnapshot) {
   if (typeof window === "undefined") {
-    return;
+    return false;
   }
 
   try {
-    window.localStorage.setItem(BRAND_KIT_STORAGE_KEY, JSON.stringify(snapshot));
+    window.localStorage.setItem(
+      BRAND_KIT_STORAGE_KEY,
+      JSON.stringify(snapshot)
+    );
+    return true;
   } catch {
     // Brand Kit persistence is local convenience data; editing can continue.
+    return false;
   }
+}
+
+function readResizeBrandProfile(): BrandProfile | null {
+  const snapshot = readBrandKitSnapshot();
+  if (!snapshot) {
+    return null;
+  }
+
+  return {
+    colors: snapshot.colors,
+    fonts: snapshot.fonts,
+    logoCount: snapshot.logoCount,
+  };
 }
 
 function buildBrandKitContext(fallbackPurpose: string) {
@@ -562,8 +687,11 @@ export default function Editor({
   const editorLayoutRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [, setLocation] = useLocation();
   const editor = useCanvasEditor(canvasRef, canvasWidth, canvasHeight);
   const [activePanel, setActivePanel] = useState<SidebarPanel>("templates");
+  const [rightPanelMode, setRightPanelMode] =
+    useState<RightPanelMode>("properties");
   const [searchQuery, setSearchQuery] = useState("");
   const [showChat, setShowChat] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<string | undefined>(
@@ -956,10 +1084,7 @@ export default function Editor({
 
     persistDraftOnUnmountRef.current = persistDraft;
 
-    const intervalId = window.setInterval(
-      persistDraft,
-      AUTOSAVE_INTERVAL_MS
-    );
+    const intervalId = window.setInterval(persistDraft, AUTOSAVE_INTERVAL_MS);
     window.addEventListener("pagehide", persistDraft);
     window.addEventListener("beforeunload", persistDraft);
 
@@ -984,9 +1109,7 @@ export default function Editor({
     }
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (
-        canvasContextMenuRef.current?.contains(event.target as Node | null)
-      ) {
+      if (canvasContextMenuRef.current?.contains(event.target as Node | null)) {
         return;
       }
       closeCanvasContextMenu();
@@ -1057,7 +1180,11 @@ export default function Editor({
   }, [closeCanvasContextMenu, editor]);
 
   useEffect(() => {
-    if (!isCanvasReady || !hasCompletedInitialLoadRef.current || !isAuthenticated) {
+    if (
+      !isCanvasReady ||
+      !hasCompletedInitialLoadRef.current ||
+      !isAuthenticated
+    ) {
       return;
     }
 
@@ -1169,6 +1296,18 @@ export default function Editor({
     setActivePanel(activePanel === panel ? null : panel);
   };
 
+  const handleOpenReflowProject = useCallback(
+    (projectId: string, preview: ReflowResult) => {
+      const params = new URLSearchParams({
+        project: projectId,
+        w: String(preview.preset.width),
+        h: String(preview.preset.height),
+      });
+      setLocation(`/editor?${params.toString()}`);
+    },
+    [setLocation]
+  );
+
   const selectedObj = editor.editorState.selectedObjects[0];
   const hasSelection = editor.editorState.selectedObjects.length > 0;
   const multiSelect = editor.editorState.selectedObjects.length > 1;
@@ -1181,7 +1320,13 @@ export default function Editor({
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       {/* Top Toolbar */}
-      <div className="h-12 flex items-center gap-1 px-3 shrink-0 bg-[oklch(0.12_0.006_260)]" style={{borderTop: '1px solid var(--amber)', borderBottom: '1px solid var(--toolbar-border)' }}>
+      <div
+        className="h-12 flex items-center gap-1 px-3 shrink-0 bg-[oklch(0.12_0.006_260)]"
+        style={{
+          borderTop: "1px solid var(--amber)",
+          borderBottom: "1px solid var(--toolbar-border)",
+        }}
+      >
         <Button
           variant="ghost"
           size="sm"
@@ -1386,7 +1531,7 @@ export default function Editor({
             <button
               onClick={() => setIsEditingName(true)}
               className={`text-sm font-medium tracking-wide text-[oklch(0.82_0.007_75)] hover:text-[oklch(0.91_0.008_75)] rounded-sm px-3 py-1 hover:bg-[oklch(0.19_0.006_260)] transition-colors truncate max-w-xs ${styles.fontSpaceGrotesk}`}
-              style={{fontFamily: '"Space Grotesk", ui-sans-serif' }}
+              style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}
               title="Click to rename"
             >
               {projectName}
@@ -1394,6 +1539,17 @@ export default function Editor({
           )}
         </div>
 
+        <ToolbarButton
+          icon={Maximize2}
+          tooltip="Smart Resize"
+          onClick={() => {
+            setShowChat(false);
+            setRightPanelMode(current =>
+              current === "resize" ? "properties" : "resize"
+            );
+          }}
+          active={!showChat && rightPanelMode === "resize"}
+        />
         <ToolbarButton
           icon={MessageSquare}
           tooltip="AI Chat"
@@ -1423,7 +1579,10 @@ export default function Editor({
 
       <div ref={editorLayoutRef} className="flex flex-1 overflow-hidden">
         {/* Left Icon Sidebar */}
-        <div className="w-[52px] border-r bg-[oklch(0.12_0.006_260)] flex flex-col items-center py-3 gap-0.5 shrink-0" style={{borderRightColor: 'var(--panel-border)' }}>
+        <div
+          className="w-[52px] border-r bg-[oklch(0.12_0.006_260)] flex flex-col items-center py-3 gap-0.5 shrink-0"
+          style={{ borderRightColor: "var(--panel-border)" }}
+        >
           <SidebarIcon
             icon={LayoutTemplate}
             label="Templates"
@@ -1487,7 +1646,10 @@ export default function Editor({
         {activePanel && (
           <div
             className="border-r bg-[oklch(0.14_0.006_260)] flex flex-col shrink-0 panel-glide"
-            style={{borderRightColor: 'var(--panel-border)', width: leftPanelWidth }}
+            style={{
+              borderRightColor: "var(--panel-border)",
+              width: leftPanelWidth,
+            }}
           >
             <SidePanel
               panel={activePanel}
@@ -1516,7 +1678,7 @@ export default function Editor({
         <div
           ref={canvasContainerRef}
           className="flex-1 overflow-auto relative"
-          style={{background: "oklch(0.18 0.005 260)" }}
+          style={{ background: "oklch(0.18 0.005 260)" }}
           onContextMenu={handleCanvasContextMenu}
         >
           <div className="min-h-full min-w-full flex items-center justify-center p-0">
@@ -1585,22 +1747,34 @@ export default function Editor({
                 onMouseDown={() => setResizeTarget("right")}
               />
             )}
-            <div className="border-l border-border bg-card shrink-0" style={{ width: rightPanelWidth }}>
-            {hasSelection ? (
-              <PropertiesPanel
-                editor={editor}
-                canvasWidth={canvasWidth}
-                canvasHeight={canvasHeight}
-              />
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center p-4 text-center gap-2">
-                <Shapes className="w-8 h-8 opacity-20 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">
-                  Select an element to edit properties
-                </p>
-              </div>
-            )}
-          </div>
+            <div
+              className="border-l border-border bg-card shrink-0"
+              style={{ width: rightPanelWidth }}
+            >
+              {rightPanelMode === "resize" ? (
+                <ResizePanel
+                  editor={editor}
+                  canvasWidth={canvasWidth}
+                  canvasHeight={canvasHeight}
+                  projectName={projectName}
+                  brandProfile={readResizeBrandProfile()}
+                  onOpenProject={handleOpenReflowProject}
+                />
+              ) : hasSelection ? (
+                <PropertiesPanel
+                  editor={editor}
+                  canvasWidth={canvasWidth}
+                  canvasHeight={canvasHeight}
+                />
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center p-4 text-center gap-2">
+                  <Shapes className="w-8 h-8 opacity-20 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">
+                    Select an element to edit properties
+                  </p>
+                </div>
+              )}
+            </div>
           </>
         )}
 
@@ -1615,9 +1789,12 @@ export default function Editor({
                 onMouseDown={() => setResizeTarget("right")}
               />
             )}
-            <div className="border-l border-border shrink-0" style={{ width: rightPanelWidth }}>
-            <AIChatPanel onClose={() => setShowChat(false)} />
-          </div>
+            <div
+              className="border-l border-border shrink-0"
+              style={{ width: rightPanelWidth }}
+            >
+              <AIChatPanel onClose={() => setShowChat(false)} />
+            </div>
           </>
         )}
       </div>
@@ -1745,7 +1922,7 @@ function SidePanel({
       <div className="p-3 border-b border-border">
         <h3
           className="text-xs font-semibold text-card-foreground mb-2 tracking-[0.08em] uppercase"
-          style={{fontFamily: '"Space Grotesk", ui-sans-serif' }}
+          style={{ fontFamily: '"Space Grotesk", ui-sans-serif' }}
         >
           {panelTitles[panel || ""]}
         </h3>
@@ -1851,9 +2028,12 @@ function EditorSettingsPanel({
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-border bg-secondary/40 p-3">
-        <p className="text-xs font-medium text-card-foreground">Editor Layout</p>
+        <p className="text-xs font-medium text-card-foreground">
+          Editor Layout
+        </p>
         <p className="mt-1 text-[11px] text-muted-foreground">
-          Enable adjustable panel widths and drag the divider bars between panels.
+          Enable adjustable panel widths and drag the divider bars between
+          panels.
         </p>
         <Button
           type="button"
@@ -1867,7 +2047,8 @@ function EditorSettingsPanel({
       </div>
 
       <p className="text-[11px] text-muted-foreground px-1">
-        When enabled, drag either vertical divider to resize the left or right panel.
+        When enabled, drag either vertical divider to resize the left or right
+        panel.
       </p>
     </div>
   );
@@ -2594,7 +2775,9 @@ function ElementsPanel({
     if (!prompt || isGeneratingElement) return;
 
     if (aiScope === "Image") {
-      toast.info(`Generating AI element. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`);
+      toast.info(
+        `Generating AI element. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`
+      );
       try {
         const result = await generateImageMut.mutateAsync({ prompt });
         if (result.url) {
@@ -2613,7 +2796,9 @@ function ElementsPanel({
     }
 
     if (aiScope === "Graphic") {
-      toast.info(`Generating editable SVG. ${aiCreditLabel(AI_CREDIT_ESTIMATES.svg)}.`);
+      toast.info(
+        `Generating editable SVG. ${aiCreditLabel(AI_CREDIT_ESTIMATES.svg)}.`
+      );
       try {
         const result = await generateSvgMut.mutateAsync({
           prompt,
@@ -2684,7 +2869,9 @@ function ElementsPanel({
             title="AI generation scope"
             value={aiScope}
             onChange={event =>
-              setAiScope(event.target.value as (typeof ELEMENT_AI_SCOPES)[number])
+              setAiScope(
+                event.target.value as (typeof ELEMENT_AI_SCOPES)[number]
+              )
             }
             className="h-8 flex-1 rounded-md border border-border bg-secondary px-2 text-xs text-card-foreground"
           >
@@ -2709,23 +2896,23 @@ function ElementsPanel({
         </div>
       )}
       {recentSearches.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {recentSearches.map(query => (
-              <button
-                key={query}
-                type="button"
-                className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground hover:text-card-foreground"
-                onClick={() => setSearchQuery(query)}
-              >
-                {query}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-1.5">
+          {recentSearches.map(query => (
+            <button
+              key={query}
+              type="button"
+              className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground hover:text-card-foreground"
+              onClick={() => setSearchQuery(query)}
+            >
+              {query}
+            </button>
+          ))}
+        </div>
+      )}
       {/* Category tabs */}
       <div
         className="flex gap-1 overflow-x-auto pb-1"
-        style={{scrollbarWidth: "none" }}
+        style={{ scrollbarWidth: "none" }}
       >
         {visibleCategories.map(cat => (
           <button
@@ -2803,7 +2990,7 @@ function ElementsPanel({
                 }
                 title={c}
                 className="w-7 h-7 rounded-md border border-border hover:scale-110 transition-transform"
-                style={{background: c }}
+                style={{ background: c }}
               />
             ))}
           </div>
@@ -2849,7 +3036,7 @@ function ElementsPanel({
                 }
                 title={`Gradient: ${c1} to ${c2}`}
                 className="aspect-square rounded-lg border border-border hover:scale-105 transition-transform"
-                style={{background: `linear-gradient(135deg, ${c1}, ${c2})` }}
+                style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
               />
             ))}
           </div>
@@ -3053,7 +3240,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
       >
         <p
           className="text-lg font-bold text-card-foreground"
-          style={{fontFamily: "Montserrat" }}
+          style={{ fontFamily: "Montserrat" }}
         >
           Add a heading
         </p>
@@ -3067,7 +3254,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
       >
         <p
           className="text-base font-semibold text-card-foreground"
-          style={{fontFamily: "Poppins" }}
+          style={{ fontFamily: "Poppins" }}
         >
           Add a subheading
         </p>
@@ -3081,7 +3268,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
       >
         <p
           className="text-sm text-card-foreground"
-          style={{fontFamily: "Inter" }}
+          style={{ fontFamily: "Inter" }}
         >
           Add body text
         </p>
@@ -3141,7 +3328,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
           >
             <p
               className="text-sm font-bold text-card-foreground"
-              style={{fontFamily: combo.heading }}
+              style={{ fontFamily: combo.heading }}
             >
               {combo.label}
             </p>
@@ -3197,7 +3384,7 @@ function TextPanel({ editor }: { editor: ReturnType<typeof useCanvasEditor> }) {
           >
             <span
               className="text-xs"
-              style={{color: preset.color, fontWeight: preset.weight }}
+              style={{ color: preset.color, fontWeight: preset.weight }}
             >
               {preset.label}
             </span>
@@ -3232,7 +3419,9 @@ function PhotosPanel({
   const handleGeneratePhoto = async () => {
     const prompt = searchQuery.trim();
     if (!prompt || generatePhotoMut.isPending) return;
-    toast.info(`Generating AI photo. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`);
+    toast.info(
+      `Generating AI photo. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`
+    );
     try {
       const result = await generatePhotoMut.mutateAsync({ prompt });
       if (result.url) {
@@ -3240,17 +3429,17 @@ function PhotosPanel({
         toast.success("AI photo added to canvas!");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Photo generation failed.");
+      toast.error(
+        err instanceof Error ? err.message : "Photo generation failed."
+      );
     }
   };
 
-  const {
-    data: unsplashResult,
-    isLoading,
-  } = trpc.assets.searchUnsplash.useQuery(
-    { query: committedQuery, page, orientation: orientation || undefined },
-    { enabled: !aiMode }
-  );
+  const { data: unsplashResult, isLoading } =
+    trpc.assets.searchUnsplash.useQuery(
+      { query: committedQuery, page, orientation: orientation || undefined },
+      { enabled: !aiMode }
+    );
 
   // Accumulate pages — reset when query/orientation changes (page resets to 1)
   useEffect(() => {
@@ -3279,16 +3468,29 @@ function PhotosPanel({
   const handleAddPhoto = async (photo: UnsplashPhoto) => {
     await editor.addImage(photo.url);
     toast.success("Photo added to canvas");
-    triggerDownload.mutateAsync(photo.downloadLocation).catch(() => {/* non-fatal */});
+    triggerDownload.mutateAsync(photo.downloadLocation).catch(() => {
+      /* non-fatal */
+    });
   };
 
-  const QUICK_TOPICS = ["Nature", "Business", "Technology", "People", "Food", "Abstract", "Architecture", "Travel"];
+  const QUICK_TOPICS = [
+    "Nature",
+    "Business",
+    "Technology",
+    "People",
+    "Food",
+    "Abstract",
+    "Architecture",
+    "Travel",
+  ];
 
   return (
     <div className="space-y-3">
       {aiMode && (
         <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/10 p-3">
-          <p className="text-[10px] text-muted-foreground">{aiCreditLabel(AI_CREDIT_ESTIMATES.image)}</p>
+          <p className="text-[10px] text-muted-foreground">
+            {aiCreditLabel(AI_CREDIT_ESTIMATES.image)}
+          </p>
           <Button
             size="sm"
             className="w-full h-8 text-xs"
@@ -3296,9 +3498,13 @@ function PhotosPanel({
             onClick={handleGeneratePhoto}
           >
             {generatePhotoMut.isPending ? (
-              <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Generating...</>
+              <>
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Generating...
+              </>
             ) : (
-              <><Sparkles className="mr-1 h-3 w-3" /> Generate Photo</>
+              <>
+                <Sparkles className="mr-1 h-3 w-3" /> Generate Photo
+              </>
             )}
           </Button>
         </div>
@@ -3426,7 +3632,9 @@ function PhotosPanel({
             >
               Unsplash
             </a>
-            <span className="text-[9px] text-muted-foreground">· Free to use</span>
+            <span className="text-[9px] text-muted-foreground">
+              · Free to use
+            </span>
           </div>
         </>
       )}
@@ -3440,14 +3648,16 @@ function UploadsPanel({
 }: {
   editor: ReturnType<typeof useCanvasEditor>;
 }) {
-  const [uploads, setUploads] = useState<Array<{ url: string; name: string }>>(() => {
-    try {
-      const stored = window.localStorage.getItem(UPLOADS_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
+  const [uploads, setUploads] = useState<Array<{ url: string; name: string }>>(
+    () => {
+      try {
+        const stored = window.localStorage.getItem(UPLOADS_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : [];
+      } catch {
+        return [];
+      }
     }
-  });
+  );
   const [uploading, setUploading] = useState(false);
 
   const handleFileUpload = useCallback(
@@ -3463,7 +3673,10 @@ function UploadsPanel({
           setUploads(prev => {
             const next = [...prev, { url, name: file.name }];
             try {
-              window.localStorage.setItem(UPLOADS_STORAGE_KEY, JSON.stringify(next));
+              window.localStorage.setItem(
+                UPLOADS_STORAGE_KEY,
+                JSON.stringify(next)
+              );
             } catch {}
             return next;
           });
@@ -3541,20 +3754,102 @@ function BrandPanel({
     const stored = readBrandKitSnapshot();
     return stored?.colors.length ? stored.colors : DEFAULT_BRAND_COLORS;
   });
-  const [logoCount, setLogoCount] = useState(
-    () => readBrandKitSnapshot()?.logoCount ?? 0
+  const [brandLogos, setBrandLogos] = useState(
+    () => readBrandKitSnapshot()?.logos ?? []
   );
   const [newColor, setNewColor] = useState("#6366f1");
   const [logoAiPrompt, setLogoAiPrompt] = useState("");
+  const [logoUploadPending, setLogoUploadPending] = useState(false);
+  const recoveredLegacyLogosRef = useRef(false);
   const generateLogoMut = trpc.ai.generateImage.useMutation();
+
+  useEffect(() => {
+    if (recoveredLegacyLogosRef.current || brandLogos.length > 0) {
+      return;
+    }
+
+    const stored = readBrandKitSnapshot();
+    if (!stored || stored.logoCount <= 0 || stored.logos.length > 0) {
+      return;
+    }
+
+    const imageUrls = editor
+      .getObjects()
+      .filter(object => object.type === "image")
+      .map(object => {
+        const imageObject = object as { getSrc?: () => string; src?: string };
+        return typeof imageObject.getSrc === "function"
+          ? imageObject.getSrc()
+          : imageObject.src;
+      })
+      .filter((url): url is string => typeof url === "string" && !!url);
+
+    if (imageUrls.length === 0) {
+      return;
+    }
+
+    recoveredLegacyLogosRef.current = true;
+    setBrandLogos(
+      imageUrls
+        .slice(-stored.logoCount)
+        .reverse()
+        .map((url, index) =>
+          createBrandLogoAsset(`Logo ${index + 1}`, url, "upload")
+        )
+    );
+  }, [brandLogos.length, editor]);
 
   useEffect(() => {
     writeBrandKitSnapshot({
       colors: brandColors,
       fonts: BRAND_FONT_OPTIONS.map(font => font.name),
-      logoCount,
+      logos: brandLogos,
+      logoCount: brandLogos.length,
     });
-  }, [brandColors, logoCount]);
+  }, [brandColors, brandLogos]);
+
+  const handleLogoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (files.length === 0) {
+      return;
+    }
+
+    setLogoUploadPending(true);
+    try {
+      const savedLogos: BrandLogoAsset[] = [];
+      for (const file of files) {
+        const logoUrl = await createPersistableLogoDataUrl(file);
+        await editor.addImage(logoUrl);
+        savedLogos.push(createBrandLogoAsset(file.name, logoUrl, "upload"));
+      }
+
+      const nextLogos = [...savedLogos, ...brandLogos];
+      const didPersist = writeBrandKitSnapshot({
+        colors: brandColors,
+        fonts: BRAND_FONT_OPTIONS.map(font => font.name),
+        logos: nextLogos,
+        logoCount: nextLogos.length,
+      });
+
+      setBrandLogos(nextLogos);
+      if (didPersist) {
+        toast.success(
+          `${savedLogos.length} logo${savedLogos.length === 1 ? "" : "s"} saved to Brand Kit`
+        );
+      } else {
+        toast.error("Logo added, but the Brand Kit could not save it.");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Logo upload failed."
+      );
+    } finally {
+      setLogoUploadPending(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -3568,7 +3863,7 @@ function BrandPanel({
               <button
                 title={c.name}
                 className="w-10 h-10 rounded-lg border border-border hover:scale-110 transition-transform"
-                style={{background: c.hex }}
+                style={{ background: c.hex }}
                 onClick={() => editor.updateActiveObject({ fill: c.hex })}
               />
               <p className="text-[9px] text-muted-foreground mt-0.5">
@@ -3625,7 +3920,7 @@ function BrandPanel({
             >
               <span
                 className="text-sm text-card-foreground"
-                style={{fontFamily: font.name }}
+                style={{ fontFamily: font.name }}
               >
                 {font.name}
               </span>
@@ -3641,28 +3936,63 @@ function BrandPanel({
 
       <div>
         <p className="text-xs text-muted-foreground font-medium mb-2">
-          Logos {logoCount > 0 ? `(${logoCount})` : ""}
+          Logos {brandLogos.length > 0 ? `(${brandLogos.length})` : ""}
         </p>
+        {brandLogos.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {brandLogos.map(logo => (
+              <div
+                key={logo.id}
+                className="relative overflow-hidden rounded-lg border border-border bg-secondary group"
+              >
+                <button
+                  type="button"
+                  title={`Add ${logo.name} to canvas`}
+                  onClick={() => editor.addImage(logo.url)}
+                  className="aspect-square w-full overflow-hidden"
+                >
+                  <img
+                    src={logo.url}
+                    alt={logo.name}
+                    className="h-full w-full object-contain p-1.5"
+                  />
+                </button>
+                <div className="absolute bottom-0 left-0 right-0 bg-black/65 px-1.5 py-0.5">
+                  <p className="truncate text-[9px] text-white">{logo.name}</p>
+                </div>
+                <button
+                  type="button"
+                  title={`Remove ${logo.name}`}
+                  onClick={() =>
+                    setBrandLogos(current =>
+                      current.filter(item => item.id !== logo.id)
+                    )
+                  }
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-sm bg-black/70 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <label className="flex flex-col items-center justify-center w-full h-16 border-2 border-dashed border-border rounded-lg hover:border-primary cursor-pointer transition-colors bg-secondary/50">
-          <Upload className="w-4 h-4 text-muted-foreground mb-0.5" />
-          <span className="text-[10px] text-muted-foreground">Upload logo</span>
+          {logoUploadPending ? (
+            <Loader2 className="w-4 h-4 text-muted-foreground mb-0.5 animate-spin" />
+          ) : (
+            <Upload className="w-4 h-4 text-muted-foreground mb-0.5" />
+          )}
+          <span className="text-[10px] text-muted-foreground">
+            {logoUploadPending ? "Saving logo..." : "Upload logo"}
+          </span>
           <input
             type="file"
             title="Upload brand logo"
             accept="image/*"
+            multiple
             className="hidden"
-            onChange={e => {
-              const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = ev => {
-                  editor.addImage(ev.target?.result as string);
-                  setLogoCount(count => count + 1);
-                  toast.success("Logo added to canvas");
-                };
-                reader.readAsDataURL(file);
-              }
-            }}
+            disabled={logoUploadPending}
+            onChange={handleLogoUpload}
           />
         </label>
       </div>
@@ -3673,7 +4003,9 @@ function BrandPanel({
         <p className="text-xs font-medium text-primary flex items-center gap-1">
           <Sparkles className="w-3 h-3" /> AI Logo Generator
         </p>
-        <p className="text-[10px] text-muted-foreground">{aiCreditLabel(AI_CREDIT_ESTIMATES.image)}</p>
+        <p className="text-[10px] text-muted-foreground">
+          {aiCreditLabel(AI_CREDIT_ESTIMATES.image)}
+        </p>
         <textarea
           value={logoAiPrompt}
           onChange={e => setLogoAiPrompt(e.target.value)}
@@ -3686,24 +4018,37 @@ function BrandPanel({
           disabled={!logoAiPrompt.trim() || generateLogoMut.isPending}
           onClick={async () => {
             if (!logoAiPrompt.trim()) return;
-            toast.info(`Generating AI logo. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`);
+            toast.info(
+              `Generating AI logo. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`
+            );
             try {
-              const result = await generateLogoMut.mutateAsync({ prompt: logoAiPrompt });
+              const result = await generateLogoMut.mutateAsync({
+                prompt: logoAiPrompt,
+              });
               if (result.url) {
                 await editor.addImage(result.url);
-                setLogoCount(c => c + 1);
-                toast.success("AI logo added to canvas!");
+                setBrandLogos(current => [
+                  createBrandLogoAsset("AI Logo", result.url, "ai"),
+                  ...current,
+                ]);
+                toast.success("AI logo saved to Brand Kit");
                 setLogoAiPrompt("");
               }
             } catch (err) {
-              toast.error(err instanceof Error ? err.message : "Logo generation failed.");
+              toast.error(
+                err instanceof Error ? err.message : "Logo generation failed."
+              );
             }
           }}
         >
           {generateLogoMut.isPending ? (
-            <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Generating...</>
+            <>
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Generating...
+            </>
           ) : (
-            <><Sparkles className="w-3 h-3 mr-1" /> Generate Logo</>
+            <>
+              <Sparkles className="w-3 h-3 mr-1" /> Generate Logo
+            </>
           )}
         </Button>
       </div>
@@ -3728,7 +4073,9 @@ function AIPanel({
 
   const handleGenerateElement = async () => {
     if (!aiPrompt.trim()) return;
-    toast.info(`Generating with AI. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`);
+    toast.info(
+      `Generating with AI. ${aiCreditLabel(AI_CREDIT_ESTIMATES.image)}.`
+    );
     try {
       const result = await generateImageMut.mutateAsync({ prompt: aiPrompt });
       if (result.url) {
@@ -4205,7 +4552,7 @@ function PropertiesPanel({
                 onClick={() => editor.updateActiveObject({ fill: c })}
                 title={c}
                 className="w-5 h-5 rounded border border-border hover:scale-125 transition-transform"
-                style={{background: c }}
+                style={{ background: c }}
               />
             ))}
           </div>
@@ -4480,7 +4827,7 @@ function PropertiesPanel({
                   onClick={() => editor.setBackground(c)}
                   title={c}
                   className="w-5 h-5 rounded border border-border hover:scale-125 transition-transform"
-                  style={{background: c }}
+                  style={{ background: c }}
                 />
               ))}
             </div>
@@ -4512,5 +4859,3 @@ function PropertiesPanel({
     </ScrollArea>
   );
 }
-
-

@@ -379,137 +379,6 @@ export function useCanvasEditor(
     [height, width]
   );
 
-  const applyScalingSnapping = useCallback(
-    (object: fabric.Object, corner?: string) => {
-      const canvas = fabricRef.current;
-      if (!canvas) {
-        return;
-      }
-
-      const bounds = object.getBoundingRect(true, true);
-      const boundsRight = bounds.left + bounds.width;
-      const boundsBottom = bounds.top + bounds.height;
-      const center = object.getCenterPoint();
-
-      const activeObjects = canvas.getActiveObjects();
-      const movingSet = new Set(activeObjects.length ? activeObjects : [object]);
-      const stationaryBounds = canvas
-        .getObjects()
-        .filter(candidate => !movingSet.has(candidate))
-        .map(candidate => {
-          const rect = candidate.getBoundingRect(true, true);
-          return {
-            left: rect.left,
-            top: rect.top,
-            width: rect.width,
-            height: rect.height,
-            right: rect.left + rect.width,
-            bottom: rect.top + rect.height,
-            centerX: rect.left + rect.width / 2,
-            centerY: rect.top + rect.height / 2,
-          };
-        });
-
-      const xGuides = new Set<number>([0, width, width / 2]);
-      const yGuides = new Set<number>([0, height, height / 2]);
-
-      stationaryBounds.forEach(candidate => {
-        xGuides.add(candidate.left);
-        xGuides.add(candidate.right);
-        xGuides.add(candidate.centerX);
-        yGuides.add(candidate.top);
-        yGuides.add(candidate.bottom);
-        yGuides.add(candidate.centerY);
-      });
-
-      const xAffects =
-        !corner || ["ml", "mr", "tl", "tr", "bl", "br"].includes(corner);
-      const yAffects =
-        !corner || ["mt", "mb", "tl", "tr", "bl", "br"].includes(corner);
-
-      const isLeftHandle = corner ? ["ml", "tl", "bl"].includes(corner) : false;
-      const isRightHandle = corner ? ["mr", "tr", "br"].includes(corner) : false;
-      const isTopHandle = corner ? ["mt", "tl", "tr"].includes(corner) : false;
-      const isBottomHandle = corner ? ["mb", "bl", "br"].includes(corner) : false;
-
-      const nearestGuide = (value: number, guides: Set<number>, threshold: number) => {
-        let nearest: number | null = null;
-        let distance = Number.POSITIVE_INFINITY;
-        guides.forEach(guide => {
-          const nextDistance = Math.abs(value - guide);
-          if (nextDistance <= threshold && nextDistance < distance) {
-            nearest = guide;
-            distance = nextDistance;
-          }
-        });
-        return nearest;
-      };
-
-      if (snapToEdgesRef.current && xAffects) {
-        const leftGuide = nearestGuide(bounds.left, xGuides, EDGE_THRESHOLD);
-        const rightGuide = nearestGuide(boundsRight, xGuides, EDGE_THRESHOLD);
-        const centerGuide = snapToCenterRef.current ? nearestGuide(center.x, xGuides, CENTER_THRESHOLD) : null;
-
-        if (leftGuide !== null && isLeftHandle) {
-          const nextWidth = Math.max(4, boundsRight - leftGuide);
-          object.set("scaleX", nextWidth / Math.max(object.width || 1, 1));
-          object.setPositionByOrigin(
-            new fabric.Point(leftGuide + nextWidth / 2, center.y),
-            "center",
-            "center"
-          );
-        } else if (rightGuide !== null && isRightHandle) {
-          const nextWidth = Math.max(4, rightGuide - bounds.left);
-          object.set("scaleX", nextWidth / Math.max(object.width || 1, 1));
-          object.setPositionByOrigin(
-            new fabric.Point(bounds.left + nextWidth / 2, center.y),
-            "center",
-            "center"
-          );
-        } else if (centerGuide !== null) {
-          object.setPositionByOrigin(
-            new fabric.Point(centerGuide, center.y),
-            "center",
-            "center"
-          );
-        }
-      }
-
-      if (snapToEdgesRef.current && yAffects) {
-        const topGuide = nearestGuide(bounds.top, yGuides, EDGE_THRESHOLD);
-        const bottomGuide = nearestGuide(boundsBottom, yGuides, EDGE_THRESHOLD);
-        const centerGuide = snapToCenterRef.current ? nearestGuide(center.y, yGuides, CENTER_THRESHOLD) : null;
-
-        if (topGuide !== null && isTopHandle) {
-          const nextHeight = Math.max(4, boundsBottom - topGuide);
-          object.set("scaleY", nextHeight / Math.max(object.height || 1, 1));
-          object.setPositionByOrigin(
-            new fabric.Point(center.x, topGuide + nextHeight / 2),
-            "center",
-            "center"
-          );
-        } else if (bottomGuide !== null && isBottomHandle) {
-          const nextHeight = Math.max(4, bottomGuide - bounds.top);
-          object.set("scaleY", nextHeight / Math.max(object.height || 1, 1));
-          object.setPositionByOrigin(
-            new fabric.Point(center.x, bounds.top + nextHeight / 2),
-            "center",
-            "center"
-          );
-        } else if (centerGuide !== null) {
-          object.setPositionByOrigin(
-            new fabric.Point(center.x, centerGuide),
-            "center",
-            "center"
-          );
-        }
-      }
-
-      object.setCoords();
-    },
-    [height, width]
-  );
-
   const updateSelectionState = useCallback(() => {
     const canvas = fabricRef.current;
     if (!canvas) {
@@ -614,15 +483,12 @@ export function useCanvasEditor(
 
       applySnapping(event.target);
     });
-    canvas.on("object:scaling", event => {
-      if (!event.target) {
-        return;
+    canvas.on("object:modified", event => {
+      if (event.target) {
+        // Fabric owns the active transform while a resize is in progress.
+        // Snap only after release so its transform origin stays stable.
+        applySnapping(event.target);
       }
-
-      applyScalingSnapping(event.target, event.transform?.corner);
-      applySnapping(event.target);
-    });
-    canvas.on("object:modified", () => {
       updateSelectionState();
       saveHistory();
     });
@@ -641,7 +507,6 @@ export function useCanvasEditor(
     saveHistory();
     return canvas;
   }, [
-    applyScalingSnapping,
     applySnapping,
     canvasRef,
     height,

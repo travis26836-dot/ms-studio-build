@@ -50,10 +50,10 @@ type GeneratedAssetDescriptor = {
   createdAt: string;
 };
 
-const CUSTOM_ASSET_SOURCE = "ManuScript Generated";
+const CUSTOM_ASSET_SOURCE = "Veronica AI Generated";
 const CUSTOM_ASSET_LICENSE = "MIT";
 const CUSTOM_ASSET_LICENSE_URL =
-  "https://github.com/travis26836-dot/ms-studio-build";
+  "https://github.com/travis26836-dot/veronica-ai-studio";
 const GENERATED_ASSETS_PER_CATEGORY = 25;
 const GENERATED_ASSET_BASE_DATE = Date.UTC(2026, 4, 18, 0, 0, 0);
 const THUMB_SIZE = 320;
@@ -374,7 +374,7 @@ function createSlug(value: string) {
 }
 
 function createGeneratedAssetId(categoryId: string, index: number) {
-  return `manuscript-${categoryId}-${String(index + 1).padStart(3, "0")}`;
+  return `veronica-${categoryId}-${String(index + 1).padStart(3, "0")}`;
 }
 
 function createGeneratedAssetDate(index: number) {

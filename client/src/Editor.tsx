@@ -139,15 +139,15 @@ const FONT_OPTIONS = [
 ];
 
 const AUTOSAVE_DRAFT_VERSION = 1;
-const AUTOSAVE_DRAFT_PREFIX = "ms-studio.editorDraft.";
-const RECENT_TEMPLATE_SEARCHES_KEY = "ms-studio.recentTemplateSearches.v1";
-const RECENT_TEMPLATE_AI_PROMPTS_KEY = "ms-studio.recentTemplateAiPrompts.v1";
-const RECENT_ELEMENT_SEARCHES_KEY = "ms-studio.recentElementSearches.v1";
-const RECENT_ELEMENT_AI_PROMPTS_KEY = "ms-studio.recentElementAiPrompts.v1";
-const RECENT_STOCK_ASSETS_KEY = "ms-studio.recentStockAssets.v1";
-const BRAND_KIT_STORAGE_KEY = "ms-studio.brandKit.v1";
-const EDITOR_LAYOUT_PREFS_KEY = "ms-studio.editorLayoutPrefs.v1";
-const UPLOADS_STORAGE_KEY = "ms-studio.uploads.v1";
+const AUTOSAVE_DRAFT_PREFIX = "veronica-ai.editorDraft.";
+const RECENT_TEMPLATE_SEARCHES_KEY = "veronica-ai.recentTemplateSearches.v1";
+const RECENT_TEMPLATE_AI_PROMPTS_KEY = "veronica-ai.recentTemplateAiPrompts.v1";
+const RECENT_ELEMENT_SEARCHES_KEY = "veronica-ai.recentElementSearches.v1";
+const RECENT_ELEMENT_AI_PROMPTS_KEY = "veronica-ai.recentElementAiPrompts.v1";
+const RECENT_STOCK_ASSETS_KEY = "veronica-ai.recentStockAssets.v1";
+const BRAND_KIT_STORAGE_KEY = "veronica-ai.brandKit.v1";
+const EDITOR_LAYOUT_PREFS_KEY = "veronica-ai.editorLayoutPrefs.v1";
+const UPLOADS_STORAGE_KEY = "veronica-ai.uploads.v1";
 const MAX_RECENT_AI_ITEMS = 6;
 const LEFT_ICON_SIDEBAR_WIDTH = 52;
 const DEFAULT_LEFT_PANEL_WIDTH = 256;
@@ -375,16 +375,9 @@ async function createPersistableLogoDataUrl(file: File) {
     : canvas.toDataURL("image/png");
 }
 
-function readBrandKitSnapshot(): BrandKitSnapshot | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
+function normalizeBrandKitSnapshot(raw: unknown): BrandKitSnapshot | null {
   try {
-    const raw = window.localStorage.getItem(BRAND_KIT_STORAGE_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw) as Partial<BrandKitSnapshot>;
+    const parsed = raw as Partial<BrandKitSnapshot>;
     const colors = Array.isArray(parsed.colors)
       ? parsed.colors.filter(
           (item): item is { name: string; hex: string } =>
@@ -430,6 +423,19 @@ function readBrandKitSnapshot(): BrandKitSnapshot | null {
   }
 }
 
+function readBrandKitSnapshot(): BrandKitSnapshot | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(BRAND_KIT_STORAGE_KEY);
+    return raw ? normalizeBrandKitSnapshot(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
 function writeBrandKitSnapshot(snapshot: BrandKitSnapshot) {
   if (typeof window === "undefined") {
     return false;
@@ -464,7 +470,7 @@ function buildBrandKitContext(fallbackPurpose: string) {
   const brandKit = readBrandKitSnapshot();
   if (!brandKit) {
     return [
-      "No saved Brand Kit was found for this browser session.",
+      "No saved Brand Kit was found for this account.",
       `Infer a temporary style from: ${fallbackPurpose}`,
     ].join("\n");
   }
@@ -1334,7 +1340,7 @@ export default function Editor({
           onClick={() => window.history.back()}
         >
           <ChevronLeft className="w-4 h-4" />
-          <span className="text-sm font-medium">ManuScript Studio</span>
+          <span className="text-sm font-medium">Veronica AI Studio</span>
         </Button>
 
         <Separator orientation="vertical" className="h-6 mx-1" />
@@ -3750,6 +3756,8 @@ function BrandPanel({
 }: {
   editor: ReturnType<typeof useCanvasEditor>;
 }) {
+  const brandKitQuery = trpc.userSettings.get.useQuery();
+  const saveBrandKitMutation = trpc.userSettings.save.useMutation();
   const [brandColors, setBrandColors] = useState(() => {
     const stored = readBrandKitSnapshot();
     return stored?.colors.length ? stored.colors : DEFAULT_BRAND_COLORS;
@@ -3761,7 +3769,29 @@ function BrandPanel({
   const [logoAiPrompt, setLogoAiPrompt] = useState("");
   const [logoUploadPending, setLogoUploadPending] = useState(false);
   const recoveredLegacyLogosRef = useRef(false);
+  const [isBrandKitHydrated, setIsBrandKitHydrated] = useState(false);
+  const lastSyncedBrandKitRef = useRef<string | null>(null);
   const generateLogoMut = trpc.ai.generateImage.useMutation();
+
+  useEffect(() => {
+    if (brandKitQuery.isLoading || isBrandKitHydrated) {
+      return;
+    }
+
+    const remoteSnapshot = normalizeBrandKitSnapshot(
+      brandKitQuery.data?.brandKit
+    );
+    if (remoteSnapshot) {
+      setBrandColors(
+        remoteSnapshot.colors.length ? remoteSnapshot.colors : DEFAULT_BRAND_COLORS
+      );
+      setBrandLogos(remoteSnapshot.logos);
+      writeBrandKitSnapshot(remoteSnapshot);
+      lastSyncedBrandKitRef.current = JSON.stringify(remoteSnapshot);
+    }
+
+    setIsBrandKitHydrated(true);
+  }, [brandKitQuery.data?.brandKit, brandKitQuery.isLoading, isBrandKitHydrated]);
 
   useEffect(() => {
     if (recoveredLegacyLogosRef.current || brandLogos.length > 0) {
@@ -3800,13 +3830,38 @@ function BrandPanel({
   }, [brandLogos.length, editor]);
 
   useEffect(() => {
-    writeBrandKitSnapshot({
+    if (!isBrandKitHydrated) {
+      return;
+    }
+
+    const snapshot: BrandKitSnapshot = {
       colors: brandColors,
       fonts: BRAND_FONT_OPTIONS.map(font => font.name),
       logos: brandLogos,
       logoCount: brandLogos.length,
+    };
+    writeBrandKitSnapshot(snapshot);
+
+    const serialized = JSON.stringify(snapshot);
+    if (lastSyncedBrandKitRef.current === serialized) {
+      return;
+    }
+
+    lastSyncedBrandKitRef.current = serialized;
+    void saveBrandKitMutation.mutateAsync({ brandKit: snapshot }).catch(error => {
+      lastSyncedBrandKitRef.current = null;
+      toast.error(
+        error instanceof Error
+          ? `Brand Kit was kept locally but not saved to your account: ${error.message}`
+          : "Brand Kit was kept locally but not saved to your account."
+      );
     });
-  }, [brandColors, brandLogos]);
+  }, [
+    brandColors,
+    brandLogos,
+    isBrandKitHydrated,
+    saveBrandKitMutation,
+  ]);
 
   const handleLogoUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -3837,7 +3892,7 @@ function BrandPanel({
       setBrandLogos(nextLogos);
       if (didPersist) {
         toast.success(
-          `${savedLogos.length} logo${savedLogos.length === 1 ? "" : "s"} saved to Brand Kit`
+          `${savedLogos.length} logo${savedLogos.length === 1 ? "" : "s"} added to your Brand Kit`
         );
       } else {
         toast.error("Logo added, but the Brand Kit could not save it.");

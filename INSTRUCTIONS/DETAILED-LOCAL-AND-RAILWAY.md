@@ -78,8 +78,11 @@ STRIPE_SECRET_KEY=sk_test_YOUR_TEST_KEY
 STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_TEST_KEY
 STRIPE_WEBHOOK_SECRET=whsec_test_YOUR_TEST_SECRET
 
-# AI (optional)
-GOOGLE_GENERATIVE_AI_API_KEY=your_api_key_here
+# AI (optional, OpenAI-compatible Veronica AI endpoint)
+VERONICA_AI_API_KEY=your_api_key_here
+VERONICA_AI_BASE_URL=https://your-veronica-api.example/v1
+AI_TEXT_MODEL=veronica-text
+AI_IMAGE_MODEL=veronica-image
 AI_CREDIT_PACKS_ENABLED=true
 STRIPE_PRICE_AI_CREDIT_PACK=price_test_YOUR_PRICE_ID
 ```
@@ -186,7 +189,8 @@ STRIPE_PRICE_AI_CREDIT_PACK=price_YOUR_PRODUCTION_PRICE
 #### AI & Third-Party (Production Keys)
 
 ```bash
-GOOGLE_GENERATIVE_AI_API_KEY=your_production_key
+VERONICA_AI_API_KEY=your_production_key
+VERONICA_AI_BASE_URL=https://your-veronica-api.example/v1
 AI_CREDIT_PACKS_ENABLED=true
 ```
 

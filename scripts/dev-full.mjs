@@ -113,7 +113,7 @@ startProcess(`API on :${API_PORT}`, "pnpm run dev:api", {
 startProcess(`main app on :${MAIN_PORT}`, `pnpm exec vite --host --port ${MAIN_PORT} --strictPort`);
 startProcess(
   `customer portal on :${PORTAL_PORT}`,
-  `pnpm --dir customer-portal dev -- --host --port ${PORTAL_PORT} --strictPort`,
+  `pnpm --dir customer-portal exec vite --host --port ${PORTAL_PORT} --strictPort`,
 );
 
 console.log("All servers starting...");

@@ -87,7 +87,7 @@ async function run() {
 
   if (failed) {
     process.exitCode = 1;
-    console.log("AI validation failed. If errors mention API key invalid, update the Gemini key and retry.");
+    console.log("AI validation failed. Check the Veronica AI API key, base URL, and model configuration, then retry.");
     return;
   }
 

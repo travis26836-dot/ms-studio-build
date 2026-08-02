@@ -285,45 +285,6 @@ function normalizeEmail(raw: string) {
   return raw.trim().toLowerCase();
 }
 
-function getRequestIdentity(req: express.Request): RequestIdentity | null {
-  const clerkIdFromAuth = (
-    req as express.Request & { auth?: { userId?: string } }
-  ).auth?.userId;
-  const clerkHeader = req.header("x-user-clerk-id");
-  const emailHeader = req.header("x-user-email");
-
-  const clerkId =
-    typeof clerkIdFromAuth === "string" && clerkIdFromAuth.trim()
-      ? clerkIdFromAuth.trim()
-      : typeof clerkHeader === "string" && clerkHeader.trim()
-        ? clerkHeader.trim()
-        : null;
-
-  const email =
-    typeof emailHeader === "string" && emailHeader.trim()
-      ? normalizeEmail(emailHeader)
-      : undefined;
-
-  if (!clerkId && !email) {
-    return null;
-  }
-
-  return {
-    id: clerkId ?? `email:${email}`,
-    email,
-  };
-}
-
-function getGuestIdentity(req: express.Request): RequestIdentity {
-  const ip = req.ip || "unknown";
-  const userAgent = req.header("user-agent") || "unknown";
-  const basis = `${ip}:${userAgent.slice(0, 120)}`;
-
-  return {
-    id: `guest:${Buffer.from(basis).toString("base64url")}`,
-  };
-}
-
 function getMemoryProjects(identity: RequestIdentity) {
   const existing = memoryProjectsByUser.get(identity.id);
   if (existing) {
@@ -523,6 +484,14 @@ async function resolvePortalCustomer(
 }
 
 async function getOrCreateUser(req: express.Request) {
+  const clerkId = (
+    req as express.Request & { auth?: { userId?: string } }
+  ).auth?.userId;
+
+  if (typeof clerkId !== "string" || !clerkId.trim()) {
+    return null;
+  }
+
   let prisma: Awaited<ReturnType<typeof getPrisma>>;
 
   try {
@@ -534,108 +503,18 @@ async function getOrCreateUser(req: express.Request) {
     );
     return null;
   }
-  const clerkIdFromAuth = (
-    req as express.Request & { auth?: { userId?: string } }
-  ).auth?.userId;
-  const fallbackClerkIdHeader = req.header("x-user-clerk-id");
-  const fallbackClerkId =
-    typeof fallbackClerkIdHeader === "string" && fallbackClerkIdHeader.trim()
-      ? fallbackClerkIdHeader.trim()
-      : null;
-  const clerkId = clerkIdFromAuth ?? fallbackClerkId;
-
-  const headerEmailValue = req.header("x-user-email");
-  const headerEmail =
-    typeof headerEmailValue === "string" && headerEmailValue.trim()
-      ? normalizeEmail(headerEmailValue)
-      : null;
-
   try {
-    if (clerkId) {
-      const existingByClerkId = await prisma.user.findUnique({
-        where: { clerkId },
-        include: { customer: true },
-      });
-
-      if (existingByClerkId) {
-        if (headerEmail && existingByClerkId.email !== headerEmail) {
-          return prisma.user.update({
-            where: { id: existingByClerkId.id },
-            data: {
-              email: headerEmail,
-              customer: existingByClerkId.customer
-                ? {
-                    update: {
-                      email: headerEmail,
-                    },
-                  }
-                : undefined,
-            },
-            include: { customer: true },
-          });
-        }
-
-        return existingByClerkId;
-      }
-    }
-
-    if (headerEmail) {
-      const existingByEmail = await prisma.user.findUnique({
-        where: { email: headerEmail },
-        include: { customer: true },
-      });
-
-      if (existingByEmail) {
-        if (clerkId && existingByEmail.clerkId !== clerkId) {
-          return prisma.user.update({
-            where: { id: existingByEmail.id },
-            data: { clerkId },
-            include: { customer: true },
-          });
-        }
-
-        return existingByEmail;
-      }
-    }
-
-    if (!clerkId) {
-      if (!headerEmail) {
-        return null;
-      }
-
-      return prisma.user.upsert({
-        where: { email: headerEmail },
-        update: {},
-        create: {
-          email: headerEmail,
-          clerkId: fallbackClerkId
-            ? `fallback:${fallbackClerkId}`
-            : `fallback:${headerEmail}`,
-          customer: {
-            create: {
-              name: "",
-              email: headerEmail,
-              plan: "free",
-            },
-          },
-        },
-        include: {
-          customer: true,
-        },
-      });
-    }
-
     return prisma.user.upsert({
-      where: { clerkId },
+      where: { clerkId: clerkId.trim() },
       update: {},
       create: {
-        clerkId,
+        clerkId: clerkId.trim(),
         // Placeholder until Clerk webhook profile sync is added.
-        email: headerEmail ?? `${clerkId}@placeholder.local`,
+        email: `${clerkId.trim()}@placeholder.local`,
         customer: {
           create: {
             name: "",
-            email: headerEmail ?? `${clerkId}@placeholder.local`,
+            email: `${clerkId.trim()}@placeholder.local`,
             plan: "free",
           },
         },
@@ -648,6 +527,94 @@ async function getOrCreateUser(req: express.Request) {
     console.error("Database unavailable while resolving current user", error);
     return null;
   }
+}
+
+type BrandKitState = {
+  colors: Array<{ name: string; hex: string }>;
+  fonts: string[];
+  logos: Array<{
+    id: string;
+    name: string;
+    url: string;
+    source: "upload" | "ai";
+    createdAt: number;
+  }>;
+  logoCount: number;
+};
+
+function normalizeBrandKit(raw: unknown): BrandKitState | null {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+
+  const value = raw as Partial<BrandKitState>;
+  const colors = Array.isArray(value.colors)
+    ? value.colors
+        .filter(
+          (color): color is { name: string; hex: string } =>
+            typeof color?.name === "string" &&
+            typeof color?.hex === "string" &&
+            color.name.length <= 80 &&
+            /^#[0-9a-f]{3,8}$/i.test(color.hex)
+        )
+        .slice(0, 24)
+    : [];
+  const fonts = Array.isArray(value.fonts)
+    ? value.fonts
+        .filter((font): font is string => typeof font === "string" && font.length <= 160)
+        .slice(0, 24)
+    : [];
+  const logos = Array.isArray(value.logos)
+    ? value.logos
+        .filter(
+          (logo): logo is BrandKitState["logos"][number] =>
+            typeof logo?.id === "string" &&
+            typeof logo?.name === "string" &&
+            typeof logo?.url === "string" &&
+            (logo?.source === "upload" || logo?.source === "ai") &&
+            typeof logo?.createdAt === "number" &&
+            logo.id.length <= 160 &&
+            logo.name.length <= 240 &&
+            logo.url.length <= 1_500_000
+        )
+        .slice(0, 12)
+    : [];
+
+  if (JSON.stringify({ colors, fonts, logos }).length > 8_000_000) {
+    return null;
+  }
+
+  return {
+    colors,
+    fonts,
+    logos,
+    logoCount: logos.length,
+  };
+}
+
+async function requirePersistentUser(
+  req: express.Request,
+  res: express.Response
+) {
+  const clerkId = (
+    req as express.Request & { auth?: { userId?: string } }
+  ).auth?.userId;
+
+  if (typeof clerkId !== "string" || !clerkId.trim()) {
+    res.status(401).json({ error: "Please sign in to access saved work." });
+    return null;
+  }
+
+  const user = await getOrCreateUser(req);
+  if (!user) {
+    res.status(503).json({
+      error:
+        "Saved work is temporarily unavailable because the database could not be reached.",
+    });
+    return null;
+  }
+
+  return user;
 }
 
 function toOrigin(raw: string | undefined): string | null {
@@ -743,7 +710,7 @@ async function startServer() {
       res.setHeader("Access-Control-Allow-Credentials", "true");
       res.setHeader(
         "Access-Control-Allow-Headers",
-        "Content-Type, Authorization, x-user-email, x-user-clerk-id, x-ms-studio-client-id"
+        "Content-Type, Authorization, x-user-email, x-user-clerk-id, x-veronica-ai-client-id"
       );
       res.setHeader(
         "Access-Control-Allow-Methods",
@@ -780,8 +747,15 @@ async function startServer() {
     });
   });
 
-  app.get("/api/health", (_req, res) => {
-    return res.json({ status: "ok" });
+  app.get("/api/health", async (_req, res) => {
+    try {
+      const prisma = await getPrisma();
+      await prisma.$queryRawUnsafe("SELECT 1");
+      return res.json({ status: "ok", database: "connected" });
+    } catch (error) {
+      console.error("Database health check failed", error);
+      return res.status(503).json({ status: "degraded", database: "unavailable" });
+    }
   });
 
   app.post("/api/contact", async (req, res) => {
@@ -1487,18 +1461,48 @@ async function startServer() {
     }
   });
 
-  app.get("/api/projects", async (req, res) => {
-    const identity = getRequestIdentity(req) ?? getGuestIdentity(req);
-    const user = await getOrCreateUser(req);
+  app.get("/api/user-settings", async (req, res) => {
+    const user = await requirePersistentUser(req, res);
+    if (!user) return;
 
-    if (!user) {
-      const memoryProjects = getMemoryProjects(identity);
-      const projects = Array.from(memoryProjects.values()).sort(
-        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
-      );
+    const prisma = await getPrisma();
+    const settings = await prisma.userSettings.findUnique({
+      where: { userId: user.id },
+      select: { brandKit: true, updatedAt: true },
+    });
 
-      return res.json(projects.map(memoryProjectToClientShape));
+    return res.json({
+      brandKit: normalizeBrandKit(settings?.brandKit),
+      updatedAt: settings?.updatedAt.toISOString() ?? null,
+    });
+  });
+
+  app.put("/api/user-settings", async (req, res) => {
+    const user = await requirePersistentUser(req, res);
+    if (!user) return;
+
+    const brandKit = normalizeBrandKit(req.body?.brandKit);
+    if (!brandKit) {
+      return res.status(400).json({ error: "A valid Brand Kit is required." });
     }
+
+    const prisma = await getPrisma();
+    const settings = await prisma.userSettings.upsert({
+      where: { userId: user.id },
+      update: { brandKit },
+      create: { userId: user.id, brandKit },
+      select: { brandKit: true, updatedAt: true },
+    });
+
+    return res.json({
+      brandKit: normalizeBrandKit(settings.brandKit),
+      updatedAt: settings.updatedAt.toISOString(),
+    });
+  });
+
+  app.get("/api/projects", async (req, res) => {
+    const user = await requirePersistentUser(req, res);
+    if (!user) return;
 
     const prisma = await getPrisma();
 
@@ -1518,19 +1522,8 @@ async function startServer() {
   });
 
   app.get("/api/projects/:id", async (req, res) => {
-    const identity = getRequestIdentity(req) ?? getGuestIdentity(req);
-    const user = await getOrCreateUser(req);
-
-    if (!user) {
-      const memoryProjects = getMemoryProjects(identity);
-      const project = memoryProjects.get(req.params.id);
-
-      if (!project) {
-        return res.status(404).json({ error: "Not found" });
-      }
-
-      return res.json(memoryProjectToClientShape(project));
-    }
+    const user = await requirePersistentUser(req, res);
+    if (!user) return;
 
     const prisma = await getPrisma();
 
@@ -1549,8 +1542,8 @@ async function startServer() {
   });
 
   app.post("/api/projects", async (req, res) => {
-    const identity = getRequestIdentity(req) ?? getGuestIdentity(req);
-    const user = await getOrCreateUser(req);
+    const user = await requirePersistentUser(req, res);
+    if (!user) return;
 
     const { name, canvasData, canvasWidth, canvasHeight, thumbnailUrl } =
       req.body;
@@ -1560,25 +1553,6 @@ async function startServer() {
 
     if (!canvasData || typeof canvasData !== "string") {
       return res.status(400).json({ error: "canvasData is required" });
-    }
-
-    if (!user) {
-      const now = new Date();
-      const project: MemoryProject = {
-        id: createMemoryProjectId(),
-        name,
-        canvasState: buildCanvasState({
-          canvasData,
-          canvasWidth: typeof canvasWidth === "number" ? canvasWidth : 1080,
-          canvasHeight: typeof canvasHeight === "number" ? canvasHeight : 1080,
-          thumbnailUrl,
-        }),
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      getMemoryProjects(identity).set(project.id, project);
-      return res.status(201).json(memoryProjectToClientShape(project));
     }
 
     const prisma = await getPrisma();
@@ -1600,45 +1574,8 @@ async function startServer() {
   });
 
   app.put("/api/projects/:id", async (req, res) => {
-    const identity = getRequestIdentity(req) ?? getGuestIdentity(req);
-    const user = await getOrCreateUser(req);
-
-    if (!user) {
-      const memoryProjects = getMemoryProjects(identity);
-      const existing = memoryProjects.get(req.params.id);
-
-      if (!existing) {
-        return res.status(404).json({ error: "Not found" });
-      }
-
-      const { canvasData, thumbnailUrl, name } = req.body;
-      const nextCanvasData =
-        typeof canvasData === "string"
-          ? canvasData
-          : existing.canvasState.canvasData;
-
-      if (!nextCanvasData) {
-        return res.status(400).json({ error: "canvasData is required" });
-      }
-
-      const updated: MemoryProject = {
-        ...existing,
-        name: typeof name === "string" && name.trim() ? name : existing.name,
-        canvasState: buildCanvasState({
-          canvasData: nextCanvasData,
-          canvasWidth: existing.canvasState.canvasWidth,
-          canvasHeight: existing.canvasState.canvasHeight,
-          thumbnailUrl:
-            typeof thumbnailUrl === "string"
-              ? thumbnailUrl
-              : existing.canvasState.thumbnailUrl,
-        }),
-        updatedAt: new Date(),
-      };
-
-      memoryProjects.set(existing.id, updated);
-      return res.json(memoryProjectToClientShape(updated));
-    }
+    const user = await requirePersistentUser(req, res);
+    if (!user) return;
 
     const prisma = await getPrisma();
 
@@ -1680,18 +1617,8 @@ async function startServer() {
   });
 
   app.delete("/api/projects/:id", async (req, res) => {
-    const identity = getRequestIdentity(req) ?? getGuestIdentity(req);
-    const user = await getOrCreateUser(req);
-
-    if (!user) {
-      const memoryProjects = getMemoryProjects(identity);
-      if (!memoryProjects.has(req.params.id)) {
-        return res.status(404).json({ error: "Not found" });
-      }
-
-      memoryProjects.delete(req.params.id);
-      return res.status(204).end();
-    }
+    const user = await requirePersistentUser(req, res);
+    if (!user) return;
 
     const prisma = await getPrisma();
 

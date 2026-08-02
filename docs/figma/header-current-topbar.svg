@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1273 64" width="1273" height="64" role="img" aria-labelledby="title desc">
-  <title id="title">ManuScript Studio Header - Current Top Bar</title>
+  <title id="title">Veronica AI Studio Header - Current Top Bar</title>
   <desc id="desc">Exact header-only frame with logo, wordmark, and Get Started button for Figma import.</desc>
 
   <!-- Header background -->
@@ -16,7 +16,7 @@
     <path d="M13 18h10" stroke="oklch(0.78 0.17 75)" stroke-opacity="0.85" stroke-width="1.1"/>
     <path d="M18 13v10" stroke="oklch(0.78 0.17 75)" stroke-opacity="0.85" stroke-width="1.1"/>
 
-    <text x="48" y="22" font-family="Source Sans 3, Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="600" letter-spacing="3.24" text-transform="uppercase" fill="oklch(0.91 0.008 75)">MANUSCRIPT STUDIO</text>
+    <text x="48" y="22" font-family="Source Sans 3, Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="600" letter-spacing="3.24" text-transform="uppercase" fill="oklch(0.91 0.008 75)">VERONICA AI STUDIO</text>
   </g>
 
   <!-- Right CTA -->

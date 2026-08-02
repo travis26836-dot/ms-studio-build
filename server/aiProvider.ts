@@ -1,24 +1,15 @@
-import { createGoogleGenerativeAI, type GoogleGenerativeAIProvider } from "@ai-sdk/google";
+export const AI_PROVIDER_NAME = "veronica-ai";
+export const DEFAULT_AI_TEXT_MODEL = "veronica-text";
+export const DEFAULT_AI_IMAGE_MODEL = "veronica-image";
 
-export const AI_PROVIDER_NAME = "google-gemini";
-export const DEFAULT_AI_TEXT_MODEL = "gemini-2.5-flash";
-export const DEFAULT_AI_IMAGE_MODEL = "gemini-2.5-flash-image";
-
-const GEMINI_API_KEY_ENV_NAMES = [
-  "GOOGLE_GENERATIVE_AI_API_KEY",
-  "GEMINI_API_KEY",
-  "GOOGLE_API_KEY",
-] as const;
+const VERONICA_API_KEY_ENV_NAME = "VERONICA_AI_API_KEY";
+const VERONICA_BASE_URL_ENV_NAME = "VERONICA_AI_BASE_URL";
 
 function sanitizeEnvValue(value: string | undefined): string | null {
-  if (!value) {
-    return null;
-  }
+  if (!value) return null;
 
   const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
+  if (!trimmed) return null;
 
   const unquoted =
     (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
@@ -29,28 +20,20 @@ function sanitizeEnvValue(value: string | undefined): string | null {
   return unquoted || null;
 }
 
-let cachedProvider: GoogleGenerativeAIProvider | null = null;
-let cachedApiKey: string | null = null;
-
-export function getGeminiApiKey(): string | null {
-  for (const envName of GEMINI_API_KEY_ENV_NAMES) {
-    const apiKey = sanitizeEnvValue(process.env[envName]);
-    if (apiKey) {
-      return apiKey;
-    }
-  }
-
-  return null;
+export function getVeronicaApiKey(): string | null {
+  return sanitizeEnvValue(process.env[VERONICA_API_KEY_ENV_NAME]);
 }
 
-export function getGeminiApiKeySource(): string | null {
-  for (const envName of GEMINI_API_KEY_ENV_NAMES) {
-    if (sanitizeEnvValue(process.env[envName])) {
-      return envName;
-    }
-  }
+export function getVeronicaApiKeySource(): string | null {
+  return getVeronicaApiKey() ? VERONICA_API_KEY_ENV_NAME : null;
+}
 
-  return null;
+export function getVeronicaBaseUrl(): string | null {
+  return sanitizeEnvValue(process.env[VERONICA_BASE_URL_ENV_NAME])?.replace(/\/+$/, "") ?? null;
+}
+
+export function isVeronicaConfigured(): boolean {
+  return Boolean(getVeronicaApiKey() && getVeronicaBaseUrl());
 }
 
 export function getAiTextModelId(): string {
@@ -61,27 +44,107 @@ export function getAiImageModelId(): string {
   return sanitizeEnvValue(process.env.AI_IMAGE_MODEL) || DEFAULT_AI_IMAGE_MODEL;
 }
 
-export function getGeminiProvider(): GoogleGenerativeAIProvider | null {
-  const apiKey = getGeminiApiKey();
-
-  if (!apiKey) {
-    cachedProvider = null;
-    cachedApiKey = null;
-    return null;
+export class VeronicaApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly responseBody = ""
+  ) {
+    super(message);
+    this.name = "VeronicaApiError";
   }
-
-  if (!cachedProvider || cachedApiKey !== apiKey) {
-    cachedProvider = createGoogleGenerativeAI({ apiKey });
-    cachedApiKey = apiKey;
-  }
-
-  return cachedProvider;
 }
 
-export function getGeminiTextModel() {
-  return getGeminiProvider()?.(getAiTextModelId()) ?? null;
+type VeronicaMessage = {
+  role: "user" | "assistant" | "system";
+  content: string;
+};
+
+function getRequiredConfig(): { apiKey: string; baseUrl: string } {
+  const apiKey = getVeronicaApiKey();
+  const baseUrl = getVeronicaBaseUrl();
+  if (!apiKey || !baseUrl) {
+    throw new VeronicaApiError(
+      "Veronica AI is not configured.",
+      503
+    );
+  }
+
+  return { apiKey, baseUrl };
 }
 
-export function getGeminiImageModel() {
-  return getGeminiProvider()?.image(getAiImageModelId()) ?? null;
+async function requestVeronica<T>(path: string, payload: Record<string, unknown>): Promise<T> {
+  const { apiKey, baseUrl } = getRequiredConfig();
+  const response = await fetch(`${baseUrl}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const responseBody = await response.text();
+
+  if (!response.ok) {
+    throw new VeronicaApiError(
+      `Veronica AI request failed with status ${response.status}.`,
+      response.status,
+      responseBody
+    );
+  }
+
+  try {
+    return JSON.parse(responseBody) as T;
+  } catch {
+    throw new VeronicaApiError(
+      "Veronica AI returned an invalid JSON response.",
+      502,
+      responseBody
+    );
+  }
+}
+
+export async function generateVeronicaText(input: {
+  system?: string;
+  messages?: VeronicaMessage[];
+  prompt?: string;
+}): Promise<{ text: string }> {
+  const messages: VeronicaMessage[] = [
+    ...(input.system ? [{ role: "system" as const, content: input.system }] : []),
+    ...(input.messages ?? []),
+    ...(input.prompt ? [{ role: "user" as const, content: input.prompt }] : []),
+  ];
+  const response = await requestVeronica<{
+    choices?: Array<{ message?: { content?: string } }>;
+  }>("/chat/completions", {
+    model: getAiTextModelId(),
+    messages,
+  });
+  const text = response.choices?.[0]?.message?.content?.trim();
+  if (!text) {
+    throw new VeronicaApiError("Veronica AI did not return text.", 502);
+  }
+
+  return { text };
+}
+
+export async function generateVeronicaImage(input: {
+  prompt: string;
+  width: number;
+  height: number;
+}): Promise<{ url: string }> {
+  const response = await requestVeronica<{
+    data?: Array<{ b64_json?: string; url?: string }>;
+  }>("/images/generations", {
+    model: getAiImageModelId(),
+    prompt: input.prompt,
+    n: 1,
+    size: `${input.width}x${input.height}`,
+    response_format: "b64_json",
+  });
+  const image = response.data?.[0];
+  if (image?.b64_json) return { url: `data:image/png;base64,${image.b64_json}` };
+  if (image?.url) return { url: image.url };
+
+  throw new VeronicaApiError("Veronica AI did not return an image.", 502);
 }

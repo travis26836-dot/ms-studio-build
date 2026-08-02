@@ -360,12 +360,12 @@ export default function App() {
           <a
             href={mainAppUrl}
             className="site-logo"
-            aria-label="Open ManuScript Studio home"
+            aria-label="Open Veronica AI Studio home"
           >
             <div className="site-logo-icon">
-              <img src="/icon-192.png" alt="ManuScript Studio logo" />
+              <img src="/icon-192.png" alt="Veronica AI Studio logo" />
             </div>
-            <span className="site-logo-wordmark">ManuScript Studio</span>
+            <span className="site-logo-wordmark">Veronica AI Studio</span>
           </a>
 
           <div className="account-menu" ref={menuRef}>

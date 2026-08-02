@@ -23,7 +23,7 @@ export default function RefundPolicyPage() {
             className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
             style={{ fontFamily: '"Cinzel Decorative", serif' }}
           >
-            ManuScript Studio
+            Veronica AI Studio
           </p>
         </div>
       </header>
@@ -42,7 +42,7 @@ export default function RefundPolicyPage() {
 
         <div className="space-y-8 text-sm leading-7 text-muted-foreground [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-foreground [&_h2]:mt-8 [&_h2]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1">
           <p>
-            Thank you for choosing ManuScript Studio. We are committed to your
+              Thank you for choosing Veronica AI Studio. We are committed to your
             satisfaction. Because our Service delivers digital content and
             software tools, our refund policy reflects the nature of digital
             subscriptions and one-time purchases.
@@ -51,7 +51,7 @@ export default function RefundPolicyPage() {
           <section>
             <h2>1. Free Trial</h2>
             <p>
-              Where available, ManuScript Studio offers a free trial period for
+              Where available, Veronica AI Studio offers a free trial period for
               new users. We encourage you to fully evaluate the Service during
               this period before committing to a paid plan.
             </p>
@@ -89,7 +89,7 @@ export default function RefundPolicyPage() {
             <ul>
               <li>
                 Significant service outages or technical failures caused by
-                ManuScript Studio that substantially impair access to core
+                Veronica AI Studio that substantially impair access to core
                 features for an extended period.
               </li>
               <li>Duplicate charges resulting from a billing error.</li>
@@ -158,7 +158,7 @@ export default function RefundPolicyPage() {
           <section>
             <h2>7. Changes to This Policy</h2>
             <p>
-              ManuScript Studio reserves the right to update or modify this
+              Veronica AI Studio reserves the right to update or modify this
               policy at any time. Changes will be posted on this page with an
               updated effective date. Continued use of the Service after changes
               are posted constitutes your acceptance of the revised policy.

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 920" width="1440" height="920" role="img" aria-labelledby="ed-title ed-desc">
-  <title id="ed-title">ManuScript Studio – Canvas Editor Layout</title>
+  <title id="ed-title">Veronica AI Studio – Canvas Editor Layout</title>
   <desc id="ed-desc">Wireframe layout of the canvas editor with toolbar, left icon rail, expandable side panel, canvas workspace, and right properties/AI chat panel. All measurements are in CSS pixels.</desc>
 
   <defs>
@@ -38,7 +38,7 @@
   <rect x="8" y="8" width="128" height="32" rx="4" fill="none" stroke="#2a2d38" stroke-width="1"/>
   <!-- Back arrow icon -->
   <path d="M20 24 L14 24 M14 24 L18 20 M14 24 L18 28" stroke="#9ca3af" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  <text x="30" y="28" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#9ca3af" font-weight="500">ManuScript Studio</text>
+  <text x="30" y="28" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#9ca3af" font-weight="500">Veronica AI Studio</text>
 
   <!-- Separator -->
   <line x1="142" y1="12" x2="142" y2="36" stroke="#2a2d38" stroke-width="1"/>

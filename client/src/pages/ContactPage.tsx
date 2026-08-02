@@ -79,7 +79,7 @@ export default function ContactPage() {
             className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
             style={{ fontFamily: '"Cinzel Decorative", serif' }}
           >
-            ManuScript Studio
+            Veronica AI Studio
           </p>
         </div>
       </header>

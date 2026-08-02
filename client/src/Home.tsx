@@ -283,7 +283,7 @@ function SiteFooter() {
           <p
             className="font-['Impact'] text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
           >
-            ManuScript Studio
+            Veronica AI Studio
           </p>
           <p className="mt-2 max-w-xl text-xs leading-6 text-muted-foreground">
             Custom image editing, templates, branding systems, listing mockups,
@@ -517,14 +517,14 @@ function Dashboard({
       <header className="site-header">
         <div className="site-header-inner">
           <div className="site-header-left">
-            <a href="#" className="site-logo" aria-label="ManuScript Studio">
+            <a href="#" className="site-logo" aria-label="Veronica AI Studio">
               <div className="site-logo-icon">
                 <img
                   src="/icon-192.png"
-                  alt="ManuScript Studio logo"
+                  alt="Veronica AI Studio logo"
                 />
               </div>
-              <span className="site-logo-wordmark">ManuScript Studio</span>
+              <span className="site-logo-wordmark">Veronica AI Studio</span>
             </a>
           </div>
 
@@ -1089,14 +1089,14 @@ function LandingPage() {
           <div className="h-9 w-9 rounded-lg ring-2 ring-[oklch(0.78_0.17_75)]/50 bg-black overflow-hidden">
             <img
               src="/icon-192.png"
-              alt="ManuScript Studio logo"
+              alt="Veronica AI Studio logo"
               className="h-full w-full object-contain"
             />
           </div>
           <h1
             className="font-display text-sm font-semibold tracking-[0.18em] uppercase text-foreground"
           >
-            ManuScript Studio
+            Veronica AI Studio
           </h1>
         </div>
         <div className="flex-1" />
@@ -1302,7 +1302,7 @@ function LandingPage() {
               Ready to create?
             </h2>
             <p className="mb-8 text-muted-foreground">
-              Join ManuScript Studio and start building polished digital assets
+              Join Veronica AI Studio and start building polished digital assets
               with AI-assisted editing and flexible templates.
             </p>
             <Button size="lg" asChild>

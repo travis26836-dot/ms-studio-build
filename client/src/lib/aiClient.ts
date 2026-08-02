@@ -46,7 +46,7 @@ export type AiCreditConfig = {
   };
 };
 
-const AI_CLIENT_ID_KEY = "ms-studio.aiClientId.v1";
+const AI_CLIENT_ID_KEY = "veronica-ai.aiClientId.v1";
 
 function getClientId(): string {
   if (typeof window === "undefined") {
@@ -71,7 +71,7 @@ function getClientId(): string {
 function createAiHeaders(auth?: AiRequestAuth): Headers {
   const headers = new Headers({
     "Content-Type": "application/json",
-    "X-MS-Studio-Client-Id": getClientId(),
+    "X-Veronica-AI-Client-Id": getClientId(),
   });
 
   if (auth?.token) {

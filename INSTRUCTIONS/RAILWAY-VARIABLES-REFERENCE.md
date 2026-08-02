@@ -92,13 +92,15 @@ STRIPE_PRICE_AI_CREDIT_PACK=price_YOUR_PRODUCTION_PRICE_ID
 ## AI Provider
 
 ```dotenv
-GOOGLE_GENERATIVE_AI_API_KEY=your_production_key
+VERONICA_AI_API_KEY=your_production_key
+VERONICA_AI_BASE_URL=https://your-veronica-api.example/v1
 AI_CREDIT_PACKS_ENABLED=true
 ```
 
 | Variable                       | Purpose                    | Where to Get                       |
 | ------------------------------ | -------------------------- | ---------------------------------- |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | Google Gemini API key      | <https://ai.google.dev> → API Keys |
+| `VERONICA_AI_API_KEY`          | Veronica AI API key        | Veronica AI account                 |
+| `VERONICA_AI_BASE_URL`         | OpenAI-compatible API URL  | Veronica AI account                 |
 | `AI_CREDIT_PACKS_ENABLED`      | Enable credit pack feature | `true` or `false`                  |
 
 ---
@@ -129,7 +131,8 @@ STRIPE_WEBHOOK_SECRET=whsec_live_YOUR_PRODUCTION_WEBHOOK_SECRET
 STRIPE_PRICE_AI_CREDIT_PACK=price_YOUR_PRODUCTION_PRICE_ID
 
 # AI Provider
-GOOGLE_GENERATIVE_AI_API_KEY=your_production_key
+VERONICA_AI_API_KEY=your_production_key
+VERONICA_AI_BASE_URL=https://your-veronica-api.example/v1
 AI_CREDIT_PACKS_ENABLED=true
 ```
 

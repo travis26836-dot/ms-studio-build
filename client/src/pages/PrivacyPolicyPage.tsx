@@ -23,7 +23,7 @@ export default function PrivacyPolicyPage() {
             className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
             style={{ fontFamily: '"Cinzel Decorative", serif' }}
           >
-            ManuScript Studio
+            Veronica AI Studio
           </p>
         </div>
       </header>
@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2>1. Introduction</h2>
             <p>
-              Welcome to ManuScript Studio ("Company", "we", "our", "us"). We
+              Welcome to Veronica AI Studio ("Company", "we", "our", "us"). We
               are committed to protecting your personal information and your
               right to privacy. This Privacy Policy explains how we collect,
               use, disclose, and safeguard your information when you access or
@@ -149,7 +149,7 @@ export default function PrivacyPolicyPage() {
               <li>
                 <strong className="text-foreground">Legal Authorities:</strong>{" "}
                 When required by law or to protect the rights, property, or
-                safety of ManuScript Studio, our users, or others.
+                safety of Veronica AI Studio, our users, or others.
               </li>
               <li>
                 <strong className="text-foreground">Business Transfers:</strong>{" "}

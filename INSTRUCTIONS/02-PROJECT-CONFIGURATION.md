@@ -27,7 +27,7 @@ Keep each variable in one place to avoid accidental overrides (especially
 - DATABASE_URL (local PostgreSQL)
 - CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY, VITE_CLERK_PUBLISHABLE_KEY
 - API_PORT, NODE_ENV, VITE_API_URL
-- GOOGLE_GENERATIVE_AI_API_KEY
+- VERONICA_AI_API_KEY, VERONICA_AI_BASE_URL
 - STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET
 - STRIPE_PRICE_AI_CREDIT_PACK, AI_CREDIT_PACKS_ENABLED
 
@@ -35,8 +35,12 @@ See individual guide files for where to obtain each key:
 
 - Clerk keys: Clerk Dashboard
 - Stripe keys: Stripe Dashboard  
-- Google AI key: Google AI Studio
+- Veronica AI key and API base URL: your Veronica AI account
 - Database: Local PostgreSQL
+
+The Veronica AI adapter expects an OpenAI-compatible base URL exposing
+`/chat/completions` and `/images/generations`. Do not expose the API key via a
+`VITE_` variable.
 
 ---
 

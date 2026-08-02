@@ -23,7 +23,7 @@ export default function TermsOfServicePage() {
             className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground"
             style={{ fontFamily: '"Cinzel Decorative", serif' }}
           >
-            ManuScript Studio
+            Veronica AI Studio
           </p>
         </div>
       </header>
@@ -43,7 +43,7 @@ export default function TermsOfServicePage() {
         <div className="space-y-8 text-sm leading-7 text-muted-foreground [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-foreground [&_h2]:mt-8 [&_h2]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1">
           <p>
             These Terms of Service ("Terms") govern your access to and use of
-            ManuScript Studio (the "Service") provided by ManuScript Studio
+            Veronica AI Studio (the "Service") provided by Veronica AI Studio
             ("Company", "we", "us", or "our"). By accessing or using the
             Service, you agree to be bound by these Terms. If you do not agree,
             please do not use the Service.
@@ -123,7 +123,7 @@ export default function TermsOfServicePage() {
             <p>
               All content, features, and functionality of the Service —
               including but not limited to software, text, graphics, logos, and
-              trademarks — are owned by ManuScript Studio or its licensors and
+              trademarks — are owned by Veronica AI Studio or its licensors and
               are protected by applicable intellectual property laws.
             </p>
             <p>
@@ -202,7 +202,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2>11. Limitation of Liability</h2>
             <p>
-              To the fullest extent permitted by applicable law, ManuScript
+              To the fullest extent permitted by applicable law, Veronica AI
               Studio and its affiliates, officers, directors, employees, and
               agents shall not be liable for any indirect, incidental, special,
               consequential, or punitive damages arising out of or related to
@@ -216,7 +216,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2>12. Indemnification</h2>
             <p>
-              You agree to indemnify, defend, and hold harmless ManuScript
+              You agree to indemnify, defend, and hold harmless Veronica AI
               Studio and its affiliates from and against any claims,
               liabilities, damages, judgments, awards, losses, costs, or
               expenses (including reasonable attorneys' fees) arising out of

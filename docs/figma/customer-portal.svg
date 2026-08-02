@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900" role="img" aria-labelledby="cp-title cp-desc">
-  <title id="cp-title">ManuScript Studio – Customer Portal Layout</title>
+  <title id="cp-title">Veronica AI Studio – Customer Portal Layout</title>
   <desc id="cp-desc">Wireframe of the standalone Customer Portal app (customer-portal/src/app.jsx): header with logo and account dropdown, main content area with workspace heading and action buttons, and the design cards grid.</desc>
 
   <!-- Background -->
   <rect width="1440" height="900" fill="#0d0e12"/>
-  <text x="720" y="18" font-family="'Courier New', monospace" font-size="11" fill="#c4935c" text-anchor="middle" font-weight="700">MANUSCRIPT STUDIO — CUSTOMER PORTAL  (1440 × 900px wireframe)</text>
+  <text x="720" y="18" font-family="'Courier New', monospace" font-size="11" fill="#c4935c" text-anchor="middle" font-weight="700">VERONICA AI STUDIO — CUSTOMER PORTAL  (1440 × 900px wireframe)</text>
   <text x="720" y="32" font-family="'Courier New', monospace" font-size="8" fill="#4b5563" text-anchor="middle">Standalone app: customer-portal/src/app.jsx  ·  Separate Vite build</text>
 
   <!-- ─── HEADER  h=64  y=40 ─── -->
@@ -17,7 +17,7 @@
   <rect x="24" y="52" width="32" height="32" rx="7" fill="#1a1d23" stroke="#2a2d38"/>
   <rect x="30" y="58" width="20" height="20" rx="3" fill="none" stroke="#c4935c" stroke-width="1.5"/>
   <path d="M34 63 l5 5 l5 -5" fill="none" stroke="#c4935c" stroke-width="1.5"/>
-  <text x="64" y="66" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#e2e3e8" font-weight="700" letter-spacing="1.5">MANUSCRIPT</text>
+  <text x="64" y="66" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#e2e3e8" font-weight="700" letter-spacing="1.5">VERONICA AI</text>
   <text x="64" y="79" font-family="'Inter', system-ui, sans-serif" font-size="7" fill="#9ca3af" letter-spacing="3">STUDIO</text>
 
   <!-- "Customer Portal" label -->

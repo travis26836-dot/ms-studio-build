@@ -19,6 +19,11 @@ type ProjectRecord = {
   updatedAt: string;
 };
 
+type UserSettingsRecord = {
+  brandKit: unknown | null;
+  updatedAt: string | null;
+};
+
 type TemplateRecord = {
   id: number;
   name: string;
@@ -127,14 +132,14 @@ type LayoutSuggestion = {
   description: string;
 };
 
-const TEMPLATES_KEY = "manuscript.templates.v1";
+const TEMPLATES_KEY = "veronica-ai.templates.v1";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.DEV ? "http://127.0.0.1:3010" : "");
 const DEV_API_FAILOVER_URL =
   import.meta.env.VITE_API_FAILOVER_URL ||
   (import.meta.env.DEV
-    ? "https://ms-studio-build-production.up.railway.app"
+    ? "https://veronica-ai-studio-production.up.railway.app"
     : "");
 
 let activeApiBaseUrl = API_BASE_URL;
@@ -1053,6 +1058,45 @@ export const trpc = {
             clerkUserId
           );
           return { success: true };
+        });
+      },
+    },
+  },
+  userSettings: {
+    get: {
+      useQuery: () => {
+        const { getToken, isSignedIn } = useSafeClerkAuth();
+        return useLocalQuery(async () => {
+          if (!isSignedIn) {
+            return { brandKit: null, updatedAt: null } as UserSettingsRecord;
+          }
+
+          const token = await getToken();
+          return apiRequest<UserSettingsRecord>(
+            "/api/user-settings",
+            { method: "GET" },
+            token
+          );
+        }, [isSignedIn, getToken]);
+      },
+    },
+    save: {
+      useMutation: () => {
+        const { getToken, isSignedIn } = useSafeClerkAuth();
+        return useLocalMutation(async (input: { brandKit: unknown }) => {
+          if (!isSignedIn) {
+            throw new Error("Please sign in to save your Brand Kit.");
+          }
+
+          const token = await getToken();
+          return apiRequest<UserSettingsRecord>(
+            "/api/user-settings",
+            {
+              method: "PUT",
+              body: JSON.stringify(input),
+            },
+            token
+          );
         });
       },
     },

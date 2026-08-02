@@ -1,9 +1,6 @@
 import { createHash } from "node:crypto";
 import { Router, type Request, type Response } from "express";
 import {
-  generateImage,
-  generateText,
-  streamText,
   type ImageModelUsage,
   type LanguageModelUsage,
   type ProviderMetadata,
@@ -11,12 +8,12 @@ import {
 import { z } from "zod";
 import {
   AI_PROVIDER_NAME,
+  generateVeronicaImage,
+  generateVeronicaText,
   getAiImageModelId,
   getAiTextModelId,
-  getGeminiApiKey,
-  getGeminiApiKeySource,
-  getGeminiImageModel,
-  getGeminiTextModel,
+  getVeronicaApiKeySource,
+  isVeronicaConfigured,
 } from "./aiProvider.js";
 import { getPrisma } from "./db.js";
 
@@ -149,7 +146,7 @@ function getPlanCap(plan: string): number {
 }
 
 function getAnonymousUsageKey(req: Request): string {
-  const clientId = req.header("x-ms-studio-client-id")?.trim();
+  const clientId = req.header("x-veronica-ai-client-id")?.trim();
   if (clientId) {
     return `client:${clientId.slice(0, 120)}`;
   }
@@ -185,10 +182,10 @@ function parseRequest<T>(
   return parsed.data;
 }
 
-function sendMissingGeminiKey(res: Response) {
+function sendMissingVeronicaConfig(res: Response) {
   return res.status(503).json({
     error:
-      "AI features require GOOGLE_GENERATIVE_AI_API_KEY to be configured.",
+      "AI features require VERONICA_AI_API_KEY and VERONICA_AI_BASE_URL to be configured.",
   });
 }
 
@@ -210,20 +207,19 @@ function normalizeProviderError(error: unknown): {
       status: 503,
       code: "provider_api_key_invalid",
       message:
-        "Gemini API key is invalid. Use a valid GOOGLE_GENERATIVE_AI_API_KEY (or GEMINI_API_KEY/GOOGLE_API_KEY) with Generative Language API access.",
+        "Veronica AI authentication failed. Check VERONICA_AI_API_KEY.",
     };
   }
 
   if (
     lower.includes("api key") ||
-    lower.includes("x-goog-api-key") ||
     lower.includes("permission") ||
     lower.includes("unauthorized")
   ) {
     return {
       status: 503,
       code: "provider_auth",
-      message: "Gemini provider authentication failed. Check GOOGLE_GENERATIVE_AI_API_KEY.",
+      message: "Veronica AI authentication failed. Check VERONICA_AI_API_KEY.",
     };
   }
 
@@ -236,7 +232,7 @@ function normalizeProviderError(error: unknown): {
       status: 400,
       code: "provider_blocked",
       message:
-        "Gemini blocked this generation request. Try a different prompt.",
+        "Veronica AI blocked this generation request. Try a different prompt.",
     };
   }
 
@@ -245,14 +241,14 @@ function normalizeProviderError(error: unknown): {
       status: 502,
       code: "provider_no_image",
       message:
-        "Gemini did not return an image for this request. Try a more explicit visual prompt.",
+        "Veronica AI did not return an image for this request. Try a more explicit visual prompt.",
     };
   }
 
   return {
     status: 502,
     code: "provider_error",
-    message: "Gemini provider request failed. Try again in a moment.",
+    message: "Veronica AI request failed. Try again in a moment.",
   };
 }
 
@@ -550,35 +546,15 @@ function createSvgDataUrl(svg: string): string {
   return `data:image/svg+xml;base64,${Buffer.from(svg, "utf8").toString("base64")}`;
 }
 
-function nearestGeminiAspectRatio(
-  width: number,
-  height: number
-): "1:1" | "3:4" | "4:3" | "9:16" | "16:9" {
-  const ratios = [
-    ["1:1", 1],
-    ["3:4", 3 / 4],
-    ["4:3", 4 / 3],
-    ["9:16", 9 / 16],
-    ["16:9", 16 / 9],
-  ] as const;
-  const target = width / height;
-
-  return ratios.reduce((best, current) => {
-    const bestDistance = Math.abs(Math.log(target / best[1]));
-    const currentDistance = Math.abs(Math.log(target / current[1]));
-    return currentDistance < bestDistance ? current : best;
-  })[0];
-}
-
 export function createAiRouter(options: CreateAiRouterOptions = {}): Router {
   const router = Router();
 
   router.get("/health", (_req: Request, res: Response) => {
-    const keyConfigured = Boolean(getGeminiApiKey());
+    const keyConfigured = isVeronicaConfigured();
     return res.json({
       provider: AI_PROVIDER_NAME,
       keyConfigured,
-      keySource: getGeminiApiKeySource(),
+      keySource: getVeronicaApiKeySource(),
       textModel: getAiTextModelId(),
       imageModel: getAiImageModelId(),
     });
@@ -603,13 +579,8 @@ export function createAiRouter(options: CreateAiRouterOptions = {}): Router {
     const request = parseRequest(chatRequestSchema, req.body, res);
     if (!request) return;
 
-    if (!getGeminiApiKey()) {
-      return sendMissingGeminiKey(res);
-    }
-
-    const model = getGeminiTextModel();
-    if (!model) {
-      return sendMissingGeminiKey(res);
+    if (!isVeronicaConfigured()) {
+      return sendMissingVeronicaConfig(res);
     }
 
     const access = await prepareAiAccess(req, options, "chat");
@@ -621,7 +592,7 @@ export function createAiRouter(options: CreateAiRouterOptions = {}): Router {
     logAiRequest("chat", access.access, modelId);
 
     const systemParts = [
-      "You are an expert AI design assistant for MS Studio, a web-based graphic design editor.",
+      "You are Veronica AI, an expert assistant for a web-based graphic design editor.",
       "Help users with layout suggestions, color palettes, copy writing, and design feedback.",
       "Be concise, practical, and use markdown formatting for clarity.",
     ];
@@ -639,20 +610,14 @@ export function createAiRouter(options: CreateAiRouterOptions = {}): Router {
     ];
 
     try {
-      const result = streamText({
-        model,
+      const result = await generateVeronicaText({
         system: systemParts.join("\n\n"),
         messages,
       });
 
       res.setHeader("Content-Type", "text/plain; charset=utf-8");
-      for await (const delta of result.textStream) {
-        res.write(delta);
-      }
-      res.end();
+      res.end(result.text);
 
-      const usage = await result.totalUsage;
-      const providerMetadata = await result.providerMetadata;
       await recordAiUsage({
         access: access.access,
         feature: "chat",
@@ -660,8 +625,6 @@ export function createAiRouter(options: CreateAiRouterOptions = {}): Router {
         prompt: request.message,
         status: "success",
         costUnits: FEATURE_COST_UNITS.chat,
-        usage,
-        providerMetadata,
       });
     } catch (error) {
       const normalized = normalizeProviderError(error);
@@ -688,13 +651,8 @@ export function createAiRouter(options: CreateAiRouterOptions = {}): Router {
     const request = parseRequest(layoutRequestSchema, req.body, res);
     if (!request) return;
 
-    if (!getGeminiApiKey()) {
-      return sendMissingGeminiKey(res);
-    }
-
-    const model = getGeminiTextModel();
-    if (!model) {
-      return sendMissingGeminiKey(res);
+    if (!isVeronicaConfigured()) {
+      return sendMissingVeronicaConfig(res);
     }
 
     const access = await prepareAiAccess(req, options, "layout");
@@ -748,8 +706,7 @@ Return ONLY a valid JSON object with this exact structure, no extra text or mark
 Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Return ONLY JSON.`;
 
     try {
-      const result = await generateText({
-        model,
+      const result = await generateVeronicaText({
         prompt,
       });
 
@@ -763,8 +720,6 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
         prompt: request.purpose,
         status: "success",
         costUnits: FEATURE_COST_UNITS.layout,
-        usage: result.usage,
-        providerMetadata: result.providerMetadata,
       });
 
       return res.json(layout);
@@ -774,7 +729,7 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
         ? {
             status: 502,
             code: "layout_json_parse",
-            message: "Gemini returned a layout that did not match the required JSON schema.",
+            message: "Veronica AI returned a layout that did not match the required JSON schema.",
           }
         : normalizeProviderError(error);
 
@@ -798,13 +753,8 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
       const request = parseRequest(imageRequestSchema, req.body, res);
       if (!request) return;
 
-      if (!getGeminiApiKey()) {
-        return sendMissingGeminiKey(res);
-      }
-
-      const model = getGeminiImageModel();
-      if (!model) {
-        return sendMissingGeminiKey(res);
+      if (!isVeronicaConfigured()) {
+        return sendMissingVeronicaConfig(res);
       }
 
       const access = await prepareAiAccess(req, options, feature);
@@ -813,10 +763,6 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
       }
 
       const modelId = getAiImageModelId();
-      const aspectRatio = nearestGeminiAspectRatio(
-        request.width,
-        request.height
-      );
       logAiRequest(feature, access.access, modelId);
 
       const prompt =
@@ -825,14 +771,11 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
           : `Generate a transparent-friendly design asset or image element. Avoid embedded text unless explicitly requested. Prompt: ${request.prompt}`;
 
       try {
-        const result = await generateImage({
-          model,
+        const result = await generateVeronicaImage({
           prompt,
-          n: 1,
-          aspectRatio,
+          width: request.width,
+          height: request.height,
         });
-
-        const url = `data:${result.image.mediaType};base64,${result.image.base64}`;
 
         await recordAiUsage({
           access: access.access,
@@ -841,12 +784,10 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
           prompt: request.prompt,
           status: "success",
           costUnits: FEATURE_COST_UNITS[feature],
-          usage: result.usage,
-          providerMetadata: result.providerMetadata,
-          generatedAssetUrl: url,
+          generatedAssetUrl: result.url,
         });
 
-        return res.json({ url });
+        return res.json({ url: result.url });
       } catch (error) {
         const normalized = normalizeProviderError(error);
         await recordAiUsage({
@@ -872,13 +813,8 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
     const request = parseRequest(svgRequestSchema, req.body, res);
     if (!request) return;
 
-    if (!getGeminiApiKey()) {
-      return sendMissingGeminiKey(res);
-    }
-
-    const model = getGeminiTextModel();
-    if (!model) {
-      return sendMissingGeminiKey(res);
+    if (!isVeronicaConfigured()) {
+      return sendMissingVeronicaConfig(res);
     }
 
     const access = await prepareAiAccess(req, options, "svg");
@@ -899,8 +835,7 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
     ].join("\n");
 
     try {
-      const result = await generateText({
-        model,
+      const result = await generateVeronicaText({
         prompt,
       });
       const svg = sanitizeSvg(extractSvg(result.text), request.width, request.height);
@@ -913,8 +848,6 @@ Include 3-5 elements. Use pixel values that fit within the canvas dimensions. Re
         prompt: request.prompt,
         status: "success",
         costUnits: FEATURE_COST_UNITS.svg,
-        usage: result.usage,
-        providerMetadata: result.providerMetadata,
         generatedAssetUrl: url,
       });
 
